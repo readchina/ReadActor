@@ -6,4 +6,4 @@ The goal is to automately extract person names, space names, and institutions na
 
 ## How To
 
-Will be edit soon.
+Will be edited soon.
