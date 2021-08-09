@@ -21,7 +21,6 @@ def read_person_csv(person_url):
     """
     df = pd.read_csv(person_url, error_bad_lines=False)
     print(df)
-    geo_code_dict = {}
     person_dict = {}
     for index, row in df.iterrows():
         key = (row[0], row[3])
