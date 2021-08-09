@@ -153,9 +153,6 @@ if __name__ == "__main__":
     person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
     # print(person_dict)
 
-    # person_dict_sample = {('AG0169', 'en'): ['Stalin', 'Joseph Vissarionovich', 'male', '1878', '1953'], ('AG0169', 'ru'): ['Сталин', 'Иосиф Виссарионович', 'male', '1878', '1953'], ('AG0170', 'en'): ['Lin', 'Liguo', 'male', '1946', '1971'], ('AG0170', 'zh'): ['林', '立果', 'male', '1946', '1971'], ('AG0171', 'en'): ['Pantsov', 'Alexander', 'male', '1955', 'XXXX'], ('AG0172', 'en'): ['Sun Chang', 'Kang-i', 'male', '1944', 'XXXX'], ('AG0172', 'zh'): ['孫', '康宜', 'male', '1944', 'XXXX'], ('AG0173', 'en'): ['Fang', 'Zifen', 'male', '1941', 'XXXX'], ('AG0173', 'zh'): ['方', '子奋', 'male', '1941', 'XXXX'], ('AG0174', 'en'): ['Chen', 'Zhiqiong', 'male', 'XXXX', 'XXXX'], ('AG0174', 'zh'): ['陈', '志琼', 'male', 'XXXX', 'XXXX'], ('AG0175', 'en'): ['Dai', 'Weiwei', 'female', '[1964,1965]', 'XXXX'], ('AG0175', 'zh'): ['戴', '为伟', 'female', '[1964,1965]', 'XXXX'], ('AG0176', 'en'): ['Shao', 'Yanxiang', 'male', '1933', 'XXXX'], ('AG0176', 'zh'): ['邵', '燕祥', 'male', '1933', 'XXXX'], ('AG0177', 'en'): ['Chen', 'Yinan', 'unknown', '1948', 'XXXX'], ('AG0177', 'zh'): ['陈', '益南', 'unknown', '1948', 'XXXX'], ('AG0178', 'en'): ['Gu', 'Xunzhong', 'male', '1948', 'XXXX'], ('AG0178', 'zh'): ['顾', '训中', 'male', '1948', 'XXXX'], ('AG0179', 'en'): ['Hu', 'Xiaoshui', 'unknown', '1952', 'XXXX'], ('AG0179', 'zh'): ['胡', '小水', 'unknown', '1952', 'XXXX'], ('AG0180', 'en'): ['Han', 'Shuguan', 'unknown', 'XXXX', 'XXXX'], ('AG0180', 'zh'): ['韩', '曙光', 'unknown', 'XXXX', 'XXXX'], ('AG0181', 'en'): ['Tu', 'Xiaolei', 'male', '1948', 'XXXX'], ('AG0181', 'zh'): ['涂', '晓雷', 'male', '1948', 'XXXX']}
-
-
     no_match_list = compare(person_dict, 20)
     print("-------no_match_list", no_match_list)
 
