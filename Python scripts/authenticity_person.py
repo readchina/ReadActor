@@ -33,7 +33,7 @@ def read_person_csv(person_url):
             # key: string:  (person_id, name_lang)
             # value: list: [family_name,first_name,sex,birthyear,deathyear]
             person_dict[key] = [row[1], row[2], row[4], row[6], row[7]]
-            print("person_dict", person_dict)
+            # print("person_dict", person_dict)
         else:
             print("Probably something wrong")
     return person_dict
@@ -43,20 +43,24 @@ def compare(person_dict):
     no_match_list = []
     for k, v in person_dict.items():
         print("==============")
-        print("key: ", k)
-        print("value: ", v)
-        if k[1] != "zh":
-            print(type(v[0]))
-            print(type(v[1]))
-            name = v[0] + " " + v[1]
+        # print("key: ", k)
+        # print("value: ", v)
+        if isinstance(v[1], float):
+            name = v[0]
         else:
-            name = v[0] + v[1]
-        print("name: ", name)
+            if k[1] != "zh":
+                # print(type(v[0]))
+                # print(type(v[1]))
+                name = v[0] + " " + v[1]
+            else:
+                name = v[0] + v[1]
+        # print("name: ", name)
         q_ids = _get_q_ids(name)
         if q_ids is None:
             no_match_list.append((k,v))
             continue
         person_wiki_dict = _sparql(q_ids)
+
         if not person_wiki_dict:
             no_match_list.append((k,v))
             continue
@@ -80,7 +84,6 @@ def _sparql(q_ids):
         return []
     person_wiki_dict = {}
     for index, q in enumerate(q_ids):
-        # Todo: This query has problems.
         # Can try birthyear
         # date of birth (P569)
         # date of death (P570)
@@ -158,10 +161,7 @@ def _get_q_ids(lookup=None):
 
 
 if __name__ == "__main__":
-    # person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-
-    person_dict = {('AG0001', 'en'): ['Lu', 'Xun', 'male', '1881', '1936'], ('AG0001', 'zh'): ['鲁', '迅', 'male', '1881', '1936'], ('AG0002', 'en'): ['Mou', 'Dunbai', 'male', '1947', 'XXXX'], ('AG0002', 'zh'): ['牟', '敦白', 'male', '1947', 'XXXX'], ('AG0003', 'en'): ['Zhang', 'Langlang', 'male', '1943', 'XXXX'], ('AG0003', 'zh'): ['张', '朗朗', 'male', '1943', 'XXXX'], ('AG0004', 'en'): ['Mang', 'Ke', 'male', '1950', 'XXXX'], ('AG0004', 'zh'): ['芒', '克', 'male', '1950', 'XXXX'], ('AG0005', 'en'): ['Peng', 'Gang', 'male', '1952', 'XXXX'], ('AG0005', 'zh'): ['彭', '刚', 'male', '1952', 'XXXX'], ('AG0006', 'en'): ['Tan', 'Xiaochun', 'unknown', 'XXXX', 'XXXX'], ('AG0006', 'zh'): ['谭', '晓春', 'unknown', 'XXXX', 'XXXX'], ('AG0007', 'en'): ['Cheng', 'Chuan', 'unknown', 'XXXX', 'XXXX'], ('AG0007', 'zh'): ['呈', '川', 'unknown', 'XXXX', 'XXXX'], ('AG0008', 'en'): ['Lu', 'Zhongnan', 'male', '1950', 'XXXX'], ('AG0008', 'zh'): ['卢', '中南', 'male', '1950', 'XXXX'], ('AG0009', 'en'): ['Bei', 'Dao', 'male', '1949', 'XXXX'], ('AG0009', 'zh'): ['北', '岛', 'male', '1949', 'XXXX'], ('AG0010', 'en'): ['Duo', 'Duo', 'male', '1951', 'XXXX'], ('AG0010', 'zh'): ['多', '多', 'male', '1951', 'XXXX'], ('AG0011', 'en'): ['Xu', 'Haoyuan', 'female', '1949', 'XXXX'], ('AG0011', 'zh'): ['徐', '浩渊', 'female', '1949', 'XXXX']}
-
+    person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
 
     no_match_list = compare(person_dict)
     print("-------no_match_list", no_match_list)
