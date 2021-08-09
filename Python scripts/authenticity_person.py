@@ -100,7 +100,7 @@ def _sparql(q_ids, sleep=2):
             OPTIONAL
               { ?item  wdt:P21  ?gender }
             SERVICE wikibase:label
-              { bd:serviceParam wikibase:language  "en"
+              { bd:serviceParam wikibase:language  "[AUTO_LANGUAGE],en"
               }
           }
         GROUP BY ?item ?itemLabel 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # print(person_dict)
 
     no_match_list = compare(person_dict, 20)
-    print("-------no_match_list", no_match_list)
+    print("-------length of the no_match_list", len(no_match_list))
 
     # sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
     # print("sample_dict: ", sample_dict)
