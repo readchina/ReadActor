@@ -1,3 +1,6 @@
 
 .idea/
 .DS_Store
+Python scripts/queryLuXun.py
+Python scripts/extractWikidataProperties.py
+Python scripts/compareID.py
