@@ -10,9 +10,10 @@ import pandas as pd
 from SPARQLWrapper import SPARQLWrapper, JSON
 import time
 from wikibaseintegrator import wbi_core
+from authenticity_space import read_space_csv
 
-
-def read_institution_csv(inst_url):
+def read_institution_csv(inst_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
+                                       "/Institution.csv"):
     """
     A function to read "Person.csv".
     :param filename: "Person.csv".
@@ -20,20 +21,108 @@ def read_institution_csv(inst_url):
     "name_lang" is used to decide if white space needs to be added into name or not.
     """
     df = pd.read_csv(inst_url, error_bad_lines=False)
-    print(df)
     inst_dict = {}
+    place_dict = read_space_csv()
     for index, row in df.iterrows():
-        key = (row[0], row[2])
-        if key not in inst_dict:
-            # key: string:  (inst_id, inst_name_lang)
-            # value: list: [inst_name,place,start,end]
-            inst_dict[key] = [row[1], row[3], row[4], row[5]]
-            # print("inst_dict", inst_dict)
+        if row[1] not in inst_dict:
+            # key: string: inst_name
+            # value: list: [place,start,end]
+            if row[3] in place_dict:
+                inst_dict[row[1]] = [place_dict[row[3]][0], row[4], row[5]]
+            else:
+                inst_dict[row[1]] = [row[3], row[4], row[5]]
+                print("Please check. A space_id is not in Space.csv.")
         else:
-            print("Probably something wrong")
+            print("Please check. There are overlaps between institution names.")
     return inst_dict
 
 
+def compare(person_dict, sleep=2):
+    no_match_list = []
+    for k, v in inst_dict.items():
+        if v[1] == "unknown":
+            continue
+        q_ids = _get_q_ids(k)
+        print("-------")
+        print(q_ids)
+        if q_ids is None:
+            no_match_list.append((k, v))
+            continue
+        inst_wiki_dict = _sparql(q_ids, sleep)
+        print("inst_wiki_dict: ", inst_wiki_dict)
+        # if not inst_wiki_dict:
+        #     no_match_list.append((k, v))
+        #     continue
+        # if 'gender' in inst_wiki_dict:
+        #     if inst_wiki_dict['gender'] != v[2]:
+        #         no_match_list.append((k, v))
+        #         continue
+        # if 'birthyear' in inst_wiki_dict:
+        #     if inst_wiki_dict['birthyear'] != v[3]:
+        #         no_match_list.append((k, v))
+        #         continue
+        # if 'deathyear' in inst_wiki_dict:
+        #     if inst_wiki_dict['deathyear'] != v[4]:
+        #         no_match_list.append((k, v))
+        #         continue
+        # time.sleep(sleep)
+    return no_match_list
+
+
+def _sparql(q_ids, sleep=2):
+    if q_ids is None:
+        return []
+    person_wiki_dict = {}
+    for index, q in enumerate(q_ids):
+        query = """
+        PREFIX  schema: <http://schema.org/>
+        PREFIX  bd:   <http://www.bigdata.com/rdf#>
+        PREFIX  wdt:  <http://www.wikidata.org/prop/direct/>
+        PREFIX  wikibase: <http://wikiba.se/ontology#>
+        
+        SELECT DISTINCT  ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLabel ?locationOfFormationLabel 
+        WHERE
+          { ?article  schema:about       ?item ;
+            FILTER ( ?item = <http://www.wikidata.org/entity/""" + q + """> )
+            OPTIONAL
+              { ?item  wdt:P159  ?headquarters }
+            OPTIONAL
+              { ?item  wdt:P131  ?administrativeTerritorialEntity }
+            OPTIONAL
+              { ?item wdt:P740   ?locationOfFormation }
+            OPTIONAL
+              { ?item wdt:P571  ?inception }
+            SERVICE wikibase:label
+              { bd:serviceParam wikibase:language  "en, ch"
+              }
+          }
+        GROUP BY ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLabel ?locationOfFormationLabel 
+        """
+        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+
+        sparql.setQuery(query)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+        print(results)
+
+        # if results['results']['bindings']:
+        #     if "date_of_birth" in results['results']['bindings'][0]:
+        #         birthyear = results['results']['bindings'][0]['date_of_birth']['value'][0:4]
+        #         # print("birthyear: ", birthyear)
+        #         person_wiki_dict["birthyear"] = birthyear
+        #     if "date_of_death" in results['results']['bindings'][0]:
+        #         deathyear = results['results']['bindings'][0]['date_of_death']['value'][0:4]
+        #         # print("deathyear: ", deathyear)
+        #         person_wiki_dict["deathyear"] = deathyear
+        #     if "gender" in results['results']['bindings'][0]:
+        #         gender = results['results']['bindings'][0]['gender']['value']
+        #         if gender == "http://www.wikidata.org/entity/Q6581097":
+        #             gender = "male"
+        #         if gender == "http://www.wikidata.org/entity/Q6581072":
+        #             gender = "female"
+        #         # print("gender: ", gender)
+        #         person_wiki_dict["gender"] = gender
+        return person_wiki_dict
 
 
 def _get_q_ids(lookup=None):
@@ -56,9 +145,9 @@ def _get_q_ids(lookup=None):
 if __name__ == "__main__":
     inst_dict = read_institution_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
                                        "/Institution.csv")
-    print(inst_dict)
+    # print(inst_dict)
 
-    no_match_list = compare(inst_dict, 20)
+    no_match_list = compare(inst_dict, 5)
     print("-------length of the no_match_list", len(no_match_list))
 
 
