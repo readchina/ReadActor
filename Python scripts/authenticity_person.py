@@ -12,7 +12,7 @@ import time
 from wikibaseintegrator import wbi_core
 
 
-def read_person_csv(person_url):
+def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
     """
     A function to read "Person.csv".
     :param filename: "Person.csv".
