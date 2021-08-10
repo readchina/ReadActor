@@ -43,29 +43,38 @@ def compare(person_dict, sleep=2):
         if v[1] == "unknown":
             continue
         q_ids = _get_q_ids(k)
-        print("-------")
-        print(q_ids)
+        # print("-------")
+        # print(q_ids)
+        # print("k: ", k)
         if q_ids is None:
             no_match_list.append((k, v))
             continue
         inst_wiki_dict = _sparql(q_ids, sleep)
-        print("inst_wiki_dict: ", inst_wiki_dict)
-        # if not inst_wiki_dict:
-        #     no_match_list.append((k, v))
-        #     continue
-        # if 'gender' in inst_wiki_dict:
-        #     if inst_wiki_dict['gender'] != v[2]:
-        #         no_match_list.append((k, v))
-        #         continue
-        # if 'birthyear' in inst_wiki_dict:
-        #     if inst_wiki_dict['birthyear'] != v[3]:
-        #         no_match_list.append((k, v))
-        #         continue
-        # if 'deathyear' in inst_wiki_dict:
-        #     if inst_wiki_dict['deathyear'] != v[4]:
-        #         no_match_list.append((k, v))
-        #         continue
-        # time.sleep(sleep)
+        # print("inst_wiki_dict: ", inst_wiki_dict)
+        if not inst_wiki_dict:
+            no_match_list.append((k, v))
+            continue
+        if 'headquarters' in inst_wiki_dict:
+            for h in inst_wiki_dict['headquarters']:
+                if h != v[0]:
+                    no_match_list.append((k, v))
+                    continue
+        if 'administrativeTerritorialEntity' in inst_wiki_dict:
+            for h in inst_wiki_dict['administrativeTerritorialEntity']:
+                if h != v[0]:
+                    no_match_list.append((k, v))
+                    continue
+        if 'locationOfFormation' in inst_wiki_dict:
+            for h in inst_wiki_dict['locationOfFormation']:
+                if h != v[0]:
+                    no_match_list.append((k, v))
+                    continue
+        if 'inception' in inst_wiki_dict:
+            for h in inst_wiki_dict['inception']:
+                if h != v[1]:
+                    no_match_list.append((k, v))
+                    continue
+        time.sleep(sleep)
     return no_match_list
 
 
@@ -80,10 +89,11 @@ def _sparql(q_ids, sleep=2):
         PREFIX  wdt:  <http://www.wikidata.org/prop/direct/>
         PREFIX  wikibase: <http://wikiba.se/ontology#>
         
-        SELECT DISTINCT  ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLabel ?locationOfFormationLabel 
+        SELECT DISTINCT  ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLabel 
+        ?locationOfFormationLabel ?inceptionLabel
         WHERE
           { ?article  schema:about       ?item ;
-            FILTER ( ?item = <http://www.wikidata.org/entity/""" + q + """> )
+            FILTER ( ?item = <http://www.wikidata.org/entity/Q849418> )
             OPTIONAL
               { ?item  wdt:P159  ?headquarters }
             OPTIONAL
@@ -96,32 +106,33 @@ def _sparql(q_ids, sleep=2):
               { bd:serviceParam wikibase:language  "en, ch"
               }
           }
-        GROUP BY ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLabel ?locationOfFormationLabel 
+        GROUP BY ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLabel ?locationOfFormationLabel  ?inceptionLabel
         """
         sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
 
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
-        print(results)
+        # print(results)
 
-        # if results['results']['bindings']:
-        #     if "date_of_birth" in results['results']['bindings'][0]:
-        #         birthyear = results['results']['bindings'][0]['date_of_birth']['value'][0:4]
-        #         # print("birthyear: ", birthyear)
-        #         person_wiki_dict["birthyear"] = birthyear
-        #     if "date_of_death" in results['results']['bindings'][0]:
-        #         deathyear = results['results']['bindings'][0]['date_of_death']['value'][0:4]
-        #         # print("deathyear: ", deathyear)
-        #         person_wiki_dict["deathyear"] = deathyear
-        #     if "gender" in results['results']['bindings'][0]:
-        #         gender = results['results']['bindings'][0]['gender']['value']
-        #         if gender == "http://www.wikidata.org/entity/Q6581097":
-        #             gender = "male"
-        #         if gender == "http://www.wikidata.org/entity/Q6581072":
-        #             gender = "female"
-        #         # print("gender: ", gender)
-        #         person_wiki_dict["gender"] = gender
+        person_wiki_dict["headquarters"],person_wiki_dict["administrativeTerritorialEntity"], person_wiki_dict[
+            "locationOfFormation"],person_wiki_dict["inception"]  = [], [], [], []
+        if results['results']['bindings']:
+            bindings = results['results']['bindings']
+            for b in bindings:
+                if "headquartersLabel" in b:
+                    headquarters = b['headquartersLabel']['value']
+                    person_wiki_dict["headquarters"].append(headquarters)
+                if "administrativeTerritorialEntityLabel" in b:
+                    administrativeTerritorialEntity = b['administrativeTerritorialEntityLabel']['value']
+                    person_wiki_dict["administrativeTerritorialEntity"].append(administrativeTerritorialEntity)
+                if "locationOfFormationLabel" in b:
+                    locationOfFormation = b['locationOfFormationLabel']['value']
+                    person_wiki_dict["locationOfFormation"].append(locationOfFormation)
+                if "inceptionLabel" in b:
+                    inception = b['inceptionLabel']['value']
+                    person_wiki_dict["inception"].append(inception)
+        # print("person_wiki_dict: ", person_wiki_dict)
         return person_wiki_dict
 
 
@@ -146,9 +157,10 @@ if __name__ == "__main__":
     inst_dict = read_institution_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
                                        "/Institution.csv")
     # print(inst_dict)
-
     no_match_list = compare(inst_dict, 5)
+    print("no_match_list: ", no_match_list)
     print("-------length of the no_match_list", len(no_match_list))
+
 
 
 
