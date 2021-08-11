@@ -23,7 +23,33 @@ SERVICE wikibase:label
 }}
 """
 
-
+QUERY1 = """
+        PREFIX  schema: <http://schema.org/>
+        PREFIX  bd:   <http://www.bigdata.com/rdf#>
+        PREFIX  wdt:  <http://www.wikidata.org/prop/direct/>
+        PREFIX  wikibase: <http://wikiba.se/ontology#>
+        
+        SELECT DISTINCT  ?item ?itemLabel (SAMPLE(?date_of_birth) AS ?date_of_birth) (SAMPLE(?date_of_death) AS 
+        ?date_of_death) 
+        (SAMPLE(?gender) AS ?gender) 
+        WHERE
+          { ?article  schema:about       ?item ;
+                      schema:inLanguage  "en" ;
+                      schema:isPartOf    <https://en.wikipedia.org/>
+            FILTER ( ?item = <http://www.wikidata.org/entity/"""
+QUERY2 = """> )
+            OPTIONAL
+              { ?item  wdt:P569  ?date_of_birth }
+            OPTIONAL
+              { ?item  wdt:P570  ?date_of_death }
+            OPTIONAL
+              { ?item  wdt:P21  ?gender }
+            SERVICE wikibase:label
+              { bd:serviceParam wikibase:language  "[AUTO_LANGUAGE],en"
+              }
+          }
+        GROUP BY ?item ?itemLabel 
+        """
 def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
     """
     A function to read "Person.csv".
@@ -57,93 +83,65 @@ def compare(person_dict, sleep=2):
             else:
                 name = v[0] + v[1]
         q_ids = _get_q_ids(name, k[1])
-        print("---", v, q_ids)
+        print("-----------\n", v, q_ids)
         if q_ids is None:
             no_match_list.append((k, v))
+            print("A match: ", k, v)
             continue
         person_wiki_dict = _sparql(q_ids, sleep)
         if not person_wiki_dict:
             no_match_list.append((k, v))
+            print("A match: ", k, v)
             continue
         if 'gender' in person_wiki_dict:
             if person_wiki_dict['gender'] != v[2]:
                 no_match_list.append((k, v))
+                print("A match: ", k, v)
                 continue
         if 'birthyear' in person_wiki_dict:
             if person_wiki_dict['birthyear'] != v[3]:
                 no_match_list.append((k, v))
+                print("A match: ", k, v)
                 continue
         if 'deathyear' in person_wiki_dict:
             if person_wiki_dict['deathyear'] != v[4]:
                 no_match_list.append((k, v))
+                print("A match: ", k, v)
                 continue
-        time.sleep(sleep)
     return no_match_list
 
 
 def _sparql(q_ids, sleep=2):
     if len(q_ids) == 0:
         return []
-    person_wiki_dict = {}
-    for index, q in enumerate(q_ids):
-        query = """
-        PREFIX  schema: <http://schema.org/>
-        PREFIX  bd:   <http://www.bigdata.com/rdf#>
-        PREFIX  wdt:  <http://www.wikidata.org/prop/direct/>
-        PREFIX  wikibase: <http://wikiba.se/ontology#>
-        
-        SELECT DISTINCT  ?item ?itemLabel (SAMPLE(?date_of_birth) AS ?date_of_birth) (SAMPLE(?date_of_death) AS 
-        ?date_of_death) 
-        (SAMPLE(?gender) AS ?gender) 
-        WHERE
-          { ?article  schema:about       ?item ;
-                      schema:inLanguage  "en" ;
-                      schema:isPartOf    <https://en.wikipedia.org/>
-            FILTER ( ?item = <http://www.wikidata.org/entity/""" + q + """> )
-            OPTIONAL
-              { ?item  wdt:P569  ?date_of_birth }
-            OPTIONAL
-              { ?item  wdt:P570  ?date_of_death }
-            OPTIONAL
-              { ?item  wdt:P21  ?gender }
-            SERVICE wikibase:label
-              { bd:serviceParam wikibase:language  "[AUTO_LANGUAGE],en"
-              }
-          }
-        GROUP BY ?item ?itemLabel 
-        """
-        sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+    person_wiki = {}
 
-        sparql.setQuery(query)
-
-        sparql.setReturnFormat(JSON)
-        results = sparql.query().convert()
-        # print(results)
-        if results['results']['bindings']:
-            if "date_of_birth" in results['results']['bindings'][0]:
-                birthyear = results['results']['bindings'][0]['date_of_birth']['value'][0:4]
-                # print("birthyear: ", birthyear)
-                person_wiki_dict["birthyear"] = birthyear
-            if "date_of_death" in results['results']['bindings'][0]:
-                deathyear = results['results']['bindings'][0]['date_of_death']['value'][0:4]
-                # print("deathyear: ", deathyear)
-                person_wiki_dict["deathyear"] = deathyear
-            if "gender" in results['results']['bindings'][0]:
-                gender = results['results']['bindings'][0]['gender']['value']
-                if gender == "http://www.wikidata.org/entity/Q6581097":
-                    gender = "male"
-                if gender == "http://www.wikidata.org/entity/Q6581072":
-                    gender = "female"
-                # print("gender: ", gender)
-                person_wiki_dict["gender"] = gender
-        return person_wiki_dict
+    with requests.Session() as s:
+        for q in q_ids:
+            response = s.get(URL, params={"format": "json", "query": QUERY1 + q + QUERY2})
+            if response.status_code == 200:  # a successful response
+                results = response.json().get("results", {}).get("bindings")
+                if results:
+                    for r in results:
+                        if "date_of_birth" in r:
+                            person_wiki["birthyear"] = r['date_of_birth']['value'][0:4]
+                        if "date_of_death" in r:
+                            person_wiki["deathyear"] = r['date_of_death']['value'][0:4]
+                        if "gender" in r:
+                            if r['gender']['value'] == "http://www.wikidata.org/entity/Q6581097":
+                                gender = "male"
+                            elif r['gender']['value'] == "http://www.wikidata.org/entity/Q6581072":
+                                gender = "female"
+                            person_wiki["gender"] = gender
+            time.sleep(sleep)
+    return person_wiki
 
 
 def _get_q_ids(lookup, lang):
     """
     A function to search qnames in wikidata with a lookup string.
     :param lookup: a string
-    :return: a list of string(s)
+    :return: a list of string(s) (first 10 if more than 10)
     """
     q_ids = []
     with requests.Session() as s:
@@ -153,20 +151,21 @@ def _get_q_ids(lookup, lang):
             if results:
                 for person in results:
                     q_ids.append(person['person']['value'][31:])
-        return q_ids
+        return q_ids[0:10]
 
 if __name__ == "__main__":
-    # person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    # # print(person_dict)
-    #
-    # no_match_list = compare(person_dict, 20)
-    # print("-------length of the no_match_list", len(no_match_list))
-    #
+    person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    # print(person_dict)
 
-    sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
-    no_match_list_for_sample = compare(sample_dict, 20)
-    print(no_match_list_for_sample)
-    print("-------length of the no_match_list", len(no_match_list_for_sample))
+    no_match_list = compare(person_dict, 20)
+    print(no_match_list)
+    print("-------length of the no_match_list", len(no_match_list))
+
+
+    # sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
+    # no_match_list_for_sample = compare(sample_dict, 20)
+    # print(no_match_list_for_sample)
+    # print("-------length of the no_match_list", len(no_match_list_for_sample))
 
 
 
