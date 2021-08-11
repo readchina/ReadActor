@@ -49,20 +49,15 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
 def compare(person_dict, sleep=2):
     no_match_list = []
     for k, v in person_dict.items():
-        # print("key: ", k)
-        # print("value: ", v)
         if isinstance(v[1], float):
             name = v[0]
         else:
             if k[1] != "zh":
-                # print(type(v[0]))
-                # print(type(v[1]))
                 name = v[0] + " " + v[1]
             else:
                 name = v[0] + v[1]
-        # print("name: ", name)
         q_ids = _get_q_ids(name, k[1])
-        print(k[0], q_ids)
+        print("---", v, q_ids)
         if q_ids is None:
             no_match_list.append((k, v))
             continue
@@ -170,6 +165,7 @@ if __name__ == "__main__":
 
     sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
     no_match_list_for_sample = compare(sample_dict, 20)
+    print(no_match_list_for_sample)
     print("-------length of the no_match_list", len(no_match_list_for_sample))
 
 
