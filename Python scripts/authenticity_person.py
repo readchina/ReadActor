@@ -8,9 +8,7 @@ Main idea:
 """
 import pandas as pd
 import requests
-from SPARQLWrapper import SPARQLWrapper, JSON
 import time
-from wikibaseintegrator import wbi_core
 
 URL  = "https://query.wikidata.org/sparql"
 QUERY_PERSON_NAME = """
@@ -50,6 +48,8 @@ QUERY2 = """> )
           }
         GROUP BY ?item ?itemLabel 
         """
+
+
 def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
     """
     A function to read "Person.csv".
@@ -66,7 +66,6 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
             # key: string:  (person_id, name_lang)
             # value: list: [family_name,first_name,sex,birthyear,deathyear]
             person_dict[key] = [row[1], row[2], row[4], row[6], row[7]]
-            # print("person_dict", person_dict)
         else:
             print("Probably something wrong")
     return person_dict
