@@ -7,9 +7,21 @@ Main idea:
 - Compare wikidata item properties with data in ReadAct
 """
 import pandas as pd
+import requests
 from SPARQLWrapper import SPARQLWrapper, JSON
 import time
 from wikibaseintegrator import wbi_core
+
+URL  = "https://query.wikidata.org/sparql"
+QUERY_PERSON_NAME = """
+SELECT ?person ?personLabel
+WHERE {{
+  ?person wdt:P31 wd:Q5 ;
+          rdfs:label "{}"@{} .
+SERVICE wikibase:label
+        {{ bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }}
+}}
+"""
 
 
 def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
@@ -49,7 +61,8 @@ def compare(person_dict, sleep=2):
             else:
                 name = v[0] + v[1]
         # print("name: ", name)
-        q_ids = _get_q_ids(name)
+        q_ids = _get_q_ids(name, k[1])
+        print(k[0], q_ids)
         if q_ids is None:
             no_match_list.append((k, v))
             continue
@@ -74,7 +87,7 @@ def compare(person_dict, sleep=2):
 
 
 def _sparql(q_ids, sleep=2):
-    if q_ids is None:
+    if len(q_ids) == 0:
         return []
     person_wiki_dict = {}
     for index, q in enumerate(q_ids):
@@ -131,36 +144,34 @@ def _sparql(q_ids, sleep=2):
         return person_wiki_dict
 
 
-def _get_q_ids(lookup=None):
+def _get_q_ids(lookup, lang):
     """
     A function to search qnames in wikidata with a lookup string.
     :param lookup: a string
-    :return: a list of item identifiers (first 10)
+    :return: a list of string(s)
     """
-    e = wbi_core.FunctionsEngine()
-    instance = e.get_search_results(search_string=lookup,
-                                    search_type='item')
-
-    if len(instance) > 0:
-        return instance[0:1]
-    else:
-        print("Lookup '", lookup, "' not in Wikidata. Didn't find Q-ids.")
-        return None
-
+    q_ids = []
+    with requests.Session() as s:
+        response = s.get(URL, params={"format": "json", "query": QUERY_PERSON_NAME.format(lookup, lang)})
+        if response.status_code == 200:  # a successful response
+            results = response.json().get("results", {}).get("bindings")
+            if results:
+                for person in results:
+                    q_ids.append(person['person']['value'][31:])
+        return q_ids
 
 if __name__ == "__main__":
-    person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    # print(person_dict)
+    # person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    # # print(person_dict)
+    #
+    # no_match_list = compare(person_dict, 20)
+    # print("-------length of the no_match_list", len(no_match_list))
+    #
 
-    no_match_list = compare(person_dict, 20)
-    print("-------length of the no_match_list", len(no_match_list))
+    sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
+    no_match_list_for_sample = compare(sample_dict, 20)
+    print("-------length of the no_match_list", len(no_match_list_for_sample))
 
-    # sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
-    # print("sample_dict: ", sample_dict)
-    # q_ids = compare(sample_dict, 2)
-    # # print(q_ids)
-    # # q_ids = ['Q701031','Q45581047']
-    # _sparql(q_ids,seep=3)
 
 
 
