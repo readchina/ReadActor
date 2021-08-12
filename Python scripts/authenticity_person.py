@@ -156,7 +156,7 @@ if __name__ == "__main__":
     person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
     # print(person_dict)
 
-    no_match_list = compare(person_dict, 20)
+    no_match_list = compare(person_dict, 2)
     print(no_match_list)
     print("-------length of the no_match_list", len(no_match_list))
 
