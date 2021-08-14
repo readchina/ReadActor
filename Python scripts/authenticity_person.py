@@ -13,7 +13,7 @@ import time
 URL  = "https://query.wikidata.org/sparql"
 
 QUERY = """
-SELECT ?person ?personLabel ?birthLabel ?deathLabel ?genderLabel (GROUP_CONCAT(DISTINCT ?altLabel; separator = ", ")  AS ?altLabel_list)
+SELECT ?person ?personLabel ?birthLabel ?deathLabel ?genderLabel 
 WHERE {{ 
 {{?person wdt:P31 wd:Q5 ;
         rdfs:label "{}"@{} . }} UNION {{?person wdt:P31 wd:Q5 ;
