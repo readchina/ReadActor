@@ -11,43 +11,23 @@ import requests
 import time
 
 URL  = "https://query.wikidata.org/sparql"
-QUERY_PERSON_NAME = """
-SELECT ?person ?personLabel
-WHERE {{
-  ?person wdt:P31 wd:Q5 ;
-          rdfs:label "{}"@{} .
-SERVICE wikibase:label
-        {{ bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }}
-}}
-"""
 
-QUERY1 = """
-        PREFIX  schema: <http://schema.org/>
-        PREFIX  bd:   <http://www.bigdata.com/rdf#>
-        PREFIX  wdt:  <http://www.wikidata.org/prop/direct/>
-        PREFIX  wikibase: <http://wikiba.se/ontology#>
-        
-        SELECT DISTINCT  ?item ?itemLabel (SAMPLE(?date_of_birth) AS ?date_of_birth) (SAMPLE(?date_of_death) AS 
-        ?date_of_death) 
-        (SAMPLE(?gender) AS ?gender) 
-        WHERE
-          { ?article  schema:about       ?item ;
-                      schema:inLanguage  "en" ;
-                      schema:isPartOf    <https://en.wikipedia.org/>
-            FILTER ( ?item = <http://www.wikidata.org/entity/"""
-QUERY2 = """> )
-            OPTIONAL
-              { ?item  wdt:P569  ?date_of_birth }
-            OPTIONAL
-              { ?item  wdt:P570  ?date_of_death }
-            OPTIONAL
-              { ?item  wdt:P21  ?gender }
-            SERVICE wikibase:label
-              { bd:serviceParam wikibase:language  "[AUTO_LANGUAGE],en"
-              }
-          }
-        GROUP BY ?item ?itemLabel 
-        """
+QUERY = """
+SELECT ?person ?personLabel ?birthLabel ?deathLabel ?genderLabel (GROUP_CONCAT(DISTINCT ?altLabel; separator = ", ")  AS ?altLabel_list)
+WHERE {{ 
+{{?person wdt:P31 wd:Q5 ;
+        rdfs:label "{}"@{} . }} UNION {{?person wdt:P31 wd:Q5 ;
+        skos:altLabel "{}"@{} . }}
+OPTIONAL {{ ?person  wdt:P569  ?birth . }}
+OPTIONAL {{ ?person  wdt:P570  ?death . }}
+OPTIONAL {{ ?person  wdt:P21  ?gender . }}
+OPTIONAL {{ ?person skos:altLabel ?altLabel . }}
+OPTIONAL {{ ?person skos:altLabel ?altLabel . }}
+SERVICE wikibase:label {{ bd:serviceParam wikibase:language  "[AUTO_LANGUAGE], en"}}
+}}
+GROUP BY ?person ?personLabel ?birthLabel ?deathLabel ?genderLabel
+LIMIT 250
+"""
 
 
 def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
@@ -142,23 +122,26 @@ def _get_q_ids(lookup, lang):
     :param lookup: a string
     :return: a list of string(s) (first 10 if more than 10)
     """
-    q_ids = []
+    # print(QUERY.format(lookup, lang, lookup, lang))
+    person = []
     with requests.Session() as s:
-        response = s.get(URL, params={"format": "json", "query": QUERY_PERSON_NAME.format(lookup, lang)})
+        response = s.get(URL, params={"format": "json", "query": QUERY.format(lookup, lang, lookup, lang)})
         if response.status_code == 200:  # a successful response
             results = response.json().get("results", {}).get("bindings")
-            if results:
-                for person in results:
-                    q_ids.append(person['person']['value'][31:])
-        return q_ids[0:10]
+            if len(results) == 0:
+                print("-----Didn't find:", lookup)
+            else:
+                for p in results:
+                    person.append(p)
+    return person
 
 if __name__ == "__main__":
     person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
     # print(person_dict)
 
-    no_match_list = compare(person_dict, 2)
-    print(no_match_list)
-    print("-------length of the no_match_list", len(no_match_list))
+    # no_match_list = compare(person_dict, 2)
+    # print(no_match_list)
+    # print("-------length of the no_match_list", len(no_match_list))
 
 
     # sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
@@ -167,6 +150,7 @@ if __name__ == "__main__":
     # print("-------length of the no_match_list", len(no_match_list_for_sample))
 
 
-
+    person = _get_q_ids("鲁迅", "zh")
+    print(person)
 
 
