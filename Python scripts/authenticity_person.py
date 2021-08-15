@@ -13,19 +13,20 @@ import time
 URL  = "https://query.wikidata.org/sparql"
 
 QUERY = """
-SELECT ?person ?personLabel ?birthLabel ?deathLabel ?genderLabel 
+SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
 WHERE {{ 
 {{?person wdt:P31 wd:Q5 ;
         rdfs:label "{}"@{} . }} UNION {{?person wdt:P31 wd:Q5 ;
         skos:altLabel "{}"@{} . }}
-OPTIONAL {{ ?person  wdt:P569  ?birth . }}
-OPTIONAL {{ ?person  wdt:P570  ?death . }}
+OPTIONAL {{ ?person  wdt:P569  ?birth . BIND(year(?birth) as ?ybirth) }}
+OPTIONAL {{ ?person  wdt:P570  ?death . BIND(year(?death) as ?ydeath) }}
+OPTIONAL {{ ?person wdt:P19  ?birthplace . }}
 OPTIONAL {{ ?person  wdt:P21  ?gender . }}
 OPTIONAL {{ ?person skos:altLabel ?altLabel . }}
-OPTIONAL {{ ?person skos:altLabel ?altLabel . }}
+
 SERVICE wikibase:label {{ bd:serviceParam wikibase:language  "[AUTO_LANGUAGE], en"}}
 }}
-GROUP BY ?person ?personLabel ?birthLabel ?deathLabel ?genderLabel
+GROUP BY ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
 LIMIT 250
 """
 
@@ -41,11 +42,10 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     print(df)
     person_dict = {}
     for index, row in df.iterrows():
-        key = (row[0], row[3])
+        key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
-            # key: string:  (person_id, name_lang)
-            # value: list: [family_name,first_name,sex,birthyear,deathyear]
-            person_dict[key] = [row[1], row[2], row[4], row[6], row[7]]
+            person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
+                                row['deathyear'], row['alt_name'], row['place_of_birth']]
         else:
             print("Probably something wrong")
     return person_dict
@@ -54,75 +54,43 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
 def compare(person_dict, sleep=2):
     no_match_list = []
     for k, v in person_dict.items():
+        lang = k[1]
         if isinstance(v[1], float):
-            name = v[0]
+            lookup = v[0]
         else:
-            if k[1] != "zh":
-                name = v[0] + " " + v[1]
-            else:
-                name = v[0] + v[1]
-        q_ids = _get_q_ids(name, k[1])
-        print("-----------\n", v, q_ids)
-        if q_ids is None:
+            if lang == "en":
+                lookup = v[0] + " " + v[1]
+            elif lang == "zh":
+                lookup = v[0] + v[1]
+
+        person = _sparql(lookup, lang, sleep)
+        if len(person) == 0:
+            print("No match: ", k, v)
             no_match_list.append((k, v))
-            print("A match: ", k, v)
             continue
-        person_wiki_dict = _sparql(q_ids, sleep)
-        if not person_wiki_dict:
-            no_match_list.append((k, v))
-            print("A match: ", k, v)
-            continue
-        if 'gender' in person_wiki_dict:
-            if person_wiki_dict['gender'] != v[2]:
-                no_match_list.append((k, v))
-                print("A match: ", k, v)
-                continue
-        if 'birthyear' in person_wiki_dict:
-            if person_wiki_dict['birthyear'] != v[3]:
-                no_match_list.append((k, v))
-                print("A match: ", k, v)
-                continue
-        if 'deathyear' in person_wiki_dict:
-            if person_wiki_dict['deathyear'] != v[4]:
-                no_match_list.append((k, v))
-                print("A match: ", k, v)
-                continue
+        else:
+            for p in person:
+                if 'birthyear' in p:
+                    if p['birthyear'] == v[3]:
+                        print("---A match: ", k, v)
+                        continue
+                elif 'deathyear' in p:
+                    if p['deathyear'] == v[4]:
+                        print("---A match: ", k, v)
+                        continue
+                elif 'gender' in p:
+                    if p['gender'] == v[2]:
+                        print("---A match: ", k, v)
+                        continue
+                else:
+                    no_match_list.append((k, v))
+                    print("No match: ", k, v)
     return no_match_list
 
 
-def _sparql(q_ids, sleep=2):
-    if len(q_ids) == 0:
-        return []
-    person_wiki = {}
-
-    with requests.Session() as s:
-        for q in q_ids:
-            response = s.get(URL, params={"format": "json", "query": QUERY1 + q + QUERY2})
-            if response.status_code == 200:  # a successful response
-                results = response.json().get("results", {}).get("bindings")
-                if results:
-                    for r in results:
-                        if "date_of_birth" in r:
-                            person_wiki["birthyear"] = r['date_of_birth']['value'][0:4]
-                        if "date_of_death" in r:
-                            person_wiki["deathyear"] = r['date_of_death']['value'][0:4]
-                        if "gender" in r:
-                            if r['gender']['value'] == "http://www.wikidata.org/entity/Q6581097":
-                                gender = "male"
-                            elif r['gender']['value'] == "http://www.wikidata.org/entity/Q6581072":
-                                gender = "female"
-                            person_wiki["gender"] = gender
-            time.sleep(sleep)
-    return person_wiki
-
-
-def _get_q_ids(lookup, lang):
-    """
-    A function to search qnames in wikidata with a lookup string.
-    :param lookup: a string
-    :return: a list of string(s) (first 10 if more than 10)
-    """
-    # print(QUERY.format(lookup, lang, lookup, lang))
+def _sparql(lookup, lang, sleep=2):
+    if len(lookup) == 0:
+        return None
     person = []
     with requests.Session() as s:
         response = s.get(URL, params={"format": "json", "query": QUERY.format(lookup, lang, lookup, lang)})
@@ -131,26 +99,37 @@ def _get_q_ids(lookup, lang):
             if len(results) == 0:
                 print("-----Didn't find:", lookup)
             else:
-                for p in results:
-                    person.append(p)
+                # print(results)
+                for r in results:
+                    person_wiki = {}
+                    if "ybirth" in r:
+                        person_wiki["birthyear"] = r['ybirth']['value']
+                    if "ydeath" in r:
+                        person_wiki["deathyear"] = r['ydeath']['value']
+                    if "genderLabel" in r:
+                        person_wiki["gender"] = r['genderLabel']['value']
+                    if "birthplaceLabel" in r:
+                        person_wiki['birthplace'] = r['birthplaceLabel']['value']
+                    person.append(person_wiki)
+        time.sleep(sleep)
     return person
+
 
 if __name__ == "__main__":
     person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    # print(person_dict)
 
-    # no_match_list = compare(person_dict, 2)
-    # print(no_match_list)
-    # print("-------length of the no_match_list", len(no_match_list))
+    print(person_dict)
+
+    sample_dict = {('AG0623', 'en'): ['Chen', 'Yiyang', 'male', '1947', 'XXXX', 'Nah', 'SP0073'], ('AG0623','zh'): ['陈', '一阳', 'male', '1947', 'XXXX', 'NaN', 'SP0073'], ('AG0624', 'en'): ['Wang', 'Xizhe', 'male', '1948', 'XXXX', 'NaN', 'SP0009'], ('AG0624', 'zh'): ['王', '希哲', 'male', '1948', 'XXXX', 'NaN', 'SP0009'], ('AG0625', 'en'): ['Guo', 'Hongzhi', 'male', '1929', '1998', 'NaN', 'SP0433'], ('AG0625', 'zh'): ['郭', '鸿志', 'male', '1929', '1998', 'NaN', 'SP0433'], ('AG0626', 'en'): ['anonymous', 'NaN', 'unknown', 'XXXX', 'XXXX', 'NaN', 'SP0436'], ('AG0626', 'zh'): ['无名', 'NaN', 'unknown', 'XXXX', 'XXXX', 'NaN', 'SP0436'], ('AG1000', 'en'): ['Room', 'Adrian', 'male', '1933', '2010', 'NaN', 'SP1001']}
+
+    no_match_list = compare(person_dict, 2)
+    print(no_match_list)
+    print("-------length of the no_match_list", len(no_match_list))
+
+    # person = _sparql("Lu Xun", 'en')
+    # print(person)
 
 
-    # sample_dict = {('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935']}
-    # no_match_list_for_sample = compare(sample_dict, 20)
-    # print(no_match_list_for_sample)
-    # print("-------length of the no_match_list", len(no_match_list_for_sample))
 
-
-    person = _get_q_ids("鲁迅", "zh")
-    print(person)
 
 
