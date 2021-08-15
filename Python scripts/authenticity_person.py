@@ -9,6 +9,7 @@ Main idea:
 import pandas as pd
 import requests
 import time
+from authenticity_space import read_space_csv
 
 URL  = "https://query.wikidata.org/sparql"
 
@@ -41,11 +42,17 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     df = pd.read_csv(person_url, error_bad_lines=False)
     print(df)
     person_dict = {}
+    place_dict = read_space_csv()
     for index, row in df.iterrows():
         key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
-            person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
-                                row['deathyear'], row['alt_name'], row['place_of_birth']]
+            if row['person_dict'] in place_dict:
+                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
+                                    row['deathyear'], row['alt_name'], place_dict[str(row['place_of_birth'])][0]]
+            else:
+                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
+                                    row['deathyear'], row['alt_name'], row['place_of_birth']]
+                print("Please check. A space_id is not in Space.csv.")
         else:
             print("Probably something wrong")
     return person_dict
