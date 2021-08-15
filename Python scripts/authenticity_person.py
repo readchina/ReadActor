@@ -46,9 +46,9 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     for index, row in df.iterrows():
         key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
-            if row['person_dict'] in place_dict:
+            if row['place_of_birth'] in place_dict:
                 person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
-                                    row['deathyear'], row['alt_name'], place_dict[str(row['place_of_birth'])][0]]
+                                          row['deathyear'], row['alt_name'], place_dict[str(row['place_of_birth'])][0]]
             else:
                 person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
                                     row['deathyear'], row['alt_name'], row['place_of_birth']]
@@ -89,6 +89,10 @@ def compare(person_dict, sleep=2):
                     if p['gender'] == v[2]:
                         print("---A match: ", k, v)
                         continue
+                elif 'birthplace' in p:
+                    if p['birthplace'] == v[6]:
+                        print("---A match: ", k, v)
+                        continue
                 else:
                     no_match_list.append((k, v))
                     print("No match: ", k, v)
@@ -127,10 +131,10 @@ if __name__ == "__main__":
 
     print(person_dict)
 
-    sample_dict = {('AG0623', 'en'): ['Chen', 'Yiyang', 'male', '1947', 'XXXX', 'Nah', 'SP0073'], ('AG0623','zh'): ['陈', '一阳', 'male', '1947', 'XXXX', 'NaN', 'SP0073'], ('AG0624', 'en'): ['Wang', 'Xizhe', 'male', '1948', 'XXXX', 'NaN', 'SP0009'], ('AG0624', 'zh'): ['王', '希哲', 'male', '1948', 'XXXX', 'NaN', 'SP0009'], ('AG0625', 'en'): ['Guo', 'Hongzhi', 'male', '1929', '1998', 'NaN', 'SP0433'], ('AG0625', 'zh'): ['郭', '鸿志', 'male', '1929', '1998', 'NaN', 'SP0433'], ('AG0626', 'en'): ['anonymous', 'NaN', 'unknown', 'XXXX', 'XXXX', 'NaN', 'SP0436'], ('AG0626', 'zh'): ['无名', 'NaN', 'unknown', 'XXXX', 'XXXX', 'NaN', 'SP0436'], ('AG1000', 'en'): ['Room', 'Adrian', 'male', '1933', '2010', 'NaN', 'SP1001']}
+    sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'], ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
 
-    no_match_list = compare(person_dict, 2)
-    print(no_match_list)
+    no_match_list = compare(sample_dict, 2)
+    print("no_match_list", no_match_list)
     print("-------length of the no_match_list", len(no_match_list))
 
     # person = _sparql("Lu Xun", 'en')
