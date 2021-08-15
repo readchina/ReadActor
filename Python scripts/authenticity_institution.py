@@ -43,18 +43,29 @@ GROUP BY ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLab
 ?locationOfFormationLabel  ?inceptionLabel 
 """
 
-QUERY_QID = """
-SELECT ?person ?personLabel ?genderLabel ?birthLabel ?deathLabel WHERE {
-  {
-    ?person wdt:P31 wd:Q5;
-            rdfs:label "{}"@en .
-    optional { ?person wdt:P21 ?gender }
-    optional { ?person wdt:P569 ?birth }
-    optional { ?person wdt:P570  ?death }
+# Plan to use only one SPARQL query for institutions.
+# Not finished yet.
+QUERY = """
+SELECT DISTINCT  ?inst ?instLabel ?headquartersLabel ?administrativeTerritorialEntityLabel 
+?locationOfFormationLabel ?inceptionLabel
+WHERE
+  {{
+    ?item wdt:P31 wd:Q2085381 ;
+          rdfs:label "新华书店"@zh .
+    OPTIONAL
+      { ?inst  wdt:P159  ?headquarters }
+    OPTIONAL
+      { ?inst  wdt:P131  ?administrativeTerritorialEntity }
+    OPTIONAL
+      { ?inst wdt:P740   ?locationOfFormation }
+    OPTIONAL
+      { ?inst wdt:P571  ?inception }
     SERVICE wikibase:label
-        { bd:serviceParam wikibase:language "[AUTO_LANGUAGE]". }
-}
-}
+      { bd:serviceParam wikibase:language  "[AUTO_LANGUAGE], en" }
+  }}
+GROUP BY ?inst ?instLabel ?headquartersLabel ?administrativeTerritorialEntityLabel 
+?locationOfFormationLabel  ?inceptionLabel 
+LIMIT 150
 """
 
 def read_institution_csv(inst_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
