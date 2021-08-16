@@ -47,12 +47,27 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     for index, row in df.iterrows():
         key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
+
+            # bithyear and deathyear are lists of possible years
+            birthyear,  deathyear = [], []
+            birthyear.append(row['birthyear'])
+            deathyear.append(row['deathyear'])
+
+            # For BCE year
+            if row['birthyear'] < 0:
+                b = abs(row['birthyear'])
+                birthyear.extend([str(b), str(b+1), str(b-1)])
+            if row['deathyear'] < 0:
+                d = abs(row['deathyear'])
+                deathyear.extend([str(d), str(d+1), str(d-1)])
+
+            # Replace space_id with the name of space
             if row['place_of_birth'] in place_dict:
-                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
-                                          row['deathyear'], row['alt_name'], place_dict[str(row['place_of_birth'])][0]]
+                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'],
+                                    place_dict[str(row['place_of_birth'])][0]]
+
             else:
-                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], row['birthyear'],
-                                    row['deathyear'], row['alt_name'], row['place_of_birth']]
+                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'], row['place_of_birth']]
                 print("Please check. A space_id is not in Space.csv.")
         else:
             print("Probably something wrong")
@@ -76,10 +91,10 @@ def compare(person_dict, sleep=2):
         if isinstance(v[5], str):
             # print("++++++++++alt_name: ", v[5])
             # print("language type: ", detect(v[5]))
+            # print("language type: ", lang)
             # print("will append")
             # print("~~~~~~~~person before appending: ", person)
-
-            # Here the detect(v[5]) must be modified for accuracy reason
+            # Here the "lang" might need to be modified
             for p in _sparql(v[5], lang, sleep):
                 person.append(p)
             # print("~~~~~~person after appending: ", person)
@@ -91,13 +106,15 @@ def compare(person_dict, sleep=2):
         else:
             for p in person:
                 if 'birthyear' in p:
-                    if p['birthyear'] == v[3]:
-                        print("---A match: ", k, v)
-                        continue
+                    for b in p['birthyear']:
+                        if b == v[3]:
+                            print("---A match: ", k, v)
+                            continue
                 elif 'deathyear' in p:
-                    if p['deathyear'] == v[4]:
-                        print("---A match: ", k, v)
-                        continue
+                    for d in p['deathyear']:
+                        if d == v[4]:
+                            print("---A match: ", k, v)
+                            continue
                 elif 'gender' in p:
                     if p['gender'] == v[2]:
                         print("---A match: ", k, v)
