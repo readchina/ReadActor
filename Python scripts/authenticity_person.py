@@ -80,7 +80,8 @@ def compare(person_dict, sleep=2):
             # print("~~~~~~~~person before appending: ", person)
 
             # Here the detect(v[5]) must be modified for accuracy reason
-            person.append(_sparql(v[5], detect(v[5]), sleep))
+            for p in _sparql(v[5], lang, sleep):
+                person.append(p)
             # print("~~~~~~person after appending: ", person)
 
         if len(person) == 0:
@@ -150,9 +151,9 @@ if __name__ == "__main__":
 
     # sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'], ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
     #
-    # no_match_list = compare(sample_dict, 2)
-    # print("no_match_list", no_match_list)
-    # print("-------length of the no_match_list", len(no_match_list))
+    no_match_list = compare(person_dict, 2)
+    print("no_match_list", no_match_list)
+    print("-------length of the no_match_list", len(no_match_list))
 
 
 
