@@ -15,22 +15,22 @@ from langdetect import detect
 URL  = "https://query.wikidata.org/sparql"
 
 QUERY = """
-SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
-WHERE {{ 
-{{?person wdt:P31 wd:Q5 ;
-        rdfs:label "{}"@{} . }} UNION {{?person wdt:P31 wd:Q5 ;
-        skos:altLabel "{}"@{} . }}
-OPTIONAL {{ ?person  wdt:P569  ?birth . BIND(year(?birth) as ?ybirth) }}
-OPTIONAL {{ ?person  wdt:P570  ?death . BIND(year(?death) as ?ydeath) }}
-OPTIONAL {{ ?person wdt:P19  ?birthplace . }}
-OPTIONAL {{ ?person  wdt:P21  ?gender . }}
-OPTIONAL {{ ?person skos:altLabel ?altLabel . }}
-
-SERVICE wikibase:label {{ bd:serviceParam wikibase:language  "[AUTO_LANGUAGE], en"}}
-}}
-GROUP BY ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
-LIMIT 250
-"""
+        SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
+        WHERE {{ 
+        {{?person wdt:P31 wd:Q5 ;
+                rdfs:label "{}"@{} . }} UNION {{?person wdt:P31 wd:Q5 ;
+                skos:altLabel "{}"@{} . }}
+        OPTIONAL {{ ?person  wdt:P569  ?birth . BIND(year(?birth) as ?ybirth) }}
+        OPTIONAL {{ ?person  wdt:P570  ?death . BIND(year(?death) as ?ydeath) }}
+        OPTIONAL {{ ?person wdt:P19  ?birthplace . }}
+        OPTIONAL {{ ?person  wdt:P21  ?gender . }}
+        OPTIONAL {{ ?person skos:altLabel ?altLabel . }}
+        
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language  "[AUTO_LANGUAGE], en"}}
+        }}
+        GROUP BY ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
+        LIMIT 250
+        """
 
 
 def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
@@ -65,7 +65,6 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
             if row['place_of_birth'] in place_dict:
                 person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'],
                                     place_dict[str(row['place_of_birth'])][0]]
-
             else:
                 person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'], row['place_of_birth']]
                 print("Please check. A space_id is not in Space.csv.")
