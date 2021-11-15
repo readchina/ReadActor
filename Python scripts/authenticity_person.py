@@ -35,9 +35,10 @@ QUERY = """
 
 def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
     """
-    A function to read "Person.csv".
+    A function to read "Person.csv", preprocess data.
     :param filename: "Person.csv".
-    :return: a dictionary: key: unique person_id; value: [family_name,first_name,name_lang,sex,birthyear,deathyear]
+    :return: a dictionary: key: (person_id, name_lang); value: [family_name,first_name,name_lang,sex,birthyear,
+    deathyear]
     "name_lang" is used to decide if white space needs to be added into name or not.
     """
     df = pd.read_csv(person_url, error_bad_lines=False)
@@ -47,8 +48,20 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     for index, row in df.iterrows():
         key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
-
             # bithyear and deathyear are lists of possible years
+
+            # TODO
+            # when they are in ranges
+            # when they contain non-digit characters
+            # when nothing special
+            if __isChar(row['birthyear']):
+                 birthyear.append(row['birthyear'])
+
+
+            if __isChar(row['deathyear']):
+                 birthyear.append(row['deathyear'])
+
+
             birthyear,  deathyear = [], []
             birthyear.append(row['birthyear'])
             deathyear.append(row['deathyear'])
@@ -72,6 +85,13 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     #     else:
     #         print("Probably something wrong")
     # return person_dict
+
+
+def __isDigit(s):
+    return any(i.isdigit() for i in s)
+
+def __isChar(s):
+    return any(i.isChar() for i in s)
 
 
 def compare(person_dict, sleep=2):

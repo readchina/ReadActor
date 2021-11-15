@@ -4,6 +4,10 @@ This repo contains Python scripts for verifying the authenticity for named entit
 
 The goal is to automately extract person names, space names, and institutions names from ReadAct/data, then locate the named entity in Wikidata and compare attributes.
 
-## How To
+## How to use
 
-Will be edited soon.
+#### Person Lookup
+
+```python
+```
+
