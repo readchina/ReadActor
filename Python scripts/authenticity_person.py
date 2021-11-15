@@ -53,79 +53,85 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
             birthyear.append(row['birthyear'])
             deathyear.append(row['deathyear'])
 
+            print(row['birthyear'])
             # For BCE year
-            if row['birthyear'] < 0:
-                b = abs(row['birthyear'])
-                birthyear.extend([str(b), str(b+1), str(b-1)])
-            if row['deathyear'] < 0:
-                d = abs(row['deathyear'])
-                deathyear.extend([str(d), str(d+1), str(d-1)])
-
-            # Replace space_id with the name of space
-            if row['place_of_birth'] in place_dict:
-                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'],
-                                    place_dict[str(row['place_of_birth'])][0]]
-            else:
-                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'], row['place_of_birth']]
-                print("Please check. A space_id is not in Space.csv.")
-        else:
-            print("Probably something wrong")
-    return person_dict
+    #         if row['birthyear'] < 0:
+    #             b = abs(row['birthyear'])
+    #             birthyear.extend([str(b), str(b+1), str(b-1)])
+    #         if int(row['deathyear']) < 0:
+    #             d = abs(row['deathyear'])
+    #             deathyear.extend([str(d), str(d+1), str(d-1)])
+    #
+    #         # Replace space_id with the name of space
+    #         if row['place_of_birth'] in place_dict:
+    #             person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'],
+    #                                 place_dict[str(row['place_of_birth'])][0]]
+    #         else:
+    #             person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'], row['place_of_birth']]
+    #             print("Please check. A space_id is not in Space.csv.")
+    #     else:
+    #         print("Probably something wrong")
+    # return person_dict
 
 
 def compare(person_dict, sleep=2):
     no_match_list = []
     for k, v in person_dict.items():
         lang = k[1]
+        print("_______", v[0])
         if isinstance(v[1], float):
             lookup = v[0]
         else:
             if lang == "en":
-                lookup = v[0] + " " + v[1]
+                # Distinguish Pinyin and English
+                if (k, 'zh') in person_dict:
+                    print("-------this person has a chinese name")
+                lookup = v[1] + " " + v[0] # Last name + " " + Family name
             elif lang == "zh":
                 lookup = v[0] + v[1]
-        person = _sparql(lookup, lang, sleep)
-
-        # If has alt_name
-        if isinstance(v[5], str):
-            # print("++++++++++alt_name: ", v[5])
-            # print("language type: ", detect(v[5]))
-            # print("language type: ", lang)
-            # print("will append")
-            # print("~~~~~~~~person before appending: ", person)
-            # Here the "lang" might need to be modified
-            for p in _sparql(v[5], lang, sleep):
-                person.append(p)
-            # print("~~~~~~person after appending: ", person)
-
-        if len(person) == 0:
-            print("No match: ", k, v)
-            no_match_list.append((k, v))
-            continue
-        else:
-            for p in person:
-                if 'birthyear' in p:
-                    for b in p['birthyear']:
-                        if b == v[3]:
-                            print("---A match: ", k, v)
-                            continue
-                elif 'deathyear' in p:
-                    for d in p['deathyear']:
-                        if d == v[4]:
-                            print("---A match: ", k, v)
-                            continue
-                elif 'gender' in p:
-                    if p['gender'] == v[2]:
-                        print("---A match: ", k, v)
-                        continue
-                elif 'birthplace' in p:
-                    if p['birthplace'] == v[6]:
-                        print("---A match: ", k, v)
-                        continue
-                else:
-                    no_match_list.append((k, v))
-                    print("No match: ", k, v)
-    return no_match_list
+        print("----------", lookup)
+    #     person = _sparql(lookup, lang, sleep)
+    #
+    #     # If has alt_name
+    #     if isinstance(v[5], str):
+    #         # print("++++++++++alt_name: ", v[5])
+    #         # print("language type: ", detect(v[5]))
+    #         # print("language type: ", lang)
+    #         # print("will append")
+    #         # print("~~~~~~~~person before appending: ", person)
+    #         # Here the "lang" might need to be modified
+    #         for p in _sparql(v[5], lang, sleep):
+    #             person.append(p)
+    #         # print("~~~~~~person after appending: ", person)
+    #
+    #     if len(person) == 0:
+    #         print("No match: ", k, v)
+    #         no_match_list.append((k, v))
+    #         continue
+    #     else:
+    #         for p in person:
+    #             if 'birthyear' in p:
+    #                 for b in p['birthyear']:
+    #                     if b == v[3]:
+    #                         print("---A match: ", k, v)
+    #                         continue
+    #             elif 'deathyear' in p:
+    #                 for d in p['deathyear']:
+    #                     if d == v[4]:
+    #                         print("---A match: ", k, v)
+    #                         continue
+    #             elif 'gender' in p:
+    #                 if p['gender'] == v[2]:
+    #                     print("---A match: ", k, v)
+    #                     continue
+    #             elif 'birthplace' in p:
+    #                 if p['birthplace'] == v[6]:
+    #                     print("---A match: ", k, v)
+    #                     continue
+    #             else:
+    #                 no_match_list.append((k, v))
+    #                 print("No match: ", k, v)
+    # return no_match_list
 
 
 def _sparql(lookup, lang, sleep=2):
@@ -162,11 +168,11 @@ def _detectLang(text):
 
 if __name__ == "__main__":
     person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-
-    print(person_dict)
-
-    # sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'], ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
     #
+    # print(person_dict)
+
+    sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'], ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
+
     no_match_list = compare(person_dict, 2)
     print("no_match_list", no_match_list)
     print("-------length of the no_match_list", len(no_match_list))
