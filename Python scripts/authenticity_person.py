@@ -76,7 +76,7 @@ def __clean_birth_death_year_format(default_year):
         years = list(range(int(cleaned_year[0]), int(cleaned_year[1])+1))
     elif '-' in cleaned_year:  # For BCE year
         cleaned_year = int(cleaned_year.replace('-', ''))
-        years = [cleaned_year-1, cleaned_year, cleaned_year]
+        years = [cleaned_year+1, cleaned_year, cleaned_year-1]
     elif any([i.isalpha() for i in cleaned_year]):
         cleaned_year = [cleaned_year.replace('X', '0').replace('x', '0'), cleaned_year.replace('X', '9').replace('x', '0')]
         # Maybe consider to tickle the weight at this step already? since range(1000,2000) covers 1000 years and it
