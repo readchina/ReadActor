@@ -49,24 +49,28 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
         key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
             # bithyear and deathyear are lists of possible years
-
+            birth_years,  death_years = [], []
             # TODO
             # when they are in ranges
             # when they contain non-digit characters
             # when nothing special
-            if __isChar(row['birthyear']):
-                 birthyear.append(row['birthyear'])
+
+            if "?" in row['birthyear']:  # remove "?"
+                row['birthyear'] = row['birthyear'].replace('?', '')
+            elif row['birthyear'].isalpha():  # "XXXX" contain 0 information
+                birth_years.append([])
+            elif any([i.isalpha() for i in row['birthyear']]):
+                birth_years.append([row['birthyear'].replace('X', '0').replace('x', '0'), row['birthyear'].replace('X', '9').replace('x', '0')])
+            print(birth_years)
 
 
-            if __isChar(row['deathyear']):
-                 birthyear.append(row['deathyear'])
+
+            # birthyear.append(row['birthyear'])
+            # deathyear.append(row['deathyear'])
+            #
+            # print(row['birthyear'])
 
 
-            birthyear,  deathyear = [], []
-            birthyear.append(row['birthyear'])
-            deathyear.append(row['deathyear'])
-
-            print(row['birthyear'])
             # For BCE year
     #         if row['birthyear'] < 0:
     #             b = abs(row['birthyear'])
@@ -85,13 +89,6 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     #     else:
     #         print("Probably something wrong")
     # return person_dict
-
-
-def __isDigit(s):
-    return any(i.isdigit() for i in s)
-
-def __isChar(s):
-    return any(i.isChar() for i in s)
 
 
 def compare(person_dict, sleep=2):
@@ -193,9 +190,9 @@ if __name__ == "__main__":
 
     sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'], ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
 
-    no_match_list = compare(person_dict, 2)
-    print("no_match_list", no_match_list)
-    print("-------length of the no_match_list", len(no_match_list))
+    # no_match_list = compare(person_dict, 2)
+    # print("no_match_list", no_match_list)
+    # print("-------length of the no_match_list", len(no_match_list))
 
 
 
