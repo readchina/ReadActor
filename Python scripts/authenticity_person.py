@@ -48,48 +48,46 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     for index, row in df.iterrows():
         key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
-            # bithyear and deathyear are lists of possible years
-            birth_years,  death_years = [], []
-            # TODO
-            # when they are in ranges
-            # when they contain non-digit characters
-            # when nothing special
+            birth_years =  __clean_birth_death_year_format(row['birthyear'])
+            death_years = __clean_birth_death_year_format(row['deathyear'])
 
-            if "?" in row['birthyear']:  # remove "?"
-                row['birthyear'] = row['birthyear'].replace('?', '')
-            elif row['birthyear'].isalpha():  # "XXXX" contain 0 information
-                birth_years.append([])
-            elif any([i.isalpha() for i in row['birthyear']]):
-                birth_years.append([row['birthyear'].replace('X', '0').replace('x', '0'), row['birthyear'].replace('X', '9').replace('x', '0')])
-            print(birth_years)
-
+            # Replace space_id with the name of space
+            if row['place_of_birth'] in place_dict:
+                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birth_years, death_years, row['alt_name'],
+                                    place_dict[str(row['place_of_birth'])][0]]
+            else:
+                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birth_years, death_years, row['alt_name'], row['place_of_birth']]
+                print("Please check. A space_id is not in Space.csv.")
+        else:
+            print("Probably something wrong")
+    return person_dict
 
 
-            # birthyear.append(row['birthyear'])
-            # deathyear.append(row['deathyear'])
-            #
-            # print(row['birthyear'])
+def __clean_birth_death_year_format(default_year):
+    char_to_remove = ['[',']','?','~']
+    cleaned_year = default_year
+    for c in char_to_remove:
+        cleaned_year = cleaned_year.replace(c, "")
 
-
-            # For BCE year
-    #         if row['birthyear'] < 0:
-    #             b = abs(row['birthyear'])
-    #             birthyear.extend([str(b), str(b+1), str(b-1)])
-    #         if int(row['deathyear']) < 0:
-    #             d = abs(row['deathyear'])
-    #             deathyear.extend([str(d), str(d+1), str(d-1)])
-    #
-    #         # Replace space_id with the name of space
-    #         if row['place_of_birth'] in place_dict:
-    #             person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'],
-    #                                 place_dict[str(row['place_of_birth'])][0]]
-    #         else:
-    #             person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birthyear, deathyear, row['alt_name'], row['place_of_birth']]
-    #             print("Please check. A space_id is not in Space.csv.")
-    #     else:
-    #         print("Probably something wrong")
-    # return person_dict
-
+    if cleaned_year.isalpha():  # "XXXX" contain 0 information
+        years = []
+    elif '.' in cleaned_year:
+        cleaned_year = cleaned_year.split('..')
+        years = list(range(int(cleaned_year[0]), int(cleaned_year[1])+1))
+    elif '-' in cleaned_year:  # For BCE year
+        cleaned_year = int(cleaned_year.replace('-', ''))
+        years = [cleaned_year-1, cleaned_year, cleaned_year]
+    elif any([i.isalpha() for i in cleaned_year]):
+        cleaned_year = [cleaned_year.replace('X', '0').replace('x', '0'), cleaned_year.replace('X', '9').replace('x', '0')]
+        # Maybe consider to tickle the weight at this step already? since range(1000,2000) covers 1000 years and it
+        # does not offer really useful information
+        years = list(range(int(cleaned_year[0]), int(cleaned_year[1])+1))
+    elif ',' in cleaned_year:
+        cleaned_year = cleaned_year.split(',')
+        years = list(range(int(cleaned_year[0]), int(cleaned_year[1])+1))
+    else:
+        years = [int(cleaned_year)]
+    return years
 
 def compare(person_dict, sleep=2):
     no_match_list = []
@@ -185,8 +183,8 @@ def _detectLang(text):
 
 if __name__ == "__main__":
     person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    #
-    # print(person_dict)
+
+    print(person_dict)
 
     sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'], ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
 
