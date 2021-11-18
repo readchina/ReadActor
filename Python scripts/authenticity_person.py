@@ -37,12 +37,12 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     """
     A function to read "Person.csv", preprocess data.
     :param filename: "Person.csv".
-    :return: a dictionary: key: (person_id, name_lang); value: [family_name,first_name,name_lang,sex,birthyear,
-    deathyear]
+    :return: a dictionary: key: (person_id, name_lang); value: [family_name,first_name,name_lang,sex,[birthyear],
+    [deathyear]]
     "name_lang" is used to decide if white space needs to be added into name or not.
     """
     df = pd.read_csv(person_url, error_bad_lines=False)
-    print(df)
+    # print(df)
     person_dict = {}
     place_dict = read_space_csv()
     for index, row in df.iterrows():
@@ -51,17 +51,35 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
             birth_years =  __clean_birth_death_year_format(row['birthyear'])
             death_years = __clean_birth_death_year_format(row['deathyear'])
 
+            name_ordered = __order_name_by_language(row)
+
             # Replace space_id with the name of space
             if row['place_of_birth'] in place_dict:
-                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birth_years, death_years, row['alt_name'],
-                                    place_dict[str(row['place_of_birth'])][0]]
+                value = name_ordered.append()
+                person_dict[key] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'],
+                                    place_dict[row['place_of_birth']][0]]
             else:
-                person_dict[key] = [row['family_name'], row['first_name'], row['sex'], birth_years, death_years, row['alt_name'], row['place_of_birth']]
-                print("Please check. A space_id is not in Space.csv.")
-        else:
-            print("Probably something wrong")
+                person_dict[key] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'], row['place_of_birth']]
+                print("Please check as well. Because a space_id is not in Space.csv.")
     return person_dict
 
+def __order_name_by_language(row):
+     # add conditions to see if this prson has both family name and first name
+    if len(row['family_name']) == 0:
+        name_ordered = row['first_name']
+    elif len(row['first_name']) == 0:
+        name_ordered = row['family_name']
+    if row['name_lang'] == 'zh':
+        name_ordered = row['family_name'] + row['first_name'] # 毛泽东
+    elif row['name_lang'] == 'en':
+        # Add conditions to check if this name is also in Pinyin or not
+       
+        name_ordered = row['first_name'] + " " + row['family_name'] #
+
+    else:
+        pass
+
+    return name_ordered
 
 def __clean_birth_death_year_format(default_year):
     char_to_remove = ['[',']','?','~']
@@ -93,18 +111,20 @@ def compare(person_dict, sleep=2):
     no_match_list = []
     for k, v in person_dict.items():
         lang = k[1]
-        print("_______", v[0])
-        if isinstance(v[1], float):
-            lookup = v[0]
-        else:
-            if lang == "en":
-                # Distinguish Pinyin and English
-                if (k, 'zh') in person_dict:
-                    print("-------this person has a chinese name")
-                lookup = v[1] + " " + v[0] # Last name + " " + Family name
-            elif lang == "zh":
-                lookup = v[0] + v[1]
-        print("----------", lookup)
+        # print("_______", v[0])
+        # if isinstance(v[1], float):
+        #     lookup = v[0]
+        # else:
+        #     if lang == "en":
+        #         # Distinguish Pinyin and English
+        #         if (k, 'zh') in person_dict:
+        #             # print("-------this person has a chinese name")
+        #         lookup = v[1] + " " + v[0] # Last name + " " + Family name
+        #     elif lang == "zh":
+        #         lookup = v[0] + v[1]
+
+
+        # print("----------", lookup)
     #     person = _sparql(lookup, lang, sleep)
     #
     #     # If has alt_name
