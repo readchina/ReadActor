@@ -161,7 +161,7 @@ def compare(person_dict, sleep=2):
                     if p['birthyear'] in v[2]:
                         weight += 1
                 elif 'deathyear' in p:
-                    if p['birthyear'] in v[3]:
+                    if p['deathyear'] in v[3]:
                         weight += 1
                 elif 'birthplace' in p:
                     if p['birthplace'] == v[5]:
