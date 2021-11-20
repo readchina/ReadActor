@@ -127,7 +127,7 @@ def __clean_birth_death_year_format(default_year):
 
 
 def compare(person_dict, sleep=2):
-    no_match_list = []
+    no_match = {}
     for k, v in person_dict.items():
         # get the language of the name, to be used as language tag in the SPARQL query
         lang = k[1]
@@ -146,34 +146,47 @@ def compare(person_dict, sleep=2):
         else:
             continue
 
-        # if len(person) == 0:
-        #     print("There is no match for the following information: ", k, v)
-        #     no_match_list.append((k, v))
-        #
-        # else:
-        #     for p in person:
-        #         if 'birthyear' in p:
-        #             for b in p['birthyear']:
-        #                 if b == v[3]:
-        #                     print("---A match: ", k, v)
-        #                     continue
-        #         elif 'deathyear' in p:
-        #             for d in p['deathyear']:
-        #                 if d == v[4]:
-        #                     print("---A match: ", k, v)
-        #                     continue
-        #         elif 'gender' in p:
-        #             if p['gender'] == v[2]:
-        #                 print("---A match: ", k, v)
-        #                 continue
-        #         elif 'birthplace' in p:
-        #             if p['birthplace'] == v[6]:
-        #                 print("---A match: ", k, v)
-        #                 continue
-        #         else:
-        #             no_match_list.append((k, v))
-        #             print("No match: ", k, v)
-    return no_match_list
+        if len(person) == 0:
+            print("There is no match for the following information: ", k, v)
+            no_match[k] = v
+        else:
+            weight = 0
+            weight_Q_pairs = {}
+            for Q_id, p in person.items():
+                # all the matched fields will add weight 1 to the total weight for this Q_id
+                if 'gender' in p:
+                    if p['gender'] == v[1]:
+                        weight += 1
+                elif 'birthyear' in p:
+                    if p['birthyear'] in v[2]:
+                        weight += 1
+                elif 'deathyear' in p:
+                    if p['birthyear'] in v[3]:
+                        weight += 1
+                elif 'birthplace' in p:
+                    if p['birthplace'] == v[5]:
+                        weight += 1
+                weight_Q_pairs[Q_id] = weight
+                weight = 0
+            if len(weight_Q_pairs) == 0:
+                print("There is no match for the following information: ", k, v)
+                no_match[k] = v
+            else:
+                ids = []
+                max_weight = max(weight_Q_pairs.values())
+                for id, w in weight_Q_pairs.items():
+                   if w == max_weight:
+                       ids.append(id)
+                if len(ids) == 1:
+                    print("This person, ", k, v, "should be matched with this Wikidata entity", ids[0],
+                          '\nand this entity has the following information: ', person[ids[0]])
+                else:
+                    # this part will be used to correct wrong entries for matched person in Person.csv
+                    # therefore, there should be an algorithm to choose the matched one from all the entities which
+                    # all has the hightest weight
+                    print("HEY, SOLVE THIS!")
+
+    return no_match
 
 
 def _sparql(lookup_names, lang, sleep=2):
@@ -219,6 +232,6 @@ if __name__ == "__main__":
     sample_dict = { ('AG0009', 'zh'): [['北岛'], 'male', [1949], [], '赵振开', 'Beijing'],('AG0004', 'en'): [['Ke Mang',
                                                                                                          'Mang Ke'],'male', [1950], [], 'Jiang Shiwei', 'Shenyang'], ('AG0004', 'zh'): [['芒克'], 'male', [1950], [], '姜世伟', 'Shenyang'], ('AG0005', 'en'): [['Gang Peng', 'Peng Gang'], 'male', [1952], [], '', 'Beijing'],('AG0009', 'en'): [['Dao Bei', 'Bei Dao'], 'male', [1949], [], 'Zhao Zhenkai', 'Beijing']}
 
-    no_match_list = compare(sample_dict, 2)
-    # print("no_match_list", no_match_list)
-    # print("-------length of the no_match_list", len(no_match_list))
+    no_match = compare(person_dict, 2)
+    print("no_match", no_match)
+    print("-------length of the no_match", len(no_match))
