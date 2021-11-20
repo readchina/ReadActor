@@ -139,7 +139,7 @@ def compare(person_dict, sleep=2):
         if len(v[4]) != 0:
             lookup_names.append(v[4])
 
-        print("====lookup_names:\n", lookup_names)
+        # print("====lookup_names:\n", lookup_names)
 
         if lookup_names != ['anonymous'] and lookup_names != ['无名']:
             person = _sparql(lookup_names, lang, sleep)
@@ -147,7 +147,7 @@ def compare(person_dict, sleep=2):
             continue
 
         if len(person) == 0:
-            print("There is no match for the following information: ", k, v)
+            # print("There is no match for the following information: ", k, v)
             no_match[k] = v
         else:
             weight = 0
@@ -169,7 +169,7 @@ def compare(person_dict, sleep=2):
                 weight_Q_pairs[Q_id] = weight
                 weight = 0
             if len(weight_Q_pairs) == 0:
-                print("There is no match for the following information: ", k, v)
+                # print("There is no match for the following information: ", k, v)
                 no_match[k] = v
             else:
                 ids = []
@@ -178,14 +178,16 @@ def compare(person_dict, sleep=2):
                    if w == max_weight:
                        ids.append(id)
                 if len(ids) == 1:
-                    print("This person, ", k, v, "should be matched with this Wikidata entity", ids[0],
-                          '\nand this entity has the following information: ', person[ids[0]])
+                    # print("--This person, ", k, v, "should be matched with this Wikidata entity", ids[0],
+                    #       '\nand this entity has the following information: ', person[ids[0]])
+                    pass
                 else:
                     # this part will be used to correct wrong entries for matched person in Person.csv
                     # therefore, there should be an algorithm to choose the matched one from all the entities which
                     # all has the hightest weight
-                    print("HEY, SOLVE THIS!")
-
+                    # print("--HEY, multiple highest-weight match for a person!") # should be decomment later
+                    pass
+        print("+++++\n+++++\nno_match so far: ", no_match)
     return no_match
 
 
@@ -195,12 +197,13 @@ def _sparql(lookup_names, lang, sleep=2):
     person = {} # To collect entities which is found for the same person with different names
     with requests.Session() as s:
         for lookup in lookup_names:
-            print("++++ For this name: \n", lookup)
+            # print("++++ For this name: \n", lookup)
             response = s.get(URL, params={"format": "json", "query": QUERY.format(lookup, lang, lookup, lang)})
             if response.status_code == 200:  # a successful response
                 results = response.json().get("results", {}).get("bindings")
                 if len(results) == 0:
-                    print("Didn't find the entity with this name \"", lookup, "\" on Wikidata")
+                    pass
+                    # print("Didn't find the entity with this name \"", lookup, "\" on Wikidata")
                 else:
                     for r in results:
                         person_wiki = {}
