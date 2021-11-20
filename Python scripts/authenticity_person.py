@@ -12,7 +12,7 @@ import time
 from authenticity_space import read_space_csv
 from langdetect import detect
 
-URL  = "https://query.wikidata.org/sparql"
+URL = "https://query.wikidata.org/sparql"
 
 QUERY = """
         SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
@@ -37,52 +37,65 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     """
     A function to read "Person.csv", preprocess data.
     :param filename: "Person.csv".
-    :return: a dictionary: key: (person_id, name_lang); value: [family_name,first_name,name_lang,sex,[birthyear],
-    [deathyear]]
-    "name_lang" is used to decide if white space needs to be added into name or not.
+    :return: a dictionary: key: (person_id, name_lang); value: [name ordered,sex,birthyear, deathyear,
+    altname, place of birth]
     """
     df = pd.read_csv(person_url, error_bad_lines=False)
-    # print(df)
     person_dict = {}
     place_dict = read_space_csv()
     for index, row in df.iterrows():
         key = (row['person_id'], row['name_lang'])
         if key not in person_dict:
-            birth_years =  __clean_birth_death_year_format(row['birthyear'])
+
+            # name_ordered is a list of a single name or multiple names
+            name_ordered = __order_name_by_language(row)
+
+            # sex or gender type in Wikidata for human: male, female, non-binary, intersex, transgender female,
+            # transgender male, agender.
+            if row['sex'] not in ['male', 'female', 'non-binary', 'intersex', 'transgender female', 'transgender ',
+                                  'male', 'agender']:
+                row['sex'] = ""
+
+            # birth_years and death_years are two lists of a single year or multiple years
+            birth_years = __clean_birth_death_year_format(row['birthyear'])
             death_years = __clean_birth_death_year_format(row['deathyear'])
 
-            name_ordered = __order_name_by_language(row)
+            if type(row['alt_name']) != str:
+                row['alt_name'] = ""
 
             # Replace space_id with the name of space
             if row['place_of_birth'] in place_dict:
-                value = name_ordered.append()
-                person_dict[key] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'],
-                                    place_dict[row['place_of_birth']][0]]
+                row['place_of_birth'] = place_dict[row['place_of_birth']][0]
             else:
-                person_dict[key] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'], row['place_of_birth']]
-                print("Please check as well. Because a space_id is not in Space.csv.")
+                print("Please check why the place of birth is not in the dictionary of space.")
+
+            person_dict[key] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'],
+                                row['place_of_birth']]
+        else:
+            print("Please check why the key is repeated. ")
     return person_dict
 
+
 def __order_name_by_language(row):
-     # add conditions to see if this prson has both family name and first name
-    if len(row['family_name']) == 0:
-        name_ordered = row['first_name']
-    elif len(row['first_name']) == 0:
-        name_ordered = row['family_name']
-    if row['name_lang'] == 'zh':
-        name_ordered = row['family_name'] + row['first_name'] # 毛泽东
-    elif row['name_lang'] == 'en':
-        # Add conditions to check if this name is also in Pinyin or not
-       
-        name_ordered = row['first_name'] + " " + row['family_name'] #
-
+    if type(row['family_name']) != str:
+        name_ordered = [row['first_name']]
+    elif type(row['first_name']) != str:
+        name_ordered = [row['family_name']]
+    elif row['name_lang'] == 'zh':
+        name_ordered = [row['family_name'] + row['first_name']]  # 毛泽东
     else:
-        pass
-
+        # Make it a list with two types of order to suit different languages
+        # Since the non-Chinese names are the minority, the influence on processing speed can be tolerant
+        # For example:
+        # pinyin name: family name + " " + first name
+        # Korean name: family name + " " + first name
+        # Russian name: first name + " " + family name
+        name_ordered = [row['first_name'] + " " + row['family_name'], row['family_name'] + " " + row['first_name']]
     return name_ordered
 
+
 def __clean_birth_death_year_format(default_year):
-    char_to_remove = ['[',']','?','~']
+    char_to_remove = ['[', ']', '?', '~']
     cleaned_year = default_year
     for c in char_to_remove:
         cleaned_year = cleaned_year.replace(c, "")
@@ -91,21 +104,23 @@ def __clean_birth_death_year_format(default_year):
         years = []
     elif '.' in cleaned_year:
         cleaned_year = cleaned_year.split('..')
-        years = list(range(int(cleaned_year[0]), int(cleaned_year[1])+1))
+        years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
     elif '-' in cleaned_year:  # For BCE year
         cleaned_year = int(cleaned_year.replace('-', ''))
-        years = [cleaned_year+1, cleaned_year, cleaned_year-1]
+        years = [cleaned_year + 1, cleaned_year, cleaned_year - 1]
     elif any([i.isalpha() for i in cleaned_year]):
-        cleaned_year = [cleaned_year.replace('X', '0').replace('x', '0'), cleaned_year.replace('X', '9').replace('x', '0')]
+        cleaned_year = [cleaned_year.replace('X', '0').replace('x', '0'),
+                        cleaned_year.replace('X', '9').replace('x', '0')]
         # Maybe consider to tickle the weight at this step already? since range(1000,2000) covers 1000 years and it
         # does not offer really useful information
-        years = list(range(int(cleaned_year[0]), int(cleaned_year[1])+1))
+        years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
     elif ',' in cleaned_year:
         cleaned_year = cleaned_year.split(',')
-        years = list(range(int(cleaned_year[0]), int(cleaned_year[1])+1))
+        years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
     else:
         years = [int(cleaned_year)]
     return years
+
 
 def compare(person_dict, sleep=2):
     no_match_list = []
@@ -122,7 +137,6 @@ def compare(person_dict, sleep=2):
         #         lookup = v[1] + " " + v[0] # Last name + " " + Family name
         #     elif lang == "zh":
         #         lookup = v[0] + v[1]
-
 
         # print("----------", lookup)
     #     person = _sparql(lookup, lang, sleep)
@@ -206,14 +220,19 @@ if __name__ == "__main__":
 
     print(person_dict)
 
-    sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'], ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'], ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'], ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'], ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'], ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'], ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'], ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
+    sample_dict = {('AG0616', 'en'): ['Qian', 'Zhongshu', 'male', '1910', '1998', "Nan", 'SP0183'],
+                   ('AG0616', 'zh'): ['钱', '钟书', 'male', '1910', '1998', "Nan", 'SP0183'],
+                   ('AG0617', 'en'): ['Qin', 'Guan', 'male', '1049', '1100', "Nan", 'SP0370'],
+                   ('AG0617', 'zh'): ['秦', '观', 'male', '1049', '1100', "Nan", 'SP0370'],
+                   ('AG0618', 'en'): ['Qu', 'Bo', 'male', '1923', '2002', "Nan", 'SP0108'],
+                   ('AG0618', 'zh'): ['曲', '波', 'male', '1923', '2002', "Nan", 'SP0108'],
+                   ('AG0619', 'en'): ['Qu', 'Yuan', 'male', '-0340', '-0278', 'Lingjun', 'SP0340'],
+                   ('AG0619', 'zh'): ['屈', '原', 'male', '-0340', '-0278', '灵均', 'SP0340'],
+                   ('AG0620', 'en'): ['Qu', 'Qiubai', 'male', '1899', '1935', "Nan", 'SP0106'],
+                   ('AG0620', 'zh'): ['瞿', '秋白', 'male', '1899', '1935', "Nan", 'SP0106'],
+                   ('AG0621', 'en'): ['Thomas', 'Dylan', 'male', '1914', '1953', "Nan", 'SP0371'],
+                   ('AG0621', 'zh'): ['托马斯', '狄兰', 'male', '1914', '1953', "Nan", 'SP0371']}
 
     # no_match_list = compare(person_dict, 2)
     # print("no_match_list", no_match_list)
     # print("-------length of the no_match_list", len(no_match_list))
-
-
-
-
-
-
