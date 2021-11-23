@@ -10,7 +10,6 @@ import pandas as pd
 import requests
 import time
 from authenticity_space import read_space_csv
-from langdetect import detect
 
 URL = "https://query.wikidata.org/sparql"
 
