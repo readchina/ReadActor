@@ -41,10 +41,14 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     """
     df = pd.read_csv(person_url, error_bad_lines=False)
     person_dict = {}
+    person_dict_with_name_lang = {}
     place_dict = read_space_csv()
     for index, row in df.iterrows():
+        # a dictionary to collect final q_id for each unique person id
+        person_dict[row['person_id']] = ""
+
         key = (row['person_id'], row['name_lang'])
-        if key not in person_dict:
+        if key not in person_dict_with_name_lang:
 
             # name_ordered is a list of a single name or multiple names
             name_ordered = __order_name_by_language(row)
@@ -72,11 +76,11 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
             else:
                 print("Please check why the place of birth is not in the dictionary of space.")
 
-            person_dict[key] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'],
+            person_dict_with_name_lang[key] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'],
                                 row['place_of_birth']]
         else:
             print("Please check why the key is repeated. ")
-    return person_dict
+    return person_dict_with_name_lang, person_dict
 
 
 def __order_name_by_language(row):
@@ -125,10 +129,10 @@ def __clean_birth_death_year_format(default_year):
     return years
 
 
-def compare(person_dict, sleep=2):
-    no_match = {}
-    for k, v in person_dict.items():
+def compare(person_dict_with_name_lang, person_dict, sleep=2):
+    for k, v in person_dict_with_name_lang.items():
         # get the language of the name, to be used as language tag in the SPARQL query
+        person_id = k[0] # k[0]: {k[1]: weight, q-ids}
         lang = k[1]
 
         # Use the ordered_name list as lookups
@@ -139,15 +143,14 @@ def compare(person_dict, sleep=2):
             lookup_names.append(v[4])
 
         # print("====lookup_names:\n", lookup_names)
-
         if lookup_names != ['anonymous'] and lookup_names != ['无名']:
             person = _sparql(lookup_names, lang, sleep)
         else:
             continue
 
         if len(person) == 0:
-            # print("There is no match for the following information: ", k, v)
-            no_match[k] = v
+            print("There is no match for the person unique id ", id, " with language ", lang)
+
         else:
             weight = 0
             weight_Q_pairs = {}
@@ -165,20 +168,23 @@ def compare(person_dict, sleep=2):
                 elif 'birthplace' in p:
                     if p['birthplace'] == v[5]:
                         weight += 1
+
                 weight_Q_pairs[Q_id] = weight
                 weight = 0
             if len(weight_Q_pairs) == 0:
-                # print("There is no match for the following information: ", k, v)
-                no_match[k] = v
+                print("There is no match for the person unique id ", id, " with language ", lang)
+
             else:
-                ids = []
+                q_ids = []
                 max_weight = max(weight_Q_pairs.values())
+
                 for id, w in weight_Q_pairs.items():
                    if w == max_weight:
-                       ids.append(id)
-                if len(ids) == 1:
+                       q_ids.append(id)
+                if len(q_ids) == 1:
                     # print("--This person, ", k, v, "should be matched with this Wikidata entity", ids[0],
                     #       '\nand this entity has the following information: ', person[ids[0]])
+                    # person_dict[person_id] = {lang: [weight, ]}
                     pass
                 else:
                     # this part will be used to correct wrong entries for matched person in Person.csv
@@ -186,7 +192,7 @@ def compare(person_dict, sleep=2):
                     # all has the hightest weight
                     # print("--HEY, multiple highest-weight match for a person!") # should be decomment later
                     pass
-        print("+++++\n+++++\nno_match so far: ", no_match)
+
     return no_match
 
 
@@ -227,13 +233,14 @@ def _sparql(lookup_names, lang, sleep=2):
 
 
 if __name__ == "__main__":
-    person_dict = read_person_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    person_dict_with_name_lang, person_dict = read_person_csv(
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
 
     # print(person_dict)
 
     sample_dict = { ('AG0009', 'zh'): [['北岛'], 'male', [1949], [], '赵振开', 'Beijing'],('AG0004', 'en'): [['Ke Mang',
                                                                                                          'Mang Ke'],'male', [1950], [], 'Jiang Shiwei', 'Shenyang'], ('AG0004', 'zh'): [['芒克'], 'male', [1950], [], '姜世伟', 'Shenyang'], ('AG0005', 'en'): [['Gang Peng', 'Peng Gang'], 'male', [1952], [], '', 'Beijing'],('AG0009', 'en'): [['Dao Bei', 'Bei Dao'], 'male', [1949], [], 'Zhao Zhenkai', 'Beijing']}
 
-    no_match = compare(person_dict, 2)
+    no_match = compare(person_dict_with_name_lang, person_dict, 2)
     print("no_match", no_match)
     print("-------length of the no_match", len(no_match))
