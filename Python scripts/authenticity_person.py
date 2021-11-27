@@ -128,9 +128,9 @@ def __clean_birth_death_year_format(default_year):
 def get_person_weight(person_dict, sleep=2):
     person_weight_dict = {}
     for person_id, value in person_dict.items():
-        person_weight_dict[person_id] = []
         name_langs = value.keys()
         l = []
+        person_weight_dict[person_id] = []
         for lang in name_langs:
             v = value[lang]
             # Use the ordered_name list as lookups
@@ -147,7 +147,8 @@ def get_person_weight(person_dict, sleep=2):
                 continue
 
             if len(person) == 0:
-                print("There is no match for the person unique id ", person_id, " with language ", lang)
+                # print("There is no match for the person unique id ", person_id, " with language ", lang)
+                pass
 
             else:
                 weight = 0
@@ -176,7 +177,8 @@ def get_person_weight(person_dict, sleep=2):
                 l.append(weights)
                 l.append(Qids)
 
-            person_weight_dict[person_id].append(l)
+            if len(l) > 0 :
+                person_weight_dict[person_id].append(l)
             l = []
     return person_weight_dict
 
@@ -219,12 +221,10 @@ def _sparql(lookup_names, lang, sleep=2):
 def compare_weights(person_weight_dict):
     no_match = []
     person_match_dict = {}
-    for id, value in person_weight_dict.items():
-        p = person_weight_dict[id]
+    for id, p in person_weight_dict.items():
         # No match at all
-        if len(value) < 1:
+        if len(p) < 1 :
             no_match.append(id)
-            person_match_dict[id] = ""
         # At least one match for one name_lang, no match for the rest name_lang
         elif len(person_weight_dict[id]) == 1:
             lang = p[0][0]
@@ -232,6 +232,7 @@ def compare_weights(person_weight_dict):
             max_weight = max(weights) # for multiple identical weights to be the max weight, return the first max weight
             index = weights.index(max_weight)
             Qid = p[0][2][index]
+            person_match_dict[id] = Qid
         # There are at least one match for each name_lang
         else:
             m = 0
@@ -261,17 +262,29 @@ if __name__ == "__main__":
     #     print(len(lang))
 
 
-    sample_dict = {'AG0001': {'en': [['Xun Lu', 'Lu Xun'], 'male', [1881], [1936], 'Zhou Shuren', 'Shaoxing'],
-                              'zh': [['鲁迅'], 'male', [1881], [1936], '周树人', 'Shaoxing']}, 'AG0089': {'en': [[
-        'Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н Бальмо́нт', 'Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']}, 'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']}, 'AG0091': {'en': [['Charles Baudelaire', 'Baudelaire Charles'], 'male', [1821], [1867], '', 'Paris'], 'zh': [['波德莱尔夏尔'], 'male', [1821], [1867], '', 'Paris']}, 'AG0092': {'en': [['Samuel Beckett', 'Beckett Samuel'], 'male', [1906], [1989], '', 'Foxrock'], 'zh': [['贝克特萨缪尔'], 'male', [1906], [1989], '', 'Foxrock']}, 'AG0097': {'en': [['Ruxie Bi', 'Bi Ruxie'], 'male', [], [], '', 'unknown'], 'zh': [['毕汝协'], 'male', [], [], '毕汝谐', 'unknown']}, 'AG0098': {'en': [['Zhilin Bian', 'Bian Zhilin'], 'male', [1910], [2000], '', 'Haimen'], 'zh': [['卞之琳'], 'male', [1910], [2000], '', 'Haimen']}, 'AG0511': {'en': [['Er Nie', 'Nie Er'], 'male', [1912], [1935], 'Nie Shouxin', 'Vinci'], 'zh': [['聂耳'], 'male', [1912], [1935], '聂守信', 'Vinci']}}
+    sample_dict = {'AG0089': {'en': [['Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н ''Бальмо́нт','Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']},
+                   'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']},
+        'AG0091': {'en': [['Charles Baudelaire', 'Baudelaire Charles'], 'male', [1821], [1867], '', 'Paris'], 'zh': [['波德莱尔夏尔'], 'male', [1821], [1867], '', 'Paris']},
+        'AG0092': {'en': [['Samuel Beckett', 'Beckett Samuel'], 'male', [1906], [1989], '', 'Foxrock'], 'zh': [['贝克特萨缪尔'], 'male', [1906], [1989], '', 'Foxrock']},
+        'AG0097': {'en': [['Ruxie Bi', 'Bi Ruxie'], 'male', [], [], '', 'unknown'], 'zh': [['毕汝协'], 'male', [], [], '毕汝谐', 'unknown']},
+        'AG0098': {'en': [['Zhilin Bian', 'Bian Zhilin'], 'male', [1910], [2000], '', 'Haimen'], 'zh': [['卞之琳'], 'male', [1910], [2000], '', 'Haimen']},
+        'AG0511': {'en': [['Er Nie', 'Nie Er'], 'male', [1912], [1935], 'Nie Shouxin', 'Vinci'], 'zh': [['聂耳'], 'male', [1912], [1935], '聂守信', 'Vinci']}
+    }
 
-    person_weight_dict = get_person_weight(sample_dict, 2)
+    # person_weight_dict = get_person_weight(sample_dict, 2)
+    #
+    # print(person_weight_dict)
 
-    print(person_weight_dict)
+    sample_person_weight_dict = {'AG0089': [['en', [1], ['Q314498']]],
+                                 'AG0090': [['en', [1], ['Q9711']]],
+                                 'AG0091': [['en', [1, 1], ['Q501', 'Q481146']]],
+                                 'AG0092': [['en', [1], ['Q37327']]],
+                                 'AG0097': [],
+                                 'AG0098': [['en', [1], ['Q4902475']], ['zh', [1], ['Q4902475']]],
+                                 'AG0511': [['en', [1], ['Q527143']], ['zh', [1], ['Q527143']]]}
 
-    # sample_weight_dict = {'AG0001': [['en', [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], ['Q23114', 'Q102872962', 'Q378492', 'Q24863687', 'Q28412108', 'Q45379181', 'Q45388421', 'Q45427450', 'Q45436521', 'Q45441460', 'Q45450814', 'Q45452257', 'Q45514822', 'Q45517806', 'Q45532757', 'Q45537860', 'Q45540008', 'Q45542482', 'Q45543185', 'Q45544990', 'Q45550086', 'Q45552396', 'Q45552955', 'Q45554089', 'Q45562435', 'Q45563201', 'Q45565172', 'Q45577309', 'Q45579967', 'Q45586359', 'Q45589464', 'Q45594918', 'Q45599926', 'Q45624522', 'Q45637521', 'Q45646922', 'Q45679993', 'Q45706291', 'Q65824042', 'Q65863354', 'Q65903597', 'Q65914218']], ['zh', [1], ['Q23114']]]}
 
-    no_match, person_match_dict = compare_weights(person_weight_dict)
+    no_match, person_match_dict = compare_weights(sample_person_weight_dict)
     print("no match: ", no_match)
     print("person_match_dict: ", person_match_dict)
 
