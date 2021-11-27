@@ -10,6 +10,8 @@ import pandas as pd
 import requests
 import time
 from authenticity_space import read_space_csv
+from itertools import islice
+import json
 
 URL = "https://query.wikidata.org/sparql"
 
@@ -253,39 +255,77 @@ def compare_weights(person_weight_dict):
 
     return no_match, person_match_dict
 
+def chunks(person_dict, SIZE= 2):
+    it = iter(person_dict)
+    for i in range(0, len(person_dict), 2):
+        yield {k:person_dict[k] for k in islice(it, SIZE)}
+
 
 if __name__ == "__main__":
-    # person_dict = read_person_csv(
-    #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    person_dict = read_person_csv(
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
 
-    # for id, lang in person_dict.items():
-    #     print(len(lang))
+    # print(person_dict)
+
+    # Break the entire dictionary into several chunks.
+    # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
+    final_no_match = []
+    final_person_match_dict = {}
+    for chunk in chunks(person_dict, 2): # the digit here controls the batch size
+        print("chunk: \n", chunk)
+        person_weight_dict = get_person_weight(chunk, 2)
+        no_match, person_match_dict = compare_weights(person_weight_dict)
+        if len(no_match) > 0:
+            final_no_match.append(no_match)
+        if len(person_match_dict) > 0:
+            final_person_match_dict = {**final_person_match_dict, **person_match_dict}
+
+        print("\n----------\n")
+        print("no match: ", no_match)
+        print("person_match_dict: ", person_match_dict)
+
+        print("\n===========================\n")
+        print("Current final no match: ", final_no_match)
+        print("Current final person_match_dict: ", final_person_match_dict)
+        print("\n I am taking a break XD \n")
+
+        time.sleep(90) # for every a few person entries, let this script take a break of 90 seconds
+
+    print("\n===========================\n")
+    print("no match: ", final_no_match)
+    print("person_match_dict: ", final_person_match_dict)
+
+    with open('final_no_match.json', 'w') as f:
+        json.dump(final_no_match, f)
+
+    with open('final_person_match_dict.json', 'w') as f:
+        json.dump(final_person_match_dict, f)
 
 
-    sample_dict = {'AG0089': {'en': [['Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н ''Бальмо́нт','Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']},
-                   'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']},
-        'AG0091': {'en': [['Charles Baudelaire', 'Baudelaire Charles'], 'male', [1821], [1867], '', 'Paris'], 'zh': [['波德莱尔夏尔'], 'male', [1821], [1867], '', 'Paris']},
-        'AG0092': {'en': [['Samuel Beckett', 'Beckett Samuel'], 'male', [1906], [1989], '', 'Foxrock'], 'zh': [['贝克特萨缪尔'], 'male', [1906], [1989], '', 'Foxrock']},
-        'AG0097': {'en': [['Ruxie Bi', 'Bi Ruxie'], 'male', [], [], '', 'unknown'], 'zh': [['毕汝协'], 'male', [], [], '毕汝谐', 'unknown']},
-        'AG0098': {'en': [['Zhilin Bian', 'Bian Zhilin'], 'male', [1910], [2000], '', 'Haimen'], 'zh': [['卞之琳'], 'male', [1910], [2000], '', 'Haimen']},
-        'AG0511': {'en': [['Er Nie', 'Nie Er'], 'male', [1912], [1935], 'Nie Shouxin', 'Vinci'], 'zh': [['聂耳'], 'male', [1912], [1935], '聂守信', 'Vinci']}
-    }
+    # sample_dict = {'AG0089': {'en': [['Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н ''Бальмо́нт','Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']},
+    #                'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']},
+    #     'AG0091': {'en': [['Charles Baudelaire', 'Baudelaire Charles'], 'male', [1821], [1867], '', 'Paris'], 'zh': [['波德莱尔夏尔'], 'male', [1821], [1867], '', 'Paris']},
+    #     'AG0092': {'en': [['Samuel Beckett', 'Beckett Samuel'], 'male', [1906], [1989], '', 'Foxrock'], 'zh': [['贝克特萨缪尔'], 'male', [1906], [1989], '', 'Foxrock']},
+    #     'AG0097': {'en': [['Ruxie Bi', 'Bi Ruxie'], 'male', [], [], '', 'unknown'], 'zh': [['毕汝协'], 'male', [], [], '毕汝谐', 'unknown']},
+    #     'AG0098': {'en': [['Zhilin Bian', 'Bian Zhilin'], 'male', [1910], [2000], '', 'Haimen'], 'zh': [['卞之琳'], 'male', [1910], [2000], '', 'Haimen']},
+    #     'AG0511': {'en': [['Er Nie', 'Nie Er'], 'male', [1912], [1935], 'Nie Shouxin', 'Vinci'], 'zh': [['聂耳'], 'male', [1912], [1935], '聂守信', 'Vinci']}
+    # }
 
     # person_weight_dict = get_person_weight(sample_dict, 2)
     #
     # print(person_weight_dict)
 
-    sample_person_weight_dict = {'AG0089': [['en', [1], ['Q314498']]],
-                                 'AG0090': [['en', [1], ['Q9711']]],
-                                 'AG0091': [['en', [1, 1], ['Q501', 'Q481146']]],
-                                 'AG0092': [['en', [1], ['Q37327']]],
-                                 'AG0097': [],
-                                 'AG0098': [['en', [1], ['Q4902475']], ['zh', [1], ['Q4902475']]],
-                                 'AG0511': [['en', [1], ['Q527143']], ['zh', [1], ['Q527143']]]}
+    # sample_person_weight_dict = {'AG0089': [['en', [1], ['Q314498']]],
+    #                              'AG0090': [['en', [1], ['Q9711']]],
+    #                              'AG0091': [['en', [1, 1], ['Q501', 'Q481146']]],
+    #                              'AG0092': [['en', [1], ['Q37327']]],
+    #                              'AG0097': [],
+    #                              'AG0098': [['en', [1], ['Q4902475']], ['zh', [1], ['Q4902475']]],
+    #                              'AG0511': [['en', [1], ['Q527143']], ['zh', [1], ['Q527143']]]}
 
 
-    no_match, person_match_dict = compare_weights(sample_person_weight_dict)
-    print("no match: ", no_match)
-    print("person_match_dict: ", person_match_dict)
+    # no_match, person_match_dict = compare_weights(sample_person_weight_dict)
+    # print("no match: ", no_match)
+    # print("person_match_dict: ", person_match_dict)
 
 
