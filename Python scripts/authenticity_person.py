@@ -156,6 +156,7 @@ def get_person_weight(person_dict, sleep=2):
                 weight = 0
                 weights = []
                 Qids = []
+                wiki = []
                 for Q_id, p in person.items():
                     # all the matched fields will add weight 1 to the total weight for this Q_id
                     if 'gender' in p:
@@ -173,11 +174,13 @@ def get_person_weight(person_dict, sleep=2):
 
                     weights.append(weight)
                     Qids.append(Q_id)
+                    wiki.append(p)
                     weight = 0
 
                 l.append(lang)
                 l.append(weights)
                 l.append(Qids)
+                l.append(wiki)
 
             if len(l) > 0 :
                 person_weight_dict[person_id].append(l)
@@ -228,30 +231,36 @@ def compare_weights(person_weight_dict):
         if len(p) < 1 :
             no_match.append(id)
         # At least one match for one name_lang, no match for the rest name_lang
-        elif len(person_weight_dict[id]) == 1:
+        elif len(p) == 1:
             lang = p[0][0]
             weights = p[0][1]
             max_weight = max(weights) # for multiple identical weights to be the max weight, return the first max weight
             index = weights.index(max_weight)
             Qid = p[0][2][index]
-            person_match_dict[id] = Qid
+            wiki = p[0][3][index]
+            person_match_dict[id] = [Qid, wiki]
         # There are at least one match for each name_lang
         else:
             m = 0
             q = ""
-            for l in p:
-                if len(l[1]) == 1:
-                    max_weight = l[1][0]
-                    Qid = l[2][0]
+            w = ""
+            for item in p:
+                if len(item[1]) == 1:
+                    max_weight = item[1][0]
+                    Qid = item[2][0]
+                    wiki = item[3][0]
                 else:
-                    weights = l[1]
+                    weights = item[1]
                     max_weight = max(weights) # for multiple identical weights to be the max weight, return the first
                     index = weights.index(max_weight)
-                    Qid = l[2][index]
+                    Qid = item[2][index]
+                    wiki = item[3][index]
                 if max_weight > m:
                     m = max_weight
                     q = Qid
-            person_match_dict[id] = q
+                    w = wiki
+
+            person_match_dict[id] = [q, w]
 
     return no_match, person_match_dict
 
@@ -265,7 +274,7 @@ if __name__ == "__main__":
     person_dict = read_person_csv(
         "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
 
-    # print(person_dict)
+    print(person_dict)
 
     # Break the entire dictionary into several chunks.
     # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
@@ -276,7 +285,7 @@ if __name__ == "__main__":
         person_weight_dict = get_person_weight(chunk, 2)
         no_match, person_match_dict = compare_weights(person_weight_dict)
         if len(no_match) > 0:
-            final_no_match.append(no_match)
+            final_no_match = [*final_no_match, *no_match]
         if len(person_match_dict) > 0:
             final_person_match_dict = {**final_person_match_dict, **person_match_dict}
 
@@ -295,34 +304,35 @@ if __name__ == "__main__":
     print("no match: ", final_no_match)
     print("person_match_dict: ", final_person_match_dict)
 
-    with open('final_no_match.json', 'w') as f:
-        json.dump(final_no_match, f)
 
-    with open('final_person_match_dict.json', 'w') as f:
-        json.dump(final_person_match_dict, f)
+    # with open('final_no_match.json', 'w') as f:
+    #     json.dump(final_no_match, f)
+    #
+    #
+    # with open('final_person_match_dict.json', 'w') as f:
+    #     json.dump(final_person_match_dict, f)
 
 
-    # sample_dict = {'AG0089': {'en': [['Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н ''Бальмо́нт','Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']},
-    #                'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']},
+    # sample_dict = {
+    #     'AG0089': {'en': [['Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н ''Бальмо́нт','Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']},
+    #     'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']},
     #     'AG0091': {'en': [['Charles Baudelaire', 'Baudelaire Charles'], 'male', [1821], [1867], '', 'Paris'], 'zh': [['波德莱尔夏尔'], 'male', [1821], [1867], '', 'Paris']},
-    #     'AG0092': {'en': [['Samuel Beckett', 'Beckett Samuel'], 'male', [1906], [1989], '', 'Foxrock'], 'zh': [['贝克特萨缪尔'], 'male', [1906], [1989], '', 'Foxrock']},
+    #     'AG0092': {'en': [['Samuel Beckett', 'Beckett Samuel'], 'male', [1906], [1989], '', 'Foxrock'],
+    #             'zh': [['贝克特萨缪尔'], 'male', [1906], [1989], '', 'Foxrock']},
     #     'AG0097': {'en': [['Ruxie Bi', 'Bi Ruxie'], 'male', [], [], '', 'unknown'], 'zh': [['毕汝协'], 'male', [], [], '毕汝谐', 'unknown']},
     #     'AG0098': {'en': [['Zhilin Bian', 'Bian Zhilin'], 'male', [1910], [2000], '', 'Haimen'], 'zh': [['卞之琳'], 'male', [1910], [2000], '', 'Haimen']},
     #     'AG0511': {'en': [['Er Nie', 'Nie Er'], 'male', [1912], [1935], 'Nie Shouxin', 'Vinci'], 'zh': [['聂耳'], 'male', [1912], [1935], '聂守信', 'Vinci']}
     # }
-
+    #
     # person_weight_dict = get_person_weight(sample_dict, 2)
     #
     # print(person_weight_dict)
 
-    # sample_person_weight_dict = {'AG0089': [['en', [1], ['Q314498']]],
-    #                              'AG0090': [['en', [1], ['Q9711']]],
-    #                              'AG0091': [['en', [1, 1], ['Q501', 'Q481146']]],
-    #                              'AG0092': [['en', [1], ['Q37327']]],
-    #                              'AG0097': [],
-    #                              'AG0098': [['en', [1], ['Q4902475']], ['zh', [1], ['Q4902475']]],
-    #                              'AG0511': [['en', [1], ['Q527143']], ['zh', [1], ['Q527143']]]}
-
+    # sample_person_weight_dict = {
+    #     'AG0089': [['en', [1], ['Q314498'], [{'Q-id': 'Q314498', 'name': 'Konstantin Balmont', 'gender': 'male', 'birthyear': '1867', 'deathyear': '1942', 'birthplace': 'Q50074884'}]]],
+    #     'AG0090': [['en', [1], ['Q9711'], [{'Q-id': 'Q9711', 'name': 'Honoré de Balzac', 'gender': 'male', 'birthyear': '1799', 'deathyear': '1850', 'birthplace': 'Tours'}]]],
+    #     'AG0091': [['en', [1, 1], ['Q501', 'Q481146'], [{'Q-id': 'Q501', 'name': 'Charles Baudelaire', 'gender': 'male', 'birthyear': '1821', 'deathyear': '1867', 'birthplace': 'Paris'}, {'Q-id': 'Q481146', 'name': 'Pascal Pia', 'gender': 'male', 'birthyear': '1903', 'deathyear': '1979', 'birthplace': '10th arrondissement of Paris'}]]]
+    # }
 
     # no_match, person_match_dict = compare_weights(sample_person_weight_dict)
     # print("no match: ", no_match)
