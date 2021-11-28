@@ -264,7 +264,7 @@ def compare_weights(person_weight_dict):
 
     return no_match, person_match_dict
 
-def chunks(person_dict, SIZE= 2):
+def chunks(person_dict, SIZE= 20):
     it = iter(person_dict)
     for i in range(0, len(person_dict), 2):
         yield {k:person_dict[k] for k in islice(it, SIZE)}
@@ -280,37 +280,37 @@ if __name__ == "__main__":
     # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
     final_no_match = []
     final_person_match_dict = {}
-    for chunk in chunks(person_dict, 2): # the digit here controls the batch size
-        print("chunk: \n", chunk)
-        person_weight_dict = get_person_weight(chunk, 2)
-        no_match, person_match_dict = compare_weights(person_weight_dict)
-        if len(no_match) > 0:
-            final_no_match = [*final_no_match, *no_match]
-        if len(person_match_dict) > 0:
-            final_person_match_dict = {**final_person_match_dict, **person_match_dict}
+    for chunk in chunks(person_dict, 30): # the digit here controls the batch size
+        if len(chunk) > 0:
+            print("chunk: \n", chunk)
+            person_weight_dict = get_person_weight(chunk, 2)
+            no_match, person_match_dict = compare_weights(person_weight_dict)
+            if len(no_match) > 0:
+                final_no_match = [*final_no_match, *no_match]
+            if len(person_match_dict) > 0:
+                final_person_match_dict = {**final_person_match_dict, **person_match_dict}
 
-        print("\n----------\n")
-        print("no match: ", no_match)
-        print("person_match_dict: ", person_match_dict)
+            print("\n----------\n")
+            print("no match: ", no_match)
+            print("person_match_dict: ", person_match_dict)
 
-        print("\n===========================\n")
-        print("Current final no match: ", final_no_match)
-        print("Current final person_match_dict: ", final_person_match_dict)
-        print("\n I am taking a break XD \n")
+            print("\n===========================\n")
+            print("Current final no match: ", final_no_match)
+            print("Current final person_match_dict: ", final_person_match_dict)
+            print("\n I am taking a break XD \n")
 
-        time.sleep(90) # for every a few person entries, let this script take a break of 90 seconds
+            time.sleep(90) # for every a few person entries, let this script take a break of 90 seconds
 
+    print("I finished all the iteration.")
     print("\n===========================\n")
     print("no match: ", final_no_match)
     print("person_match_dict: ", final_person_match_dict)
 
+    with open('final_no_match.json', 'w') as f:
+        json.dump(final_no_match, f)
 
-    # with open('final_no_match.json', 'w') as f:
-    #     json.dump(final_no_match, f)
-    #
-    #
-    # with open('final_person_match_dict.json', 'w') as f:
-    #     json.dump(final_person_match_dict, f)
+    with open('final_person_match_dict.json', 'w') as f:
+        json.dump(final_person_match_dict, f)
 
 
     # sample_dict = {
