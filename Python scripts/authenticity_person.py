@@ -1,7 +1,7 @@
 """
 This is a python script to check authenticity of Named Entities in /Readact/csv/data and in SCB.
 Main idea:
-- Read ReadAct CSV files, get lookups
+- Read ReadAct CSV files, get names as lookups
 - Get the Q-identifier with library wikibaseintegrator for each lookup
 - Use SPARQL to retrieve the property we need
 - Compare wikidata item properties with data in ReadAct
@@ -12,6 +12,7 @@ import time
 from authenticity_space import read_space_csv
 from itertools import islice
 import json
+import requests
 
 URL = "https://query.wikidata.org/sparql"
 
@@ -44,41 +45,73 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     df = pd.read_csv(person_url, error_bad_lines=False)
     person_dict = {}
     place_dict = read_space_csv()
+    count = 0
     for index, row in df.iterrows():
-        # a dictionary to collect final q_id for each unique person id
-        if row['person_id'] not in person_dict:
-            person_dict[row['person_id']] = dict()
+        count += 1
+        if count > 432:
+            print(__get_Qid_from_wikipedia_url(row, 'en'))
 
-        if row['name_lang'] not in person_dict[row['person_id']]:
-            # name_ordered is a list of a single name or multiple names
-            name_ordered = __order_name_by_language(row)
 
-            # sex or gender type in Wikidata for human: male, female, non-binary, intersex, transgender female,
-            # transgender male, agender.
-            if row['sex'] not in ['male', 'female', 'non-binary', 'intersex', 'transgender female', 'transgender ','male', 'agender']:
-                row['sex'] = ""
-            else:
-                row['sex'] = row['sex'].strip()
+    #     # a dictionary to collect final q_id for each unique person id
+    #     if row['person_id'] not in person_dict:
+    #         person_dict[row['person_id']] = dict()
+    #
+    #     if row['name_lang'] not in person_dict[row['person_id']]:
+    #         # name_ordered is a list of a single name or multiple names
+    #         name_ordered = __order_name_by_language(row)
+    #
+    #         # sex or gender type in Wikidata for human: male, female, non-binary, intersex, transgender female,
+    #         # transgender male, agender.
+    #         if row['sex'] not in ['male', 'female', 'non-binary', 'intersex', 'transgender female', 'transgender ','male', 'agender']:
+    #             row['sex'] = ""
+    #         else:
+    #             row['sex'] = row['sex'].strip()
+    #
+    #         # birth_years and death_years are two lists of a single year or multiple years
+    #         birth_years = __clean_birth_death_year_format(row['birthyear'])
+    #         death_years = __clean_birth_death_year_format(row['deathyear'])
+    #
+    #         if type(row['alt_name']) != str:
+    #             row['alt_name'] = ""
+    #         else:
+    #             row['alt_name'] = row['alt_name'].strip()
+    #
+    #         # Replace space_id with the name of space
+    #         if row['place_of_birth'] in place_dict:
+    #             row['place_of_birth'] = place_dict[row['place_of_birth']][0]
+    #         else:
+    #             print("Please check why the place of birth is not in the dictionary of space.")
+    #
+    #         person_dict[row['person_id']][row['name_lang']] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'], row['place_of_birth']]
+    #     else:
+    #         print("Please check why the combination of person id and name_lang is repeated. ")
+    # return person_dict
 
-            # birth_years and death_years are two lists of a single year or multiple years
-            birth_years = __clean_birth_death_year_format(row['birthyear'])
-            death_years = __clean_birth_death_year_format(row['deathyear'])
 
-            if type(row['alt_name']) != str:
-                row['alt_name'] = ""
-            else:
-                row['alt_name'] = row['alt_name'].strip()
-
-            # Replace space_id with the name of space
-            if row['place_of_birth'] in place_dict:
-                row['place_of_birth'] = place_dict[row['place_of_birth']][0]
-            else:
-                print("Please check why the place of birth is not in the dictionary of space.")
-
-            person_dict[row['person_id']][row['name_lang']] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'], row['place_of_birth']]
-        else:
-            print("Please check why the combination of person id and name_lang is repeated. ")
-    return person_dict
+def __get_Qid_from_wikipedia_url(row, language='en'):
+    link = "" # The wikipedia link in Person.csv
+    url = "" # The url for wikipedia API querying
+    Qid = ""
+    name = ""
+    if isinstance(row['source_1'], str) and row['source_1'].startswith("https://" + language +
+                                                                        ".wikipedia.org/wiki/"): # A control for
+        # English Widipedia page or Chinese Wikipedia page
+        link = row['source_1']
+    elif isinstance(row['source_2'], str) and row['source_2'].startswith("https://en.wikipedia.org/wiki/"):
+        link = row['source_2']
+    if len(link) > 30:
+        print(link)
+        name = link[30:]
+        if name[-1] == ")":
+            index = name.rfind('_')
+            name = link[30:index]
+        # Use MediaWiki API
+        url = "https://en.wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + name + "&format=json"
+        print(url)
+        response = requests.get(url).json()
+        print(response)
+        Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
+    return Qid
 
 
 def __order_name_by_language(row):
@@ -274,43 +307,48 @@ if __name__ == "__main__":
     person_dict = read_person_csv(
         "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
 
-    print(person_dict)
+    # print(person_dict)
 
-    # Break the entire dictionary into several chunks.
-    # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
-    final_no_match = []
-    final_person_match_dict = {}
-    for chunk in chunks(person_dict, 30): # the digit here controls the batch size
-        if len(chunk) > 0:
-            print("chunk: \n", chunk)
-            person_weight_dict = get_person_weight(chunk, 2)
-            no_match, person_match_dict = compare_weights(person_weight_dict)
-            if len(no_match) > 0:
-                final_no_match = [*final_no_match, *no_match]
-            if len(person_match_dict) > 0:
-                final_person_match_dict = {**final_person_match_dict, **person_match_dict}
+    # # Break the entire dictionary into several chunks.
+    # # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
+    # final_no_match = []
+    # final_person_match_dict = {}
+    # for chunk in chunks(person_dict, 30): # the digit here controls the batch size
+    #     if len(chunk) > 0:
+    #         print("chunk: \n", chunk)
+    #         person_weight_dict = get_person_weight(chunk, 2)
+    #         no_match, person_match_dict = compare_weights(person_weight_dict)
+    #         if len(no_match) > 0:
+    #             final_no_match = [*final_no_match, *no_match]
+    #         if len(person_match_dict) > 0:
+    #             final_person_match_dict = {**final_person_match_dict, **person_match_dict}
+    #
+    #         print("\n----------\n")
+    #         print("no match: ", no_match)
+    #         print("person_match_dict: ", person_match_dict)
+    #
+    #         print("\n===========================\n")
+    #         print("Current final no match: ", final_no_match)
+    #         print("Current final person_match_dict: ", final_person_match_dict)
+    #         print("\n I am taking a break XD \n")
+    #
+    #         time.sleep(90) # for every a few person entries, let this script take a break of 90 seconds
+    #
+    # print("I finished all the iteration.")
+    # print("\n===========================\n")
+    # print("no match: ", final_no_match)
+    # print("person_match_dict: ", final_person_match_dict)
+    #
+    # with open('final_no_match.json', 'w') as f:
+    #     json.dump(final_no_match, f)
+    #
+    # with open('final_person_match_dict.json', 'w') as f:
+    #     json.dump(final_person_match_dict, f)
 
-            print("\n----------\n")
-            print("no match: ", no_match)
-            print("person_match_dict: ", person_match_dict)
 
-            print("\n===========================\n")
-            print("Current final no match: ", final_no_match)
-            print("Current final person_match_dict: ", final_person_match_dict)
-            print("\n I am taking a break XD \n")
 
-            time.sleep(90) # for every a few person entries, let this script take a break of 90 seconds
 
-    print("I finished all the iteration.")
-    print("\n===========================\n")
-    print("no match: ", final_no_match)
-    print("person_match_dict: ", final_person_match_dict)
 
-    with open('final_no_match.json', 'w') as f:
-        json.dump(final_no_match, f)
-
-    with open('final_person_match_dict.json', 'w') as f:
-        json.dump(final_person_match_dict, f)
 
 
     # sample_dict = {
