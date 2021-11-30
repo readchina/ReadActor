@@ -35,6 +35,24 @@ QUERY = """
         """
 
 
+QUERY_WITH_QID = """
+SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
+WHERE {{ 
+  values ?person {{wd:{} }}
+ OPTIONAL {{ ?person  wdt:P21  ?gender . }}
+        OPTIONAL {{ ?person  wdt:P569  ?birth . BIND(year(?birth) as ?ybirth) }}
+        OPTIONAL {{ ?person  wdt:P570  ?death . BIND(year(?death) as ?ydeath) }}
+        OPTIONAL {{ ?person wdt:P19  ?birthplace . }}
+        OPTIONAL {{ ?person skos:altLabel ?altLabel . }}
+        
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language  "[AUTO_LANGUAGE], en"}}
+        }}
+LIMIT 1
+"""
+
+
+#################################################################
+################## Approach 1 : Query by name ##################
 def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
     """
     A function to read "Person.csv", preprocess data.
@@ -45,73 +63,43 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     df = pd.read_csv(person_url, error_bad_lines=False)
     person_dict = {}
     place_dict = read_space_csv()
-    count = 0
     for index, row in df.iterrows():
-        count += 1
-        if count > 432:
-            print(__get_Qid_from_wikipedia_url(row, 'en'))
+        id = row['person_id']
+        print("-----\n", index, id)
+        # a dictionary to collect final q_id for each unique person id
+        if id not in person_dict:
+            person_dict[id] = dict()
 
+        if row['name_lang'] not in person_dict[row['person_id']]:
+            # name_ordered is a list of a single name or multiple names
+            name_ordered = __order_name_by_language(row)
 
-    #     # a dictionary to collect final q_id for each unique person id
-    #     if row['person_id'] not in person_dict:
-    #         person_dict[row['person_id']] = dict()
-    #
-    #     if row['name_lang'] not in person_dict[row['person_id']]:
-    #         # name_ordered is a list of a single name or multiple names
-    #         name_ordered = __order_name_by_language(row)
-    #
-    #         # sex or gender type in Wikidata for human: male, female, non-binary, intersex, transgender female,
-    #         # transgender male, agender.
-    #         if row['sex'] not in ['male', 'female', 'non-binary', 'intersex', 'transgender female', 'transgender ','male', 'agender']:
-    #             row['sex'] = ""
-    #         else:
-    #             row['sex'] = row['sex'].strip()
-    #
-    #         # birth_years and death_years are two lists of a single year or multiple years
-    #         birth_years = __clean_birth_death_year_format(row['birthyear'])
-    #         death_years = __clean_birth_death_year_format(row['deathyear'])
-    #
-    #         if type(row['alt_name']) != str:
-    #             row['alt_name'] = ""
-    #         else:
-    #             row['alt_name'] = row['alt_name'].strip()
-    #
-    #         # Replace space_id with the name of space
-    #         if row['place_of_birth'] in place_dict:
-    #             row['place_of_birth'] = place_dict[row['place_of_birth']][0]
-    #         else:
-    #             print("Please check why the place of birth is not in the dictionary of space.")
-    #
-    #         person_dict[row['person_id']][row['name_lang']] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'], row['place_of_birth']]
-    #     else:
-    #         print("Please check why the combination of person id and name_lang is repeated. ")
-    # return person_dict
+        # sex or gender type in Wikidata for human: male, female, non-binary, intersex, transgender female,
+        # transgender male, agender.
+        if row['sex'] not in ['male', 'female', 'non-binary', 'intersex',
+                              'transgender female', 'transgender ','male', 'agender']:
+            row['sex'] = ""
+        else:
+            row['sex'] = row['sex'].strip()
 
+        # birth_years and death_years are two lists of a single year or multiple years
+        birth_years = __clean_birth_death_year_format(row['birthyear'])
+        death_years = __clean_birth_death_year_format(row['deathyear'])
 
-def __get_Qid_from_wikipedia_url(row, language='en'):
-    link = "" # The wikipedia link in Person.csv
-    url = "" # The url for wikipedia API querying
-    Qid = ""
-    name = ""
-    if isinstance(row['source_1'], str) and row['source_1'].startswith("https://" + language +
-                                                                        ".wikipedia.org/wiki/"): # A control for
-        # English Widipedia page or Chinese Wikipedia page
-        link = row['source_1']
-    elif isinstance(row['source_2'], str) and row['source_2'].startswith("https://en.wikipedia.org/wiki/"):
-        link = row['source_2']
-    if len(link) > 30:
-        print(link)
-        name = link[30:]
-        if name[-1] == ")":
-            index = name.rfind('_')
-            name = link[30:index]
-        # Use MediaWiki API
-        url = "https://en.wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + name + "&format=json"
-        print(url)
-        response = requests.get(url).json()
-        print(response)
-        Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
-    return Qid
+        if type(row['alt_name']) != str:
+            row['alt_name'] = ""
+        else:
+            row['alt_name'] = row['alt_name'].strip()
+
+        # Replace space_id with the name of space
+        if row['place_of_birth'] in place_dict:
+            row['place_of_birth'] = place_dict[row['place_of_birth']][0]
+        else:
+            print("Please check why the place of birth is not in the dictionary of space.")
+
+        person_dict[id][row['name_lang']] = [name_ordered, row['sex'], birth_years, death_years, row['alt_name'],
+        row['place_of_birth']]
+    return person_dict
 
 
 def __order_name_by_language(row):
@@ -270,8 +258,8 @@ def compare_weights(person_weight_dict):
             max_weight = max(weights) # for multiple identical weights to be the max weight, return the first max weight
             index = weights.index(max_weight)
             Qid = p[0][2][index]
-            wiki = p[0][3][index]
-            person_match_dict[id] = [Qid, wiki]
+            wi = p[0][3][index]
+            person_match_dict[id] = [Qid, wi]
         # There are at least one match for each name_lang
         else:
             m = 0
@@ -293,7 +281,7 @@ def compare_weights(person_weight_dict):
                     q = Qid
                     w = wiki
 
-            person_match_dict[id] = [q, w]
+                person_match_dict[id] = [q, w]
 
     return no_match, person_match_dict
 
@@ -302,12 +290,107 @@ def chunks(person_dict, SIZE= 20):
     for i in range(0, len(person_dict), 2):
         yield {k:person_dict[k] for k in islice(it, SIZE)}
 
+########################################################################
+################## Approach 2 : query by Q-identifier ##################
+def get_matched_by_wikipedia_url(person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"):
+    df = pd.read_csv(person_url, error_bad_lines=False)
+    person_matched_by_wikipedia = {}
+    for index, row in df.iterrows():
+        id = row['person_id']
+        print("-----\n", index, id)
+        if id not in person_matched_by_wikipedia:
+            Qid = __get_Qid_from_wikipedia_url(row)
+            if Qid is not None:
+                wiki = __sparql_with_Qid(Qid)
+                person_matched_by_wikipedia[id] = [Qid, wiki]
+    return person_matched_by_wikipedia
+
+
+def __get_Qid_from_wikipedia_url(row):
+    # link: the wikipedia link in Person.csv
+    if isinstance(row['source_1'], str) and ".wikipedia.org/wiki/" in row['source_1']:
+        link = row['source_1']
+    elif isinstance(row['source_2'], str) and ".wikipedia.org/wiki/" in row['source_2']:
+        link = row['source_2']
+    else:
+        return None
+    if len(link) > 30:
+        language = link[8:10]
+        name = link[30:]
+        if name[-1] == ")":
+            index = name.rfind('_')
+            name = name[:index]
+        # Use MediaWiki API to query
+        url = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + name + \
+              "&format=json"
+        response = requests.get(url).json()
+        if 'pageprops' in list(response['query']['pages'].values())[0]:
+            pageprops = list(response['query']['pages'].values())[0]['pageprops']
+            if 'wikibase_item' in pageprops:
+                Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
+                return Qid
+
+
+def __sparql_with_Qid(Qid):
+    wiki_dict = {}
+    with requests.Session() as s:
+        response = s.get(URL, params={"format": "json", "query": QUERY_WITH_QID.format(Qid)})
+        # print("------\n", response)
+        if response.status_code == 200:  # a successful response
+            results = response.json().get("results", {}).get("bindings")
+            if len(results) == 0:
+                pass
+                # print("Didn't find the entity with this name \"", lookup, "\" on Wikidata")
+            else:
+                for r in results:
+                    if r is not None:
+                        if "personLabel" in r:
+                            wiki_dict['name'] = r['personLabel']['value']
+                        if "genderLabel" in r:
+                            wiki_dict["gender"] = r['genderLabel']['value']
+                        if "ybirth" in r:
+                            wiki_dict["birthyear"] = r['ybirth']['value']
+                        if "ydeath" in r:
+                            wiki_dict["deathyear"] = r['ydeath']['value']
+                        if "birthplaceLabel" in r:
+                            wiki_dict['birthplace'] = r['birthplaceLabel']['value']
+    return wiki_dict
+
 
 if __name__ == "__main__":
-    person_dict = read_person_csv(
-        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    # person_dict = read_person_csv(
+    #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    # # print(person_dict)
+    #
+    # person_matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    #
+    # print(person_matched_by_wikipedia)
+    # print(len(person_matched_by_wikipedia))
+    # with open('person_matched_by_wikipedia.json', 'w') as f:
+    #     json.dump(person_matched_by_wikipedia, f)
 
-    # print(person_dict)
+    with open('final_person_match_dict.json', 'r') as f:
+        name = json.load(f)
+    with open('person_matched_by_wikipedia.json', 'r') as f:
+        wikipedia = json.load(f)
+
+    print(len(wikipedia))
+
+    difference_between_two_approaches = []
+    l = list(set(list(wikipedia.keys()) + list(name.keys())))
+    print("number of intersection: ", len(l))
+    for item in l:
+        if item in name.keys() and item in wikipedia.keys():
+
+            print("name[item]: ", name[item])
+            print('wikipedia[item]: ',wikipedia[item])
+                # difference_between_two_approaches.append(key)
+    print(difference_between_two_approaches)
+
+
+
+
+
 
     # # Break the entire dictionary into several chunks.
     # # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
@@ -317,7 +400,7 @@ if __name__ == "__main__":
     #     if len(chunk) > 0:
     #         print("chunk: \n", chunk)
     #         person_weight_dict = get_person_weight(chunk, 2)
-    #         no_match, person_match_dict = compare_weights(person_weight_dict)
+    #         no_match, person_match_dict = compare_weights(person_weight_dict, person_match_dict)
     #         if len(no_match) > 0:
     #             final_no_match = [*final_no_match, *no_match]
     #         if len(person_match_dict) > 0:
@@ -338,16 +421,12 @@ if __name__ == "__main__":
     # print("\n===========================\n")
     # print("no match: ", final_no_match)
     # print("person_match_dict: ", final_person_match_dict)
-    #
+
     # with open('final_no_match.json', 'w') as f:
     #     json.dump(final_no_match, f)
     #
     # with open('final_person_match_dict.json', 'w') as f:
     #     json.dump(final_person_match_dict, f)
-
-
-
-
 
 
 
