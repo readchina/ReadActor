@@ -39,7 +39,7 @@ QUERY_WITH_QID = """
 SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
 WHERE {{ 
   values ?person {{wd:{} }}
- OPTIONAL {{ ?person  wdt:P21  ?gender . }}
+        OPTIONAL {{ ?person  wdt:P21  ?gender . }}
         OPTIONAL {{ ?person  wdt:P569  ?birth . BIND(year(?birth) as ?ybirth) }}
         OPTIONAL {{ ?person  wdt:P570  ?death . BIND(year(?death) as ?ydeath) }}
         OPTIONAL {{ ?person wdt:P19  ?birthplace . }}
@@ -296,13 +296,28 @@ def get_matched_by_wikipedia_url(person_url="https://raw.githubusercontent.com/r
     df = pd.read_csv(person_url, error_bad_lines=False)
     person_matched_by_wikipedia = {}
     for index, row in df.iterrows():
+        if index < 146:
+            continue
         id = row['person_id']
-        print("-----\n", index, id)
+        print(index, id)
         if id not in person_matched_by_wikipedia:
             Qid = __get_Qid_from_wikipedia_url(row)
             if Qid is not None:
                 wiki = __sparql_with_Qid(Qid)
-                person_matched_by_wikipedia[id] = [Qid, wiki]
+                if len(wiki) > 0:
+                    print("    Add ", id, " in")
+                    person_matched_by_wikipedia[id] = [Qid, wiki]
+                else:
+                    print("-----\nThe Qid ", Qid, "does not return useful information.\nPlease check.")
+            else:
+                link = ""
+                if isinstance(row['source_1'], str) and ".wikipedia.org/wiki/" in row['source_1']:
+                    link = row['source_1']
+                elif isinstance(row['source_2'], str) and ".wikipedia.org/wiki/" in row['source_2']:
+                    link = row['source_2']
+                if len(link) > 0:
+                    print("link: ", link)
+                    print("========\nThe index ", index, " and id ", id, " can't be used to retrieve Qid. \nPlease check.")
     return person_matched_by_wikipedia
 
 
@@ -329,6 +344,8 @@ def __get_Qid_from_wikipedia_url(row):
             if 'wikibase_item' in pageprops:
                 Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
                 return Qid
+        else:
+            print("response: ", response)
 
 
 def __sparql_with_Qid(Qid):
@@ -339,11 +356,12 @@ def __sparql_with_Qid(Qid):
         if response.status_code == 200:  # a successful response
             results = response.json().get("results", {}).get("bindings")
             if len(results) == 0:
-                pass
-                # print("Didn't find the entity with this name \"", lookup, "\" on Wikidata")
+                print("Didn't find the entity with this Q-identifier \"", Qid, "\" on Wikidata")
+                return None
             else:
                 for r in results:
                     if r is not None:
+                        wiki_dict['Q-id'] = Qid
                         if "personLabel" in r:
                             wiki_dict['name'] = r['personLabel']['value']
                         if "genderLabel" in r:
@@ -361,31 +379,41 @@ if __name__ == "__main__":
     # person_dict = read_person_csv(
     #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
     # # print(person_dict)
-    #
-    # person_matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    #
-    # print(person_matched_by_wikipedia)
-    # print(len(person_matched_by_wikipedia))
+
+
+    person_matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+
+    print(person_matched_by_wikipedia)
+    print(len(person_matched_by_wikipedia))
+
+
+
     # with open('person_matched_by_wikipedia.json', 'w') as f:
     #     json.dump(person_matched_by_wikipedia, f)
 
-    with open('final_person_match_dict.json', 'r') as f:
-        name = json.load(f)
-    with open('person_matched_by_wikipedia.json', 'r') as f:
-        wikipedia = json.load(f)
+    # for Qid in ["Q1151", "Q4902475", "Q82646"]:
+    #     print(__sparql_with_Qid(Qid))
 
-    print(len(wikipedia))
 
-    difference_between_two_approaches = []
-    l = list(set(list(wikipedia.keys()) + list(name.keys())))
-    print("number of intersection: ", len(l))
-    for item in l:
-        if item in name.keys() and item in wikipedia.keys():
 
-            print("name[item]: ", name[item])
-            print('wikipedia[item]: ',wikipedia[item])
-                # difference_between_two_approaches.append(key)
-    print(difference_between_two_approaches)
+
+    # with open('final_person_match_dict.json', 'r') as f:
+    #     name = json.load(f)
+    # with open('person_matched_by_wikipedia.json', 'r') as f:
+    #     wikipedia = json.load(f)
+    #
+    # print(len(wikipedia))
+    #
+    # difference_between_two_approaches = []
+    # l = list(set(list(wikipedia.keys()) + list(name.keys())))
+    # print("number of intersection: ", len(l))
+    # for item in l:
+    #     if item in name.keys() and item in wikipedia.keys():
+    #
+    #         print("name[item]: ", name[item])
+    #         print('wikipedia[item]: ',wikipedia[item])
+    #             # difference_between_two_approaches.append(key)
+    # print(difference_between_two_approaches)
 
 
 
