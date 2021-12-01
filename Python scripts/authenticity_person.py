@@ -327,12 +327,11 @@ def __get_Qid_from_wikipedia_url(row):
     if len(link) > 30:
         language = link[8:10]
         name = link[30:]
-        if name[-1] == ")":
-            index = name.rfind('_')
-            name = name[:index]
         # Use MediaWiki API to query
         url = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + name + \
               "&format=json"
+
+        ""
         response = requests.get(url).json()
         if 'pageprops' in list(response['query']['pages'].values())[0]:
             pageprops = list(response['query']['pages'].values())[0]['pageprops']
@@ -379,21 +378,23 @@ if __name__ == "__main__":
 ################## Comparison ##################
     # with open('final_person_match_dict.json', 'r') as f:
     #     name = json.load(f)
-    # with open('person_matched_by_wikipedia.json', 'r') as f:
+    # with open('matched_by_wikipedia.json', 'r') as f:
     #     wikipedia = json.load(f)
     #
     # print(len(wikipedia))
+    # print(len(name))
     #
     # difference_between_two_approaches = []
     # l = list(set(list(wikipedia.keys()) + list(name.keys())))
     # print("number of intersection: ", len(l))
-    # for item in l:
-    #     if item in name.keys() and item in wikipedia.keys():
-    #
-    #         print("name[item]: ", name[item])
-    #         print('wikipedia[item]: ',wikipedia[item])
-    #             # difference_between_two_approaches.append(key)
+    # for key in l:
+    #     if key in name.keys() and key in wikipedia.keys():
+    #         if name[key] != wikipedia[key]:
+    #             print("name[key]: ", key, "\n", name[key])
+    #             print("wikipedia[key]: ", key, "\n", wikipedia[key])
+    #             difference_between_two_approaches.append(key)
     # print(difference_between_two_approaches)
+    # print(len(difference_between_two_approaches))
 
 
 
@@ -440,7 +441,8 @@ if __name__ == "__main__":
     #     json.dump(final_person_match_dict, f)
 
 
-
+#################################################################
+################## Some tests for Approach 1  ##################
     # sample_dict = {
     #     'AG0089': {'en': [['Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н ''Бальмо́нт','Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']},
     #     'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']},
