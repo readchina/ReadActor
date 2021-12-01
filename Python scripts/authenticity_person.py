@@ -369,32 +369,32 @@ def __sparql_with_Qid(Qid):
 if __name__ == "__main__":
 ########################################################################
 ################## Approach 2 : query by Q-identifier ##################
-    matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    with open('matched_by_wikipedia.json', 'w') as f:
-        json.dump(matched_by_wikipedia, f)
+    # matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    # with open('matched_by_wikipedia.json', 'w') as f:
+    #     json.dump(matched_by_wikipedia, f)
 
 
 #################################################################
 ################## Comparison ##################
-    # with open('final_person_match_dict.json', 'r') as f:
-    #     name = json.load(f)
-    # with open('matched_by_wikipedia.json', 'r') as f:
-    #     wikipedia = json.load(f)
-    #
-    # print(len(wikipedia))
-    # print(len(name))
-    #
-    # difference_between_two_approaches = []
-    # l = list(set(list(wikipedia.keys()) + list(name.keys())))
-    # print("number of intersection: ", len(l))
-    # for key in l:
-    #     if key in name.keys() and key in wikipedia.keys():
-    #         if name[key] != wikipedia[key]:
-    #             print("name[key]: ", key, "\n", name[key])
-    #             print("wikipedia[key]: ", key, "\n", wikipedia[key])
-    #             difference_between_two_approaches.append(key)
-    # print(difference_between_two_approaches)
-    # print(len(difference_between_two_approaches))
+    with open('final_person_match_dict.json', 'r') as f:
+        name = json.load(f)
+    with open('matched_by_wikipedia.json', 'r') as f:
+        wikipedia = json.load(f)
+
+    print(len(wikipedia))
+    print(len(name))
+
+    difference_between_two_approaches = []
+    l = [x for x in wikipedia.keys() if x in name.keys()]
+
+    print("number of intersection: ", len(l)) # 374
+    for key in l:
+        if name[key] != wikipedia[key]:
+            print("\nFor person with id ", key, ':')
+            print("name[key]: ", "\n", name[key])
+            print("wikipedia[key]: ", "\n", wikipedia[key], '\n')
+            difference_between_two_approaches.append(key)
+
 
 
 

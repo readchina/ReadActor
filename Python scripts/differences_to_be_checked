@@ -1,0 +1,191 @@
+For person with id  AG0100 :
+name[key]:
+ ['Q1402', {'Q-id': 'Q1402', 'name': 'Giovanni Boccaccio', 'gender': 'male', 'birthyear': '1313', 'deathyear': '1375', 'birthplace': 'Florence'}]
+wikipedia[key]:
+ ['Q82646', {'Q-id': 'Q82646', 'name': 'Certaldo'}]
+
+For person with id  AG0132 :
+name[key]:
+ ['Q182874', {'Q-id': 'Q182874', 'name': 'Cao Xueqin', 'gender': 'male', 'birthyear': '1724', 'deathyear': '1763', 'birthplace': 'Nanjing'}]
+wikipedia[key]:
+ ['Q8265', {'Q-id': 'Q8265', 'name': 'Dream of the Red Chamber'}]
+
+For person with id  AG0166 :
+name[key]:
+ ['Q16514937', {'Q-id': 'Q16514937', 'name': 'Mikhail Ilyin', 'gender': 'male', 'birthyear': '1903', 'deathyear': '1981', 'birthplace': 'Moscow'}]
+wikipedia[key]:
+ ['Q2498968', {'Q-id': 'Q2498968', 'name': 'Mihail Iljin', 'gender': 'male', 'birthyear': '1896', 'deathyear': '1953', 'birthplace': 'Bakhmut'}]
+
+For person with id  AG0270 :
+name[key]:
+ ['Q3784506', {'Q-id': 'Q3784506', 'name': 'Helen Gardner', 'gender': 'female', 'birthyear': '1884', 'deathyear': '1968', 'birthplace': 'Binghamton'}]
+wikipedia[key]:
+ ['Q5702331', {'Q-id': 'Q5702331', 'name': 'Helen Gardner', 'gender': 'female', 'birthyear': '1878', 'deathyear': '1946', 'birthplace': 'Manchester'}]
+
+For person with id  AG0331 :
+name[key]:
+ ['Q326424', {'Q-id': 'Q326424', 'name': 'Miroslav Zikmund', 'gender': 'male', 'birthyear': '1919', 'birthplace': 'Plzeň'}]
+wikipedia[key]:
+ ['Q22011139', {'Q-id': 'Q22011139', 'name': 'Hanzelka and Zikmund'}]
+
+For person with id  AG0332 :
+name[key]:
+ ['Q326409', {'Q-id': 'Q326409', 'name': 'Jiří Hanzelka', 'gender': 'male', 'birthyear': '1920', 'deathyear': '2003', 'birthplace': 'Štramberk'}]
+wikipedia[key]:
+ ['Q22011139', {'Q-id': 'Q22011139', 'name': 'Hanzelka and Zikmund'}]
+
+For person with id  AG0368 :
+name[key]:
+ ['Q45440068', {'Q-id': 'Q45440068', 'name': 'Feng Lei', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q379835', {'Q-id': 'Q379835', 'name': 'Lei Feng', 'gender': 'male', 'birthyear': '1940', 'deathyear': '1962', 'birthplace': 'Wangcheng District'}]
+
+For person with id  AG0392 :
+name[key]:
+ ['Q192529', {'Q-id': 'Q192529', 'name': 'Andrés Segovia Torres', 'gender': 'male', 'birthyear': '1893', 'deathyear': '1987', 'birthplace': 'Linares (Jaén)'}]
+wikipedia[key]:
+ ['Q192529', {'Q-id': 'Q192529', 'name': 'Andrés Segovia Torres', 'gender': 'male', 'birthyear': '1893', 'deathyear': '1987', 'birthplace': 'Linares'}]
+
+For person with id  AG0394 :
+name[key]:
+ ['Q11617011', {'Q-id': 'Q11617011', 'name': 'Fu Shen', 'gender': 'male', 'birthyear': '350', 'deathyear': '385'}]
+wikipedia[key]:
+ ['Q21664438', {'Q-id': 'Q21664438', 'name': 'Shen Fu', 'gender': 'male', 'birthyear': '1905', 'deathyear': '1994'}]
+
+For person with id  AG0420 :
+name[key]:
+ ['Q65889383', {'Q-id': 'Q65889383', 'name': 'Zhi Feng', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q1404688', {'Q-id': 'Q1404688', 'name': 'Feng Zhi', 'gender': 'male', 'birthyear': '1905', 'deathyear': '1993', 'birthplace': 'Hebei'}]
+
+For person with id  AG0423 :
+name[key]:
+ ['Q45483493', {'Q-id': 'Q45483493', 'name': 'Yu Han', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q318998', {'Q-id': 'Q318998', 'name': 'Han Yu', 'gender': 'male', 'birthyear': '768', 'deathyear': '824', 'birthplace': 'Mengzhou'}]
+
+For person with id  AG0462 :
+name[key]:
+ ['Q4075719', {'Q-id': 'Q4075719', 'name': 'George Byron, 7th Baron Byron', 'gender': 'male', 'birthyear': '1789', 'deathyear': '1868'}]
+wikipedia[key]:
+ ['Q5679', {'Q-id': 'Q5679', 'name': 'Lord Byron', 'gender': 'male', 'birthyear': '1788', 'deathyear': '1824', 'birthplace': 'London'}]
+
+For person with id  AG0481 :
+name[key]:
+ ['Q40347893', {'Q-id': 'Q40347893', 'name': 'Rui Li', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q472939', {'Q-id': 'Q472939', 'name': 'Li Rui', 'gender': 'male', 'birthyear': '1917', 'deathyear': '2019', 'birthplace': 'Pingjiang County'}]
+
+For person with id  AG0491 :
+name[key]:
+ ['Q6653873', {'Q-id': 'Q6653873', 'name': 'Liu Yong', 'gender': 'male', 'birthyear': '1719', 'deathyear': '1804', 'birthplace': 'Shandong'}]
+wikipedia[key]:
+ ['Q625179', {'Q-id': 'Q625179', 'name': 'Liu Yong', 'gender': 'male', 'birthyear': '987', 'deathyear': '1053', 'birthplace': 'Fei County'}]
+
+For person with id  AG0497 :
+name[key]:
+ ['Q45605942', {'Q-id': 'Q45605942', 'name': 'You Lu', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q1069914', {'Q-id': 'Q1069914', 'name': 'Lu You', 'gender': 'male', 'birthyear': '1125', 'deathyear': '1210', 'birthplace': 'Kaifeng'}]
+
+For person with id  AG0504 :
+name[key]:
+ ['Q4303001', {'Q-id': 'Q4303001', 'name': 'Pavel Morozov', 'gender': 'male', 'birthyear': '1958', 'birthplace': 'Sievierodonetsk'}]
+wikipedia[key]:
+ ['Q311261', {'Q-id': 'Q311261', 'name': 'Pavlik Morozov', 'gender': 'male', 'birthyear': '1918', 'deathyear': '1932', 'birthplace': 'Tobolsk Governorate'}]
+
+For person with id  AG0512 :
+name[key]:
+ ['Q45387025', {'Q-id': 'Q45387025', 'name': 'Han Tian', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q434207', {'Q-id': 'Q434207', 'name': 'Tian Han', 'gender': 'male', 'birthyear': '1898', 'deathyear': '1968', 'birthplace': 'Changsha County'}]
+
+For person with id  AG0524 :
+name[key]:
+ ['Q45521322', {'Q-id': 'Q45521322', 'name': 'Du Yang', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q8289912', {'Q-id': 'Q8289912', 'name': 'Yang Du', 'gender': 'male', 'birthyear': '1875', 'deathyear': '1931', 'birthplace': 'Xiangtan'}]
+
+For person with id  AG0542 :
+name[key]:
+ ['Q3492967', {'Q-id': 'Q3492967', 'name': 'Xie Jin (mandarin)', 'gender': 'male', 'birthyear': '1369', 'deathyear': '1415', 'birthplace': 'Jiangxi'}]
+wikipedia[key]:
+ ['Q562184', {'Q-id': 'Q562184', 'name': 'Xie Jin', 'gender': 'male', 'birthyear': '1923', 'deathyear': '2008', 'birthplace': 'Shangyu'}]
+
+For person with id  AG0544 :
+name[key]:
+ ['Q45634056', {'Q-id': 'Q45634056', 'name': 'Zhu Sun', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q7638672', {'Q-id': 'Q7638672', 'name': 'Sun Zhu', 'gender': 'male', 'birthyear': '1711', 'deathyear': '1778', 'birthplace': 'Wuxi'}]
+
+For person with id  AG0553 :
+name[key]:
+ ['Q45676740', {'Q-id': 'Q45676740', 'name': 'Bi Zhang', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q10323041', {'Q-id': 'Q10323041', 'name': 'Q10323041'}]
+
+For person with id  AG0554 :
+name[key]:
+ ['Q59938231', {'Q-id': 'Q59938231', 'name': 'Zongjin Li', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q15928405', {'Q-id': 'Q15928405', 'name': 'Q15928405', 'birthyear': '1916', 'deathyear': '1977', 'birthplace': 'Suzhou'}]
+
+For person with id  AG0562 :
+name[key]:
+ ['Q77822', {'Q-id': 'Q77822', 'name': 'Cao Fang', 'gender': 'male', 'birthyear': '232', 'deathyear': '274', 'birthplace': 'Cao Wei'}]
+wikipedia[key]:
+ ['Q2034191', {'Q-id': 'Q2034191', 'name': 'Wang Li', 'gender': 'male', 'birthyear': '1900', 'deathyear': '1986', 'birthplace': 'Bobai County'}]
+
+For person with id  AG0572 :
+name[key]:
+ ['Q65859283', {'Q-id': 'Q65859283', 'name': 'Yan Xia', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q619051', {'Q-id': 'Q619051', 'name': 'Xia Yan', 'gender': 'male', 'birthyear': '1900', 'deathyear': '1995', 'birthplace': 'Yuhang District'}]
+
+For person with id  AG0574 :
+name[key]:
+ ['Q45662999', {'Q-id': 'Q45662999', 'name': 'Hua Xiao', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q8314185', {'Q-id': 'Q8314185', 'name': 'Xiao Hua', 'gender': 'male', 'birthyear': '1916', 'deathyear': '1985', 'birthplace': 'Xingguo County'}]
+
+For person with id  AG0583 :
+name[key]:
+ ['Q45361198', {'Q-id': 'Q45361198', 'name': 'Fu Yan', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q559957', {'Q-id': 'Q559957', 'name': 'Yan Fu', 'gender': 'male', 'birthyear': '1854', 'deathyear': '1921', 'birthplace': 'Fuzhou'}]
+
+For person with id  AG0588 :
+name[key]:
+ ['Q9396301', {'Q-id': 'Q9396301', 'name': 'Fu Yin', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q11125637', {'Q-id': 'Q11125637', 'name': 'Fu Yin', 'gender': 'male', 'birthyear': '1909', 'deathyear': '1931', 'birthplace': 'Xiangshan County'}]
+
+For person with id  AG0602 :
+name[key]:
+ ['Q11094344', {'Q-id': 'Q11094344', 'name': 'Zhu Xi', 'gender': 'male', 'birthyear': '1900', 'deathyear': '1962'}]
+wikipedia[key]:
+ ['Q9397', {'Q-id': 'Q9397', 'name': 'Zhu Xi', 'gender': 'male', 'birthyear': '1130', 'deathyear': '1200', 'birthplace': 'Youxi County'}]
+
+For person with id  AG0603 :
+name[key]:
+ ['Q45427471', {'Q-id': 'Q45427471', 'name': 'Zhou Zhuang', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q47739', {'Q-id': 'Q47739', 'name': 'Zhuangzi', 'gender': 'male', 'birthyear': '-368', 'deathyear': '-287', 'birthplace': 'Shangqiu'}]
+
+For person with id  AG0612 :
+name[key]:
+ ['Q29416', {'Q-id': 'Q29416', 'name': 'Alfons Kontarsky', 'gender': 'male', 'birthyear': '1932', 'deathyear': '2010', 'birthplace': 'Iserlohn'}]
+wikipedia[key]:
+ ['Q49907', {'Q-id': 'Q49907', 'name': 'Aloys and Alfons Kontarsky'}]
+
+For person with id  AG0617 :
+name[key]:
+ ['Q65828352', {'Q-id': 'Q65828352', 'name': 'Guan Qin', 'gender': 'male'}]
+wikipedia[key]:
+ ['Q832770', {'Q-id': 'Q832770', 'name': 'Qin Guan', 'gender': 'male', 'birthyear': '1049', 'deathyear': '1100'}]
+
+For person with id  AG0624 :
+name[key]:
+ ['Q33322864', {'Q-id': 'Q33322864', 'name': 'Xizhe Wang', 'gender': 'male', 'birthyear': '1948', 'birthplace': 'Sichuan'}]
+wikipedia[key]:
+ ['Q9065255', {'Q-id': 'Q9065255', 'name': 'Wang Xizhe', 'gender': 'male', 'birthyear': '1948'}]
