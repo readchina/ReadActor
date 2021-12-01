@@ -311,18 +311,8 @@ def get_matched_by_wikipedia_url(person_url="https://raw.githubusercontent.com/r
                     time.sleep(90)
                     count = 0
                 wiki = __sparql_with_Qid(Qid)
-
-
                 if len(wiki) > 0 :
                     person_matched_by_wikipedia[id] = [Qid, wiki]
-                else:
-                    print("----", wiki)
-                    print("Qid: ", Qid)
-                    print(__sparql_with_Qid(Qid))
-                    print("----")
-
-
-
     return person_matched_by_wikipedia
 
 
@@ -378,27 +368,15 @@ def __sparql_with_Qid(Qid):
 
 
 if __name__ == "__main__":
-    # person_dict = read_person_csv(
-    #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    # # print(person_dict)
+########################################################################
+################## Approach 2 : query by Q-identifier ##################
+    matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    with open('matched_by_wikipedia.json', 'w') as f:
+        json.dump(matched_by_wikipedia, f)
 
 
-    person_matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-
-    print(person_matched_by_wikipedia)
-    print(len(person_matched_by_wikipedia))
-
-
-
-    # with open('person_matched_by_wikipedia.json', 'w') as f:
-    #     json.dump(person_matched_by_wikipedia, f)
-
-    # for Qid in ["Q484292"]:
-    #     print(__sparql_with_Qid(Qid))
-
-
-
-
+#################################################################
+################## Comparison ##################
     # with open('final_person_match_dict.json', 'r') as f:
     #     name = json.load(f)
     # with open('person_matched_by_wikipedia.json', 'r') as f:
@@ -419,8 +397,11 @@ if __name__ == "__main__":
 
 
 
-
-
+#################################################################
+################## Approach 1 : Query by name ##################
+    # person_dict = read_person_csv(
+    #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    # # print(person_dict)
 
     # # Break the entire dictionary into several chunks.
     # # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
