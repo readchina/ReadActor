@@ -328,10 +328,7 @@ def __get_Qid_from_wikipedia_url(row):
         language = link[8:10]
         name = link[30:]
         # Use MediaWiki API to query
-        url = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + name + \
-              "&format=json"
-
-        ""
+        url = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + name + "&format=json"
         response = requests.get(url).json()
         if 'pageprops' in list(response['query']['pages'].values())[0]:
             pageprops = list(response['query']['pages'].values())[0]['pageprops']
@@ -369,31 +366,32 @@ def __sparql_with_Qid(Qid):
 if __name__ == "__main__":
 ########################################################################
 ################## Approach 2 : query by Q-identifier ##################
-    # matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+
     # with open('matched_by_wikipedia.json', 'w') as f:
     #     json.dump(matched_by_wikipedia, f)
 
 
 #################################################################
 ################## Comparison ##################
-    with open('final_person_match_dict.json', 'r') as f:
-        name = json.load(f)
-    with open('matched_by_wikipedia.json', 'r') as f:
-        wikipedia = json.load(f)
-
-    print(len(wikipedia))
-    print(len(name))
-
-    difference_between_two_approaches = []
-    l = [x for x in wikipedia.keys() if x in name.keys()]
-
-    print("number of intersection: ", len(l)) # 374
-    for key in l:
-        if name[key] != wikipedia[key]:
-            print("\nFor person with id ", key, ':')
-            print("name[key]: ", "\n", name[key])
-            print("wikipedia[key]: ", "\n", wikipedia[key], '\n')
-            difference_between_two_approaches.append(key)
+    # with open('final_person_match_dict.json', 'r') as f:
+    #     name = json.load(f)
+    # with open('matched_by_wikipedia.json', 'r') as f:
+    #     wikipedia = json.load(f)
+    #
+    # print(len(wikipedia))
+    # print(len(name))
+    #
+    # difference_between_two_approaches = []
+    # l = [x for x in wikipedia.keys() if x in name.keys()]
+    #
+    # print("number of intersection: ", len(l)) # 374
+    # for key in l:
+    #     if name[key] != wikipedia[key]:
+    #         print("\nFor person with id ", key, ':')
+    #         print("name[key]: ", "\n", name[key])
+    #         print("wikipedia[key]: ", "\n", wikipedia[key], '\n')
+    #         difference_between_two_approaches.append(key)
 
 
 
