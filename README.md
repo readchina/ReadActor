@@ -18,6 +18,9 @@ For the latter, using MediaWiki API, Q-identifiers are acquired based on Wikiped
 
 
 
+## Requrements on CSV
+For pre-defined column names, check the definition in [Data Dictionary](https://github.com/readchina/ReadAct/blob/master/csv/data_dictionary.csv).
+
 ## How to use
 
 #### Person Lookup
