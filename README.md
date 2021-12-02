@@ -15,8 +15,13 @@ For the latter, using MediaWiki API, Q-identifiers are acquired based on Wikiped
 ## How to use
 
 #### Person Lookup
+- Major syntax:
 
-```
-python
-```
+  ```
+  python
+  ```
+
+- Parameters
+
+
 
