@@ -12,6 +12,12 @@ For the former, names (include alt_name) are used to lookup with SPARQL query st
 
 For the latter, using MediaWiki API, Q-identifiers are acquired based on Wikipedia links and then be used for SPARQL queyring.
 
+#### Autenticity about Space
+
+#### Autenticity about Institution
+
+
+
 ## How to use
 
 #### Person Lookup
