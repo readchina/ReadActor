@@ -13,6 +13,7 @@ from authenticity_space import read_space_csv
 from itertools import islice
 import json
 import requests
+from collections import defaultdict
 
 URL = "https://query.wikidata.org/sparql"
 
@@ -198,10 +199,7 @@ def get_person_weight(person_dict, sleep=2):
                     wiki.append(p)
                     weight = 0
 
-                l.append(lang)
-                l.append(weights)
-                l.append(Qids)
-                l.append(wiki)
+                l.extend(lang, weights, Qids, wiki)
 
             if len(l) > 0 :
                 person_weight_dict[person_id].append(l)
@@ -243,6 +241,7 @@ def _sparql(lookup_names, lang, sleep=2):
                             person[person_wiki['Q-id']] = person_wiki
             time.sleep(sleep)
     return person
+
 
 def compare_weights(person_weight_dict):
     no_match = []
@@ -286,7 +285,7 @@ def compare_weights(person_weight_dict):
     return no_match, person_match_dict
 
 
-def chunks(person_dict, SIZE= 20):
+def chunks(person_dict, SIZE= 30):
     it = iter(person_dict)
     for i in range(0, len(person_dict), 2):
         yield {k:person_dict[k] for k in islice(it, SIZE)}
@@ -304,7 +303,7 @@ def get_matched_by_wikipedia_url(person_url="https://raw.githubusercontent.com/r
         print(index, id)
         if id not in person_matched_by_wikipedia:
             Qid = __get_Qid_from_wikipedia_url(row)
-            print("Qid: ", Qid)
+            # print("Qid: ", Qid)
             if Qid is not None:
                 count += 1
                 if count == 10:
@@ -364,21 +363,93 @@ def __sparql_with_Qid(Qid):
 
 
 if __name__ == "__main__":
+
+    person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
+
 ########################################################################
 ################## Approach 2 : query by Q-identifier ##################
     matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
 
-    # with open('matched_by_wikipedia.json', 'w') as f:
-    #     json.dump(matched_by_wikipedia, f)
+    print('===========\n', matched_by_wikipedia)
+    with open('../results/matched_by_wikipedia.json', 'w') as f:
+        json.dump(matched_by_wikipedia, f)
 
 
 #################################################################
 ################## Comparison ##################
-    # with open('final_person_match_dict.json', 'r') as f:
-    #     name = json.load(f)
-    # with open('matched_by_wikipedia.json', 'r') as f:
-    #     wikipedia = json.load(f)
-    #
+    with open('../results/matched_by_name.json', 'r') as f: # matched_by_name
+        name = json.load(f)
+    with open('../results/matched_by_wikipedia.json', 'r') as f:
+        wikipedia = json.load(f)
+
+    # Rearranged a dictionay to contain person information for later comparison
+    person = read_person_csv(person_url)
+    new_dict = {}
+    for key in person.keys():
+        names, gender, birthyear, deathyear, birthplace= [], [], [], [], []
+        new_dict[key] = {}
+        langs = [*person[key]]
+        for lang in langs:
+            names.extend(person[key][lang][0])
+            if len(person[key][lang][4]) > 0:
+                names.append(person[key][lang][4])
+            gender.append(person[key][lang][1])
+            birthyear.extend(person[key][lang][2])
+            deathyear.extend(person[key][lang][3])
+            birthplace.append(person[key][lang][5])
+            new_dict[key]['name'] = list(set(names))
+            new_dict[key]['gender'] = list(set(gender))
+            new_dict[key]['birthyear'] = list(set(birthyear))
+            new_dict[key]['deathyear'] = list(set(deathyear))
+            new_dict[key]['birthplace'] = list(set(birthplace))
+
+
+    longest_match = {}
+    for key in new_dict.keys():
+        score_name = 0
+        score_wikipedia = 0
+        if key in name and key in wikipedia:
+            if name[key][1]['Q-id'] == wikipedia[key][1]['Q-id']:
+                longest_match[key] = name[key]
+            else:
+                for k in name[key][1].keys():
+                    if k == 'Q-id':
+                        continue
+                    if new_dict[key][k]:
+                        if k in ['birthyear', 'deathyear']:
+                            if int(name[key][1][k]) in new_dict[key][k]:
+                                score_name += 1
+                        else:
+                            if name[key][1][k] in new_dict[key][k]:
+                                score_name += 1
+
+                for k in wikipedia[key][1].keys():
+                    if k == 'Q-id':
+                        continue
+                    if new_dict[key][k]:
+                        if k in ['birthyear', 'deathyear']:
+                            if int(wikipedia[key][1][k]) in new_dict[key][k]:
+                                score_wikipedia += 1
+                        else:
+                            if wikipedia[key][1][k] in new_dict[key][k]:
+                                score_wikipedia += 1
+
+                if score_name > score_wikipedia:
+                    longest_match[key] = name[key]
+                elif score_name < score_wikipedia:
+                    longest_match[key] = wikipedia[key]
+                else: # same score
+                    print("Check manually.")
+        elif key in name:
+            longest_match[key] = name[key]
+        elif key in wikipedia:
+            longest_match[key] = wikipedia[key]
+
+    with open('../results/match_after_choosing_longest_match.json', 'w') as f:
+        json.dump(longest_match, f)
+
+#################################################################
+################## Difference between the results of two approaches ##################
     # print(len(wikipedia))
     # print(len(name))
     #
@@ -392,9 +463,6 @@ if __name__ == "__main__":
     #         print("name[key]: ", "\n", name[key])
     #         print("wikipedia[key]: ", "\n", wikipedia[key], '\n')
     #         difference_between_two_approaches.append(key)
-
-
-
 
 #################################################################
 ################## Approach 1 : Query by name ##################
@@ -432,10 +500,10 @@ if __name__ == "__main__":
     # print("no match: ", final_no_match)
     # print("person_match_dict: ", final_person_match_dict)
 
-    # with open('final_no_match.json', 'w') as f:
+    # with open('../results/no_match_by_querying_name.json', 'w') as f:
     #     json.dump(final_no_match, f)
     #
-    # with open('final_person_match_dict.json', 'w') as f:
+    # with open('../results/matched_by_name.json', 'w') as f:
     #     json.dump(final_person_match_dict, f)
 
 
