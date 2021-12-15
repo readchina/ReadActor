@@ -377,7 +377,7 @@ if __name__ == "__main__":
 
 #################################################################
 ################## Comparison ##################
-    with open('../results/matched_by_name.json', 'r') as f: # matched_by_name
+    with open('../results/matched_by_name.json', 'r') as f:
         name = json.load(f)
     with open('../results/matched_by_wikipedia.json', 'r') as f:
         wikipedia = json.load(f)
