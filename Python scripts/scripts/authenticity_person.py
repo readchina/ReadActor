@@ -199,7 +199,10 @@ def get_person_weight(person_dict, sleep=2):
                     wiki.append(p)
                     weight = 0
 
-                l.extend(lang, weights, Qids, wiki)
+                l.append(lang)
+                l.append(weights)
+                l.append(Qids)
+                l.append(wiki)
 
             if len(l) > 0 :
                 person_weight_dict[person_id].append(l)
@@ -366,13 +369,56 @@ if __name__ == "__main__":
 
     person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
 
+#################################################################
+################## Approach 1 : Query by name ##################
+    person_dict = read_person_csv(
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    # print(person_dict)
+
+    # Break the entire dictionary into several chunks.
+    # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
+    no_match_by_name = []
+    matched_by_name = {}
+    for chunk in chunks(person_dict, 30): # the digit here controls the batch size
+        if len(chunk) > 0:
+            print("chunk: \n", chunk)
+            person_weight_dict = get_person_weight(chunk, 2)
+            no_match, person_match_dict = compare_weights(person_weight_dict, person_match_dict)
+            if len(no_match) > 0:
+                no_match_by_name = [*no_match_by_name, *no_match]
+            if len(person_match_dict) > 0:
+                matched_by_name = {**matched_by_name, **person_match_dict}
+
+            print("\n----------\n")
+            print("no match: ", no_match)
+            print("person_match_dict: ", person_match_dict)
+
+            print("\n===========================\n")
+            print("Current final no match: ", no_match_by_name)
+            print("Current final person_match_dict: ", matched_by_name)
+            print("\n I am taking a break XD \n")
+
+            time.sleep(90) # for every a few person entries, let this script take a break of 90 seconds
+
+    print("I finished all the iteration.")
+    print("\n===========================\n")
+    print("no match: ", no_match_by_name)
+    print("person_match_dict: ", matched_by_name)
+
+    with open('../results/no_match_by_querying_name.json', 'w') as f:
+        json.dump(no_match_by_name, f)
+
+    with open('../results/matched_by_name.json', 'w') as f:
+        json.dump(matched_by_name, f)
+
+
 ########################################################################
 ################## Approach 2 : query by Q-identifier ##################
-    matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-
-    print('===========\n', matched_by_wikipedia)
-    with open('../results/matched_by_wikipedia.json', 'w') as f:
-        json.dump(matched_by_wikipedia, f)
+    # matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
+    #
+    # print('===========\n', matched_by_wikipedia)
+    # with open('../results/matched_by_wikipedia.json', 'w') as f:
+    #     json.dump(matched_by_wikipedia, f)
 
 
 #################################################################
@@ -463,48 +509,6 @@ if __name__ == "__main__":
     #         print("name[key]: ", "\n", name[key])
     #         print("wikipedia[key]: ", "\n", wikipedia[key], '\n')
     #         difference_between_two_approaches.append(key)
-
-#################################################################
-################## Approach 1 : Query by name ##################
-    # person_dict = read_person_csv(
-    #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
-    # # print(person_dict)
-
-    # # Break the entire dictionary into several chunks.
-    # # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query
-    # final_no_match = []
-    # final_person_match_dict = {}
-    # for chunk in chunks(person_dict, 30): # the digit here controls the batch size
-    #     if len(chunk) > 0:
-    #         print("chunk: \n", chunk)
-    #         person_weight_dict = get_person_weight(chunk, 2)
-    #         no_match, person_match_dict = compare_weights(person_weight_dict, person_match_dict)
-    #         if len(no_match) > 0:
-    #             final_no_match = [*final_no_match, *no_match]
-    #         if len(person_match_dict) > 0:
-    #             final_person_match_dict = {**final_person_match_dict, **person_match_dict}
-    #
-    #         print("\n----------\n")
-    #         print("no match: ", no_match)
-    #         print("person_match_dict: ", person_match_dict)
-    #
-    #         print("\n===========================\n")
-    #         print("Current final no match: ", final_no_match)
-    #         print("Current final person_match_dict: ", final_person_match_dict)
-    #         print("\n I am taking a break XD \n")
-    #
-    #         time.sleep(90) # for every a few person entries, let this script take a break of 90 seconds
-    #
-    # print("I finished all the iteration.")
-    # print("\n===========================\n")
-    # print("no match: ", final_no_match)
-    # print("person_match_dict: ", final_person_match_dict)
-
-    # with open('../results/no_match_by_querying_name.json', 'w') as f:
-    #     json.dump(final_no_match, f)
-    #
-    # with open('../results/matched_by_name.json', 'w') as f:
-    #     json.dump(final_person_match_dict, f)
 
 
 #################################################################
