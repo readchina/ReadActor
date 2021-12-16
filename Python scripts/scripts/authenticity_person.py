@@ -305,20 +305,20 @@ def get_matched_by_wikipedia_url(person_url="https://raw.githubusercontent.com/r
         id = row['person_id']
         print(index, id)
         if id not in person_matched_by_wikipedia:
-            Qid = __get_Qid_from_wikipedia_url(row)
+            Qid = get_Qid_from_wikipedia_url(row)
             # print("Qid: ", Qid)
             if Qid is not None:
                 count += 1
                 if count == 10:
                     time.sleep(90)
                     count = 0
-                wiki = __sparql_with_Qid(Qid)
+                wiki = sparql_with_Qid(Qid)
                 if len(wiki) > 0 :
                     person_matched_by_wikipedia[id] = [Qid, wiki]
     return person_matched_by_wikipedia
 
 
-def __get_Qid_from_wikipedia_url(row):
+def get_Qid_from_wikipedia_url(row):
     # link: the wikipedia link in Person.csv
     if isinstance(row['source_1'], str) and ".wikipedia.org/wiki/" in row['source_1']:
         link = row['source_1']
@@ -339,7 +339,7 @@ def __get_Qid_from_wikipedia_url(row):
                 return Qid
 
 
-def __sparql_with_Qid(Qid):
+def sparql_with_Qid(Qid):
     wiki_dict = {}
     with requests.Session() as s:
         response = s.get(URL, params={"format": "json", "query": QUERY_WITH_QID.format(Qid)})
@@ -383,7 +383,7 @@ if __name__ == "__main__":
         if len(chunk) > 0:
             print("chunk: \n", chunk)
             person_weight_dict = get_person_weight(chunk, 2)
-            no_match, person_match_dict = compare_weights(person_weight_dict, person_match_dict)
+            no_match, person_match_dict = compare_weights(person_weight_dict)
             if len(no_match) > 0:
                 no_match_by_name = [*no_match_by_name, *no_match]
             if len(person_match_dict) > 0:
