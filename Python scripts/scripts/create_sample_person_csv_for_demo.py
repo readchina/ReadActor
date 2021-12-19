@@ -44,4 +44,4 @@ df.loc[df.shape[0]] = ['', '', 'Sanmao', 'en', '', '0000', '1234', '',
 # Write dataframe into a tab-seperated CSV in the data file.
 ##########################################################
 with open('../data/Person.csv', 'w') as f:
-    f.write(df.to_csv(sep='\t'))
+    f.write(df.to_csv())
