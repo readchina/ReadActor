@@ -73,7 +73,7 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
 
         if row['name_lang'] not in person_dict[row['person_id']]:
             # name_ordered is a list of a single name or multiple names
-            name_ordered = __order_name_by_language(row)
+            name_ordered = order_name_by_language(row)
 
         # sex or gender type in Wikidata for human: male, female, non-binary, intersex, transgender female,
         # transgender male, agender.
@@ -103,7 +103,7 @@ def read_person_csv(person_url="https://raw.githubusercontent.com/readchina/Read
     return person_dict
 
 
-def __order_name_by_language(row):
+def order_name_by_language(row):
     if type(row['family_name']) != str:
         name_ordered = [row['first_name']]
     elif type(row['first_name']) != str:
@@ -166,7 +166,7 @@ def get_person_weight(person_dict, sleep=2):
 
             # print("====lookup_names:\n", lookup_names)
             if lookup_names != ['anonymous'] and lookup_names != ['无名']:
-                person = _sparql(lookup_names, lang, sleep)
+                person = sparql_by_name(lookup_names, lang, sleep)
             else:
                 continue
 
@@ -210,7 +210,7 @@ def get_person_weight(person_dict, sleep=2):
     return person_weight_dict
 
 
-def _sparql(lookup_names, lang, sleep=2):
+def sparql_by_name(lookup_names, lang, sleep=2):
     if len(lookup_names) == 0:
         return None
     person = {} # To collect entities which is found for the same person with different names

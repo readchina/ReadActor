@@ -3,7 +3,7 @@ import time
 
 
 required_columns = ['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
-                    'place_of_birth', 'wikipedia_link', 'wikidata_id', 'created', 'created_by', 'last_modified',
+                    'birthplace', 'wikipedia_link', 'wikidata_id', 'created', 'created_by', 'last_modified',
                     'last_modified_by'] # 'wikipedia_link','wikidata_id' are waiting for discussion
 
 
@@ -26,7 +26,7 @@ df.loc[df.shape[0]] =  ['', '盖曼', '尼尔', 'zh', '','', '', '', '',
 # Case 2: person already in ReadACT:
 # Given information: Name + Wikipedia link + Wikidata id + create time by user + user name.
 ##########################################################
-df.loc[df.shape[0]] =  ['', '鲁', '迅', 'zh', '', '', '', '',
+df.loc[df.shape[0]] =  ['AG0001', '鲁', '迅', 'zh', '', '', '', '',
                         'https://zh.wikipedia.org/wiki/%E9%B2%81%E8%BF%85',
                         'Q23114', time.strftime("%Y-%m-%d", time.localtime()), 'QG', '', '']
 
