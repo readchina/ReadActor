@@ -1,5 +1,5 @@
 ,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,birthplace,wikipedia_link,wikidata_id,created,created_by,last_modified,last_modified_by
-0,,Gaiman,Neil,en,male,1960,,Portchester,https://en.wikipedia.org/wiki/Neil_Gaiman,,2021-12-20,QG,2021-12-20,SemBot
+0,,Gaiman,Neil,en,male,1960,,Portchester,https://en.wikipedia.org/wiki/Neil_Gaiman,Q210059,2021-12-20,QG,2021-12-20,SemBot
 1,,盖曼,尼尔,zh,male,1960,,Portchester,,Q210059,2021-12-20,QG,2021-12-20,SemBot
 2,AG0001,鲁,迅,zh,male,1881,1936,SP0048,https://en.wikipedia.org/wiki/Lu_Xun,Q23114,2017-07-03,LH,2021-12-20,SemBot
-3,,,Sanmao,en,female,1943,1991,Chongqing,https://zh.wikipedia.org/wiki/%E4%B8%89%E6%AF%9B_(%E4%BD%9C%E5%AE%B6),,2021-12-20,QG,2021-12-20,SemBot
+3,,,Sanmao,en,female,1943,1991,Chongqing,https://zh.wikipedia.org/wiki/%E4%B8%89%E6%AF%9B_(%E4%BD%9C%E5%AE%B6),Q708679,2021-12-20,QG,2021-12-20,SemBot
