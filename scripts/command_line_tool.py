@@ -28,7 +28,7 @@ if __name__ == "__main__":
     if not args.person_csv.endswith('Person.csv'):
         print('File invalid. You should use only Person.csv as the first argument\n')
     else:
-        print("========== Validate 1/2 ==========:\nPerson.csv is going to be checked.\n")
+        print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
 
     df = pd.read_csv(args.person_csv, index_col=0)
     df = df.fillna('') # Replace all the nan into empty string
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     if not set(required_columns).issubset(df.columns.tolist()):
         print('There must be 14 mandatory columns in CSV table. Please check your file\n')
     else:
-        print("========== Validate 2/2 ==========:\nAll 14 mandatory columns are included. Well done!\n")
+        print("--> Validate 2/2 \nAll 14 mandatory columns are included. Well done!\n\n")
 
     # In the future, should also check if family_name, first_name, name_lang are empty.
     # This three are mandatory.
@@ -138,8 +138,12 @@ if __name__ == "__main__":
 
     updated_rows_sum = df['last_modified_by'].value_counts().SemBot
     rows_sum = len(df.index)
-    print("========== Update 1/2 ==========:\nFinished Updating\n")
-    print("========== Update 2/2 ==========:\nStatistics: You have ", updated_rows_sum, " rows updated, among all the ", rows_sum, " rows\n")
+    print("==================================\n==========  Update 1/2  ==========:\n==================================\nFinished "
+          "Updating\n\n")
+    print("==================================\n==========  Update 2/2  "
+          "==========\n==================================\nStatistics: Among all the ", rows_sum, " rows, you have ",
+          updated_rows_sum, " rows updated\n\n")
+
     with open('../CSV/Person_updated.csv', 'w') as f:
         f.write(df.to_csv())
 
