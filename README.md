@@ -2,7 +2,7 @@
 
 This repo contains Python scripts for verifying the authenticity for named entities in ReadAct.
 
-The goal is to automately extract information about person, space, and institutions from ReadAct/data, then locate the named entity in Wikidata and compare features.
+The goal is to automately extract information about **person**, **space**, and **institutions** from **ReadAct**/data, then use Wikidata as an authenticity sources and compare features.
 
 ## The idea
 #### Autenticity about Person
@@ -14,7 +14,11 @@ For the latter, using MediaWiki API, Q-identifiers are acquired based on Wikiped
 
 #### Autenticity about Space
 
+Two APIs (OpenStreetMap and Wikidata) are under using.
+
 #### Autenticity about Institution
+
+Wikidata to be the authenticity source as well as the other named entities.
 
 
 
@@ -25,16 +29,35 @@ MacOS
 ## Requirement on CSV
 For pre-defined column names, check the definition in [Data Dictionary](https://github.com/readchina/ReadAct/blob/master/csv/data_dictionary.csv).
 
-## How to use
+## How to use the current command line tool
+
+#### Requirements
+
+- Python3.8 or higher version.
+
+- Required dependencies. Can be installed by:
+
+  ```
+  pip install -r requirements.txt		
+  ```
 
 #### Person Lookup
-- Major syntax:
+
+- Example:
 
   ```
-  python
+  python3.8 command_line_tool.py ../CSV/Person.csv
   ```
 
-- Parameters
+  To read a user defined `Person.csv`, check the column names and to update it if necessary. Updated rows will be marked as modified by `SemBot`. 
+
+  The updating can be done based on:
+
+  	- `wikipedia link`
+  	-  `Wikidata id`
+  	-  `family name` and  `first name` (to be implemented)
+
+  At the end, a `statistic` message will be printed out to tell the user how many entries are updated.
 
 
 
