@@ -111,6 +111,7 @@ if __name__ == "__main__":
                         pageprops = list(response['query']['pages'].values())[0]['pageprops']
                     if 'wikibase_item' in pageprops:
                         Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
+                df.at[index, 'wikidata_id'] = Qid
                 dict = sparql_with_Qid(Qid)
                 flag = False
                 if 'gender' in dict:
