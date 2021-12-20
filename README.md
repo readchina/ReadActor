@@ -48,7 +48,12 @@ For pre-defined column names, check the definition in [Data Dictionary](https://
   ```
   python3.8 command_line_tool.py ../CSV/Person.csv
   ```
-
+  or
+  
+  ```
+  python3 command_line_tool.py ../CSV/Person.csv
+  ```
+  
   To read a user defined `Person.csv`, check the column names and to update it if necessary. Updated rows will be marked as modified by `SemBot`. 
 
   The updating can be done based on:
