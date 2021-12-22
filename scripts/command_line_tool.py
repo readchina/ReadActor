@@ -135,6 +135,7 @@ if __name__ == "__main__":
                 name_ordered = order_name_by_language(row)
                 person = sparql_by_name(name_ordered, row['name_lang'], 2)
                 # Not finished yet. This section is used when only name is given, no wikipedia link or wikidata id.
+                print(person)
                 pass
 
     updated_rows_sum = df['last_modified_by'].value_counts().SemBot

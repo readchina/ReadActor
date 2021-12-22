@@ -40,6 +40,14 @@ df.loc[df.shape[0]] = ['', '', 'Sanmao', 'en', '', '0000', '1234', '',
                        'https://zh.wikipedia.org/wiki/%E4%B8%89%E6%AF%9B_(%E4%BD%9C%E5%AE%B6)', '', time.strftime("%Y-%m-%d", time.localtime()), 'QG','', ''] # Correct birthyear and deathyear are 1943 and 1991
 
 
+
+##########################################################
+# Case 4: person not in ReadACT:
+# Given information: Name + name_lang + create time by user + user name.
+##########################################################
+df.loc[df.shape[0]] = ['', 'Neruda', 'Jan', 'en', '', '', '', '',
+                       '', 'Q156321', time.strftime("%Y-%m-%d", time.localtime()), 'QG','', '']
+
 ##########################################################
 # Write dataframe into a tab-seperated CSV in the CSV file.
 ##########################################################
