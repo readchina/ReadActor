@@ -70,36 +70,46 @@ if __name__ == "__main__":
     person_ids_GitHub = df_person_Github['person_id'].tolist()
 
     for index, row in df.iterrows():
-        if row['person_id'] in person_ids_GitHub:
-            # # Choice 1:
-            # df.drop(index, inplace=True)
-            # df.reset_index(drop=True, inplace=True)
-            # print("The entry with 'person_id' ", row['person_id'], " and name ", row['first_name'] + " " + row[
-            #     'family_name'], " exists already in ReadAct. ")
-
-            # Choice 2:
-            for index_GitHub, row_GitHub in df_person_Github.iterrows():
-                if row_GitHub['person_id'] == row['person_id']:
-                    if isinstance(row_GitHub['source_1'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_1']:
-                        wikipdia_link = row_GitHub['source_1']
-                    elif isinstance(row_GitHub['source_2'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_2']:
-                        wikipdia_link = row_GitHub['source_2']
-                    else:
-                        wikipdia_link = ''
-
-                    if wikipdia_link is not None:
-                        wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
-                    else:
-                        wikidata_id = ''
-
-                    df.loc[index] = [row['person_id'], row_GitHub['family_name'], row_GitHub['first_name'],
-                                     row_GitHub[
-                                         'name_lang'], row_GitHub['sex'], row_GitHub['birthyear'],
-                                     row_GitHub['deathyear'],
-                                     row_GitHub['place_of_birth'], wikipdia_link, wikidata_id, row_GitHub['created'],
-                                     row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),
-                                     'SemBot']
-
+        if row['person_id'] in person_ids_GitHub: # Should we just leave this line there or compare all the columns
+            pass
+            # This section needs to be entirely rewrite according to a better designed strategy.
+            # # with ReadAct?
+            # if len(row['wikipedia_link']) < 1:
+            #     for index_GitHub, row_GitHub in df_person_Github.iterrows():
+            #         if row_GitHub['person_id'] == row['person_id']:
+            #             if isinstance(row_GitHub['source_1'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_1']:
+            #                 wikipdia_link = row_GitHub['source_1']
+            #             elif isinstance(row_GitHub['source_2'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_2']:
+            #                 wikipdia_link = row_GitHub['source_2']
+            #             else:
+            #                 wikipdia_link = ''
+            #
+            #             if wikipdia_link is not None:
+            #                 wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
+            #             else:
+            #                 wikidata_id = ''
+            # if len(row['wikidata_id']) < 1:
+            #     pass
+            # # here we must check if wikidata is already existed after the checking of wikipedia link
+            #
+            # # And then check if wikipedia_link field is empty or not:
+            # for index_GitHub, row_GitHub in df_person_Github.iterrows():
+            #     if row_GitHub['person_id'] == row['person_id']:
+            #         if isinstance(row_GitHub['source_1'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_1']:
+            #             wikipdia_link = row_GitHub['source_1']
+            #         elif isinstance(row_GitHub['source_2'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_2']:
+            #             wikipdia_link = row_GitHub['source_2']
+            #         else:
+            #             wikipdia_link = ''
+            #
+            #         if wikipdia_link is not None:
+            #             wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
+            #         else:
+            #             wikidata_id = ''
+            #             df.loc[index] = [row['person_id'], row_GitHub['family_name'], row_GitHub['first_name'],row_GitHub[
+            #                              'name_lang'], row_GitHub['sex'], row_GitHub['birthyear'],row_GitHub['deathyear'],
+            #                              row_GitHub['place_of_birth'], wikipdia_link, wikidata_id, row_GitHub['created'],
+            #                              row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),'SemBot']
         else:
             if len(row['wikidata_id']) > 0:
                 dict = sparql_with_Qid(row['wikidata_id'])
