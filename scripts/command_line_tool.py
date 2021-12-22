@@ -15,22 +15,24 @@ if __name__ == "__main__":
                         'last_modified',
                         'last_modified_by']  # 'wikipedia_link','wikidata_id' are waiting for discussion
 
-    parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
-    parser.add_argument('person_csv', type=str, help="Path of the CSV file to be autofilled")
-    parser.add_argument('--update', help='Iteration through CSV and update it')
-    parser.add_argument('--version', action='version', version='version 1.0.0')
-
-    args = parser.parse_args()
-
-    #################################################################
-    # 1. Check the input Person.csv
-    #################################################################
-    if not args.person_csv.endswith('Person.csv'):
-        print('File invalid. You should use only Person.csv as the first argument\n')
-    else:
-        print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
-
-    df = pd.read_csv(args.person_csv, index_col=0)
+    # parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
+    # parser.add_argument('person_csv', type=str, help="Path of the CSV file to be autofilled")
+    # parser.add_argument('--update', help='Iteration through CSV and update it')
+    # parser.add_argument('--version', action='version', version='version 1.0.0')
+    #
+    # args = parser.parse_args()
+    #
+    # #################################################################
+    # # 1. Check the input Person.csv
+    # #################################################################
+    # if not args.person_csv.endswith('Person.csv'):
+    #     print('File invalid. You should use only Person.csv as the first argument\n')
+    # else:
+    #     print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
+    #
+    # df = pd.read_csv(args.person_csv, index_col=0)
+    path='../CSV/Person.csv'
+    df = pd.read_csv(path, index_col=0)
     df = df.fillna('') # Replace all the nan into empty string
     # print(df)
     if not set(required_columns).issubset(df.columns.tolist()):
@@ -47,6 +49,11 @@ if __name__ == "__main__":
 
     df_person_Github = pd.read_csv(person_csv_github)
     person_ids_GitHub = df_person_Github['person_id'].tolist()
+
+     # An empty list to collect weights if there are multiple returned value from searching by person name
+     # Must be emptyed everytime after the round of iteration
+    l = []
+
     for index, row in df.iterrows():
         if row['person_id'] in person_ids_GitHub:
             # # Choice 1:
@@ -136,7 +143,54 @@ if __name__ == "__main__":
                 person = sparql_by_name(name_ordered, row['name_lang'], 2)
                 # Not finished yet. This section is used when only name is given, no wikipedia link or wikidata id.
                 print(person)
-                pass
+
+                if len(person) == 0:
+                    # print("There is no match for this person entry)
+                    pass
+
+                else:
+                    weight = 0
+                    weights = []
+                    Qids = []
+                    wiki = []
+                    for Q_id, p in person.items():
+                        # all the matched fields will add weight 1 to the total weight for this Q_id
+                        if 'gender' in p:
+                            if p['gender'] == row['sex']:
+                                weight += 1
+                        elif 'birthyear' in p:
+                            if p['birthyear'] in row['birthyear']:
+                                weight += 1
+                        elif 'deathyear' in p:
+                            if p['deathyear'] in row['deathyear']:
+                                weight += 1
+                        elif 'birthplace' in p:
+                            if p['birthplace'] == row['birthplace']:
+                                weight += 1
+
+                        weights.append(weight)
+                        Qids.append(Q_id)
+                        wiki.append(p)
+                        weight = 0
+
+                    l.append(row['name_lang'])
+                    l.append(weights)
+                    l.append(Qids)
+                    l.append(wiki)
+
+                if len(l) > 0 :
+                    # person_weight_dict[row['person_id']].append(l)
+                    pass
+                l = []
+
+        for person_weight_dict
+            pass
+
+
+
+
+
+
 
     updated_rows_sum = df['last_modified_by'].value_counts().SemBot
     rows_sum = len(df.index)

@@ -46,7 +46,7 @@ df.loc[df.shape[0]] = ['', '', 'Sanmao', 'en', '', '0000', '1234', '',
 # Given information: Name + name_lang + create time by user + user name.
 ##########################################################
 df.loc[df.shape[0]] = ['', 'Neruda', 'Jan', 'en', '', '', '', '',
-                       '', 'Q156321', time.strftime("%Y-%m-%d", time.localtime()), 'QG','', '']
+                       '', '', time.strftime("%Y-%m-%d", time.localtime()), 'QG','', '']
 
 ##########################################################
 # Write dataframe into a tab-seperated CSV in the CSV file.
