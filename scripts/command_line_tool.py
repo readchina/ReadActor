@@ -8,6 +8,25 @@ from authenticity_person import order_name_by_language, get_Qid_from_wikipedia_u
 data_dictionary_github = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data_dictionary.csv"
 person_csv_github = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
 
+def update(df, dict):
+    flag = False
+    if 'gender' in dict:
+        df.at[index, 'sex'] = dict['gender']
+        flag = True
+    if 'birthyear' in dict:
+        df.at[index, 'birthyear'] = dict['birthyear']
+        flag = True
+    if 'deathyear' in dict:
+        df.at[index, 'deathyear'] = dict['deathyear']
+        flag = True
+    if 'birthplace' in dict:
+        df.at[index, 'birthplace'] = dict['birthplace']
+        flag = True
+    if flag:
+        df.at[index, 'last_modified'] = time.strftime("%Y-%m-%d", time.localtime())
+        df.at[index, 'last_modified_by'] = 'SemBot'
+    return df
+
 if __name__ == "__main__":
     required_columns = ['person_id', 'family_name', 'first_name', 'name_lang', 'sex',
                         'birthyear', 'deathyear', 'birthplace', 'wikipedia_link', 'wikidata_id', 'created',
@@ -31,9 +50,9 @@ if __name__ == "__main__":
     #     print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
     #
     # df = pd.read_csv(args.person_csv, index_col=0)
-    path='../CSV/Person.csv'
+    path = '../CSV/Person.csv'
     df = pd.read_csv(path, index_col=0)
-    df = df.fillna('') # Replace all the nan into empty string
+    df = df.fillna('')  # Replace all the nan into empty string
     # print(df)
     if not set(required_columns).issubset(df.columns.tolist()):
         print('There must be 14 mandatory columns in CSV table. Please check your file\n')
@@ -49,10 +68,6 @@ if __name__ == "__main__":
 
     df_person_Github = pd.read_csv(person_csv_github)
     person_ids_GitHub = df_person_Github['person_id'].tolist()
-
-     # An empty list to collect weights if there are multiple returned value from searching by person name
-     # Must be emptyed everytime after the round of iteration
-    l = []
 
     for index, row in df.iterrows():
         if row['person_id'] in person_ids_GitHub:
@@ -79,7 +94,8 @@ if __name__ == "__main__":
 
                     df.loc[index] = [row['person_id'], row_GitHub['family_name'], row_GitHub['first_name'],
                                      row_GitHub[
-                        'name_lang'], row_GitHub['sex'], row_GitHub['birthyear'], row_GitHub['deathyear'],
+                                         'name_lang'], row_GitHub['sex'], row_GitHub['birthyear'],
+                                     row_GitHub['deathyear'],
                                      row_GitHub['place_of_birth'], wikipdia_link, wikidata_id, row_GitHub['created'],
                                      row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),
                                      'SemBot']
@@ -87,22 +103,7 @@ if __name__ == "__main__":
         else:
             if len(row['wikidata_id']) > 0:
                 dict = sparql_with_Qid(row['wikidata_id'])
-                flag = False
-                if 'gender' in dict:
-                    df.at[index, 'sex'] = dict['gender']
-                    flag = True
-                if 'birthyear' in dict:
-                    df.at[index, 'birthyear'] = dict['birthyear']
-                    flag = True
-                if 'deathyear' in dict:
-                    df.at[index, 'deathyear'] = dict['deathyear']
-                    flag = True
-                if 'birthplace' in dict:
-                    df.at[index, 'birthplace'] = dict['birthplace']
-                    flag = True
-                if flag == True:
-                    df.at[index, 'last_modified'] = time.strftime("%Y-%m-%d", time.localtime())
-                    df.at[index, 'last_modified_by'] = 'SemBot'
+                df = update(df, dict)
                 # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
                 # combinations.
             elif len(row['wikipedia_link']) > 0:
@@ -120,38 +121,18 @@ if __name__ == "__main__":
                         Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
                 df.at[index, 'wikidata_id'] = Qid
                 dict = sparql_with_Qid(Qid)
-                flag = False
-                if 'gender' in dict:
-                    df.at[index, 'sex'] = dict['gender']
-                    flag = True
-                if 'birthyear' in dict:
-                    df.at[index, 'birthyear'] = dict['birthyear']
-                    flag = True
-                if 'deathyear' in dict:
-                    df.at[index, 'deathyear'] = dict['deathyear']
-                    flag = True
-                if 'birthplace' in dict:
-                    df.at[index, 'birthplace'] = dict['birthplace']
-                    flag = True
-                if flag:
-                    df.at[index, 'last_modified'] = time.strftime("%Y-%m-%d", time.localtime())
-                    df.at[index, 'last_modified_by'] = 'SemBot'
+                df = update(df, dict)
                 # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
                 # combinations.
             else:
                 name_ordered = order_name_by_language(row)
                 person = sparql_by_name(name_ordered, row['name_lang'], 2)
-                # Not finished yet. This section is used when only name is given, no wikipedia link or wikidata id.
-                print(person)
-
                 if len(person) == 0:
-                    # print("There is no match for this person entry)
+                    print("There is no match for this person entry with row index ", index)
                     pass
-
                 else:
                     weight = 0
                     weights = []
-                    Qids = []
                     wiki = []
                     for Q_id, p in person.items():
                         # all the matched fields will add weight 1 to the total weight for this Q_id
@@ -167,39 +148,31 @@ if __name__ == "__main__":
                         elif 'birthplace' in p:
                             if p['birthplace'] == row['birthplace']:
                                 weight += 1
-
                         weights.append(weight)
-                        Qids.append(Q_id)
                         wiki.append(p)
                         weight = 0
+                    if len(wiki) > 0:
+                        max_value = max(weights)
+                        max_index = weights.index(max_value)  # return the first match
+                        if max_value == 0:
+                            dict = wiki[0]
+                        else:
+                            dict = wiki[max_index]
+                        df = update(df, dict)
+                    else:
+                        print('There is no match for row with index ', index)
+                        print('Here is the information contained in this row: \n', row)
 
-                    l.append(row['name_lang'])
-                    l.append(weights)
-                    l.append(Qids)
-                    l.append(wiki)
-
-                if len(l) > 0 :
-                    # person_weight_dict[row['person_id']].append(l)
-                    pass
-                l = []
-
-        for person_weight_dict
-            pass
-
-
-
-
-
-
-
+    # For statistics:
     updated_rows_sum = df['last_modified_by'].value_counts().SemBot
     rows_sum = len(df.index)
-    print("==================================\n==========  Update 1/2  ==========:\n==================================\nFinished "
-          "Updating\n\n")
-    print("==================================\n==========  Update 2/2  "
-          "==========\n==================================\nStatistics: Among all the ", rows_sum, " rows, you have ",
+    print(
+        "==================================\n==========  Update      "
+        "==========:\n==================================\nFinished "
+        "Updating\n\n")
+    print("==================================\n==========  Statistics  "
+          "==========\n==================================\nAmong all the ", rows_sum, " rows, you have ",
           updated_rows_sum, " rows updated\n\n")
 
     with open('../CSV/Person_updated.csv', 'w') as f:
         f.write(df.to_csv())
-
