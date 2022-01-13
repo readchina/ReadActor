@@ -32,7 +32,7 @@ if __name__ == "__main__":
                         'birthyear', 'deathyear', 'birthplace', 'wikipedia_link', 'wikidata_id', 'created',
                         'created_by',
                         'last_modified',
-                        'last_modified_by']  # 'wikipedia_link','wikidata_id' are waiting for discussion
+                        'last_modified_by', 'note']  # 'wikipedia_link','wikidata_id' are waiting for discussion
 
     # parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
     # parser.add_argument('person_csv', type=str, help="Path of the CSV file to be autofilled")
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     #     print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
     #
     # df = pd.read_csv(args.person_csv, index_col=0)
+
     path = '../CSV/Person.csv'
     df = pd.read_csv(path, index_col=0)
     df = df.fillna('')  # Replace all the nan into empty string
@@ -112,28 +113,30 @@ if __name__ == "__main__":
             #                              row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),'SemBot']
         else:
             if len(row['wikidata_id']) > 0:
-                dict = sparql_with_Qid(row['wikidata_id'])
-                df = update(df, dict)
-                # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
-                # combinations.
-            elif len(row['wikipedia_link']) > 0:
-                link = row['wikipedia_link']
-                if len(link) > 30:
-                    language = link[8:10]
-                    name = link[30:]
-                    # Use MediaWiki API to query
-                    link = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + \
-                           name + "&format=json"
-                    response = requests.get(link).json()
-                    if 'pageprops' in list(response['query']['pages'].values())[0]:
-                        pageprops = list(response['query']['pages'].values())[0]['pageprops']
-                    if 'wikibase_item' in pageprops:
-                        Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
-                df.at[index, 'wikidata_id'] = Qid
-                dict = sparql_with_Qid(Qid)
-                df = update(df, dict)
-                # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
-                # combinations.
+                pass
+            #     dict = sparql_with_Qid(row['wikidata_id'])
+            #     df = update(df, dict)
+            #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
+            #     # combinations.
+            # elif len(row['wikipedia_link']) > 0:
+            #     link = row['wikipedia_link']
+            #     if len(link) > 30:
+            #         language = link[8:10]
+            #         name = link[30:]
+            #         # Use MediaWiki API to query
+            #         link = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + \
+            #                name + "&format=json"
+            #         response = requests.get(link).json()
+            #         if 'pageprops' in list(response['query']['pages'].values())[0]:
+            #             pageprops = list(response['query']['pages'].values())[0]['pageprops']
+            #         if 'wikibase_item' in pageprops:
+            #             Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
+            #     df.at[index, 'wikidata_id'] = Qid
+            #     dict = sparql_with_Qid(Qid)
+            #     df = update(df, dict)
+            #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
+            #     # combinations.
+
             else:
                 name_ordered = order_name_by_language(row)
                 person = sparql_by_name(name_ordered, row['name_lang'], 2)
@@ -169,6 +172,7 @@ if __name__ == "__main__":
                         else:
                             dict = wiki[max_index]
                         df = update(df, dict)
+                        df['note'] = "uncertain match"
                     else:
                         print('There is no match for row with index ', index)
                         print('Here is the information contained in this row: \n', row)
