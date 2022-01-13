@@ -34,13 +34,13 @@ if __name__ == "__main__":
                         'last_modified',
                         'last_modified_by', 'note']  # 'wikipedia_link','wikidata_id' are waiting for discussion
 
-    # parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
-    # parser.add_argument('person_csv', type=str, help="Path of the CSV file to be autofilled")
-    # parser.add_argument('--update', help='Iteration through CSV and update it')
-    # parser.add_argument('--version', action='version', version='version 1.0.0')
-    #
-    # args = parser.parse_args()
-    #
+    parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
+    parser.add_argument('person_csv', type=str, help="Path of the CSV file to be autofilled")
+    parser.add_argument('--update', help='Iteration through CSV and update it')
+    parser.add_argument('--version', action='version', version='version 1.0.0')
+
+    args = parser.parse_args()
+
     # #################################################################
     # # 1. Check the input Person.csv
     # #################################################################
