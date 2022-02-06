@@ -43,15 +43,24 @@ def validate(path='../CSV/Person.csv'):
     elif not set(EXPECTED_COL).issubset(set(df.columns.tolist())):
         missing_columns = set(EXPECTED_COL) - set(df.columns.tolist())
         valid = True
-        print('There are 15 expected columns in CSV table.\nYour file is lacking columns:')
+        print('There are 15 expected columns in Person.csv.\nYour file has missing column(s):')
         print(list(missing_columns))
         for i in missing_columns:
             df[i] = ""
-        print(df)
+        df = df[['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
+                        'birthplace', 'wikipedia_link', 'wikidata_id', 'created', 'created_by',
+                        'last_modified', 'last_modified_by', 'note']]
+        print("All the missing columns are inserted to your csv table now.\nNote that columns outside the 15 expected"
+              "columns are dropped.")
         # To Do: rewrite to make sure that each column has a fixed position in any Person.csv
     else:
+        df = df[['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
+                        'birthplace', 'wikipedia_link', 'wikidata_id', 'created', 'created_by',
+                        'last_modified', 'last_modified_by', 'note']]
         valid = True
-        print("--> Validate 2/2 \nAll 14 mandatory columns are included. Well done!\n\n")
+        print("--> Validate 2/2 \nAll 15 expected columns are included.\nPlease note that any irrelevant column will "
+              "be "
+              "dropped.\n")
     return valid
 
 
@@ -74,7 +83,9 @@ if __name__ == "__main__":
     #
     # df = pd.read_csv(args.person_csv, index_col=0)
     validate_result = validate('../CSV/Person.csv')
-
+    if not validate_result:
+        print('Please check your Person.csv and re-run this tool.')
+        quit()
     print('\n======= Finished Checking ========')
 
 
