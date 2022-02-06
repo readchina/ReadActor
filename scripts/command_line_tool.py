@@ -89,13 +89,15 @@ if __name__ == "__main__":
     print('\n======= Finished Checking ========')
 
 
-    # #################################################################
-    # # 2. Update Person.csv
-    # #################################################################
-    #
-    # df_person_Github = pd.read_csv(person_csv_github)
-    # person_ids_GitHub = df_person_Github['person_id'].tolist()
-    #
+    #################################################################
+    # 2. Update Person.csv
+    #################################################################
+
+    df_person_Github = pd.read_csv(PERSON_CSV_GITHUB)
+    person_ids_GitHub = df_person_Github['person_id'].tolist()
+    person_ids_GitHub.sort()
+    last_id_in_GitHub = person_ids_GitHub[-1]
+
     # for index, row in df.iterrows():
     #     if row['person_id'] in person_ids_GitHub: # Should we just leave this line there or compare all the columns
     #         pass
