@@ -61,7 +61,7 @@ def validate(path='../CSV/Person.csv'):
         print("--> Validate 2/2 \nAll 15 expected columns are included.\nPlease note that any irrelevant column will "
               "be "
               "dropped.\n")
-    return valid
+    return valid, df
 
 
 if __name__ == "__main__":
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     #     print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
     #
     # df = pd.read_csv(args.person_csv, index_col=0)
-    validate_result = validate('../CSV/Person.csv')
+    validate_result, df = validate('../CSV/Person.csv')
     if not validate_result:
         print('Please check your Person.csv and re-run this tool.')
         quit()
