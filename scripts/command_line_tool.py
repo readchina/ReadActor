@@ -65,6 +65,42 @@ def validate(path='../CSV/Person.csv'):
     return valid, df
 
 
+def __compare_two_rows(row, row_GH):
+    """
+    This function will be triggered when `person_id` and `wikidata_id` are the same.
+    It will compare the rest fields of two rows from two dataframes seperately.
+
+    :param row: one row from the user-uploaded Person.csv
+    :param row_GH: the row in Person.csv on GitHub which has the same `person_id` and `wikidata_id` with the other
+    parameter
+    :return: True if all are matching, otherwise False
+    """
+    fields_to_be_compared = ['family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
+                        'birthplace', 'wikipedia_link', 'created', 'created_by',
+                        'last_modified', 'last_modified_by', 'note']
+    for i in fields_to_be_compared:
+        if row[i] != row_GH[i]:
+            return False
+    return True
+
+
+def __overwrite(row, row_GH):
+    """
+    This function will overwrite all the fields except `person_id` and `wikidata_id`.
+    :param row: one row from the user-uploaded Person.csv
+    :param row_GH: the row in Person.csv on GitHub which has the same `person_id` and `wikidata_id` with the other
+    parameter
+    :return: row which is modified
+    """
+    fields_to_be_overwritten = ['family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
+                        'birthplace', 'wikipedia_link', 'created', 'created_by',
+                        'last_modified', 'last_modified_by', 'note']
+    for i in fields_to_be_overwritten:
+        if row[i] != row_GH[i]:
+            row[i] = row_GH[i]
+    row['note'] = row['note'].append(', SemBot')
+    return row
+
 if __name__ == "__main__":
 
     # parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
@@ -93,34 +129,58 @@ if __name__ == "__main__":
     #################################################################
     # 2. Update Person.csv
     #################################################################
-
-    df_person_Github = pd.read_csv(PERSON_CSV_GITHUB)
-    with open('../CSV/df_person_Github.csv', 'w') as f:
-        f.write(df_person_Github.to_csv())
-    df_person_Github = pd.read_csv('../CSV/df_person_Github.csv')
-    print("df_person_Github.columns: ", df_person_Github.columns)
-    person_ids_GitHub = df_person_Github['person_id'].tolist()
-    person_ids_GitHub.sort()
-
-    last_id_in_GitHub = person_ids_GitHub[-1]
+    # The following 3 lines should be activaed once this script is done
+    # df_person_Github = pd.read_csv(PERSON_CSV_GITHUB)
+    # with open('../CSV/df_person_Github.csv', 'w') as f:
+    #     f.write(df_person_Github.to_csv())
+    df_person_GH = pd.read_csv('../CSV/df_person_Github.csv')
+    # Get the person_id list from GitHub
+    person_ids_GH = df_person_GH['person_id'].tolist()
+    person_ids_GH.sort()
+    # Get the current last person_id
+    last_id_in_GH = person_ids_GH[-1]
 
     for index, row in df.iterrows():
-        # First, check the `note` field contains "Skip"
+        # if `note` field contains "Skip", skip this line, do nothing to this line
         if row['note'] == 'Skip':
             continue
-
-        # Second, check if `person_id` in GitHub database already
+        # If `person_id` in GitHub database already:
         # If yes, check if `wikidata_id` in GitHub database already
         # If not, use `family_name`, `first_name`, and `name_lang` to query for `wikidata_id`
-        elif row['person_id'] in person_ids_GitHub:
-            print(row['person_id'])
+        elif row['person_id'] in person_ids_GH:
+            print("+++++\nrow['person_id']:", row['person_id'])
+            #`person_id` on GitHub and `wikidata_id` is in this user inputted row
             if len(row['wikidata_id']) > 0:
-                print(df_person_Github.columns)
-                if 'wikidata_id' in df_person_Github.columns:
-                    wikidata_id_GitHub = df_person_Github.loc[df_person_Github['person_id'] == row['person_id'],
-                                                            'wikidata_id']
-                    print(wikidata_id_GitHub)
+                # The same`person_id` on GitHub and there is an `wikidata_id` field on GitHub
+                if 'wikidata_id' in df_person_GH.columns:
+                    # this small section is not tested yet, because there is no `wikidata_id` column in the Person.csv on GitHub yet
+                    row_GH = df_person_GH.loc[df_person_GH['person_id'] == row['person_id']].index[0]
+                    wikidata_id_GH = row_GH['wikidata_id']
+
+                    if wikidata_id_GH == row['wikidata_id']:
+                        res = __compare_two_rows(row, row_GH)
+                        if not res:
+                            row = __overwrite(row, row_GH)
+                        else:
+                            pass
+                    else: # `person_id`s match but `wikidata_id`s are not matching
+                        row['note'] = 'Error: `wikidata_id` is not matching with GitHub data. Please check.'
+                        print('For row', index, ' :\nError: `wikidata_id` is not matching with GitHub data. Please '
+                                                'check your data')
+                else: # `person_id` on GitHub but `wikidata_id` columns does not exist on GitHub, which actually
+            # should not be this case
+                    print('There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to '
+                          'check it.')
                     exit()
+
+
+
+
+            else:  # `person_id` on GitHub but `wikidata_id` not in this user inputted row
+
+
+
+
 
 
             # here we must check if wikidata is already existed after the checking of wikipedia link
