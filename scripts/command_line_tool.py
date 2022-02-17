@@ -11,6 +11,7 @@ EXPECTED_COL = ['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'b
                         'last_modified', 'last_modified_by', 'note']
 MINIMAL_COL = ['family_name', 'first_name', 'name_lang']
 
+
 def update(df, dict):
     flag = False
     if 'gender' in dict:
@@ -50,7 +51,7 @@ def validate(path='../CSV/Person.csv'):
         df = df[['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
                         'birthplace', 'wikipedia_link', 'wikidata_id', 'created', 'created_by',
                         'last_modified', 'last_modified_by', 'note']]
-        print("All the missing columns are inserted to your csv table now.\nNote that columns outside the 15 expected"
+        print("All the missing columns are inserted to your csv table now.\nNote that columns outside the 15 expected "
               "columns are dropped.")
         # To Do: rewrite to make sure that each column has a fixed position in any Person.csv
     else:
@@ -94,15 +95,35 @@ if __name__ == "__main__":
     #################################################################
 
     df_person_Github = pd.read_csv(PERSON_CSV_GITHUB)
+    with open('../CSV/df_person_Github.csv', 'w') as f:
+        f.write(df_person_Github.to_csv())
+    df_person_Github = pd.read_csv('../CSV/df_person_Github.csv')
+    print("df_person_Github.columns: ", df_person_Github.columns)
     person_ids_GitHub = df_person_Github['person_id'].tolist()
     person_ids_GitHub.sort()
+
     last_id_in_GitHub = person_ids_GitHub[-1]
 
     for index, row in df.iterrows():
-        if row['person_id'] in person_ids_GitHub: # Should we just leave this line there or compare all the columns
-            pass
-            # This section needs to be entirely rewrite according to a better designed strategy.
-            # # with ReadAct?
+        # First, check the `note` field contains "Skip"
+        if row['note'] == 'Skip':
+            continue
+
+        # Second, check if `person_id` in GitHub database already
+        # If yes, check if `wikidata_id` in GitHub database already
+        # If not, use `family_name`, `first_name`, and `name_lang` to query for `wikidata_id`
+        elif row['person_id'] in person_ids_GitHub:
+            print(row['person_id'])
+            if len(row['wikidata_id']) > 0:
+                print(df_person_Github.columns)
+                if 'wikidata_id' in df_person_Github.columns:
+                    wikidata_id_GitHub = df_person_Github.loc[df_person_Github['person_id'] == row['person_id'],
+                                                            'wikidata_id']
+                    print(wikidata_id_GitHub)
+                    exit()
+
+
+            # here we must check if wikidata is already existed after the checking of wikipedia link
             # if len(row['wikipedia_link']) < 1:
             #     for index_GitHub, row_GitHub in df_person_Github.iterrows():
             #         if row_GitHub['person_id'] == row['person_id']:
@@ -117,9 +138,7 @@ if __name__ == "__main__":
             #                 wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
             #             else:
             #                 wikidata_id = ''
-            # if len(row['wikidata_id']) < 1:
-            #     pass
-            # # here we must check if wikidata is already existed after the checking of wikipedia link
+
             #
             # # And then check if wikipedia_link field is empty or not:
             # for index_GitHub, row_GitHub in df_person_Github.iterrows():
@@ -139,9 +158,11 @@ if __name__ == "__main__":
             #                              'name_lang'], row_GitHub['sex'], row_GitHub['birthyear'],row_GitHub['deathyear'],
             #                              row_GitHub['place_of_birth'], wikipdia_link, wikidata_id, row_GitHub['created'],
             #                              row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),'SemBot']
+
+
         else:
-            if len(row['wikidata_id']) > 0:
-                pass
+            pass
+
             #     dict = sparql_with_Qid(row['wikidata_id'])
             #     df = update(df, dict)
             #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
@@ -165,56 +186,56 @@ if __name__ == "__main__":
             #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
             #     # combinations.
 
-            else:
-                name_ordered = order_name_by_language(row)
-                person = sparql_by_name(name_ordered, row['name_lang'], 2)
-                if len(person) == 0:
-                    print("There is no match for this person entry with row index ", index)
-                    pass
-                else:
-                    weight = 0
-                    weights = []
-                    wiki = []
-                    for Q_id, p in person.items():
-                        # all the matched fields will add weight 1 to the total weight for this Q_id
-                        if 'gender' in p:
-                            if p['gender'] == row['sex']:
-                                weight += 1
-                        elif 'birthyear' in p:
-                            if p['birthyear'] in row['birthyear']:
-                                weight += 1
-                        elif 'deathyear' in p:
-                            if p['deathyear'] in row['deathyear']:
-                                weight += 1
-                        elif 'birthplace' in p:
-                            if p['birthplace'] == row['birthplace']:
-                                weight += 1
-                        weights.append(weight)
-                        wiki.append(p)
-                        weight = 0
-                    if len(wiki) > 0:
-                        max_value = max(weights)
-                        max_index = weights.index(max_value)  # return the first match
-                        if max_value == 0:
-                            dict = wiki[0]
-                        else:
-                            dict = wiki[max_index]
-                        df = update(df, dict)
-                        df['note'] = "uncertain match"
-                    else:
-                        print('There is no match for row with index ', index)
-                        print('Here is the information contained in this row: \n', row)
-
-    # For statistics:
-    updated_rows_sum = df['last_modified_by'].value_counts().SemBot
-    rows_sum = len(df.index)
-    print(
-        "==================================\n==========  Update      "
-        "==========:\n==================================\nFinished "
-        "Updating\n\n")
-    print("==================================\n==========  Statistics  "
-          "==========\n==================================\nAmong all the ", rows_sum, " rows, you have ",
-          updated_rows_sum, " rows updated\n\n")
-
-    with open('../CSV/Person_updated.csv', 'w') as f:
-        f.write(df.to_csv())
+    #         else:
+    #             name_ordered = order_name_by_language(row)
+    #             person = sparql_by_name(name_ordered, row['name_lang'], 2)
+    #             if len(person) == 0:
+    #                 print("There is no match for this person entry with row index ", index)
+    #                 pass
+    #             else:
+    #                 weight = 0
+    #                 weights = []
+    #                 wiki = []
+    #                 for Q_id, p in person.items():
+    #                     # all the matched fields will add weight 1 to the total weight for this Q_id
+    #                     if 'gender' in p:
+    #                         if p['gender'] == row['sex']:
+    #                             weight += 1
+    #                     elif 'birthyear' in p:
+    #                         if p['birthyear'] in row['birthyear']:
+    #                             weight += 1
+    #                     elif 'deathyear' in p:
+    #                         if p['deathyear'] in row['deathyear']:
+    #                             weight += 1
+    #                     elif 'birthplace' in p:
+    #                         if p['birthplace'] == row['birthplace']:
+    #                             weight += 1
+    #                     weights.append(weight)
+    #                     wiki.append(p)
+    #                     weight = 0
+    #                 if len(wiki) > 0:
+    #                     max_value = max(weights)
+    #                     max_index = weights.index(max_value)  # return the first match
+    #                     if max_value == 0:
+    #                         dict = wiki[0]
+    #                     else:
+    #                         dict = wiki[max_index]
+    #                     df = update(df, dict)
+    #                     df['note'] = "uncertain match"
+    #                 else:
+    #                     print('There is no match for row with index ', index)
+    #                     print('Here is the information contained in this row: \n', row)
+    #
+    # # For statistics:
+    # updated_rows_sum = df['last_modified_by'].value_counts().SemBot
+    # rows_sum = len(df.index)
+    # print(
+    #     "==================================\n==========  Update      "
+    #     "==========:\n==================================\nFinished "
+    #     "Updating\n\n")
+    # print("==================================\n==========  Statistics  "
+    #       "==========\n==================================\nAmong all the ", rows_sum, " rows, you have ",
+    #       updated_rows_sum, " rows updated\n\n")
+    #
+    # with open('../CSV/Person_updated.csv', 'w') as f:
+    #     f.write(df.to_csv())
