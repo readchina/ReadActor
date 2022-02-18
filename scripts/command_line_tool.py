@@ -98,9 +98,7 @@ def __overwrite(row, row_GH):
     for i in fields_to_be_overwritten:
         if row[i] != row_GH[i]:
             row[i] = row_GH[i]
-    if isinstance(row['note'], float):
-        row['note'] = 'SemBot'
-    elif isinstance(row['note'], str):
+    if isinstance(row['note'], str):
         row['note'] = row['note'].append(', SemBot')
     else:
         row['note'] = 'SemBot'
@@ -119,8 +117,7 @@ def __compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
             print("wikidata_id_U: ", wikidata_id_U)
             res = __compare_two_rows(row, row_GH)
             if not res:
-                row = __overwrite(row, row_GH)
-                return row
+                return __overwrite(row, row_GH)
             else:
                 return row
         else: # `person_id`s match but `wikidata_id`s are not matching
@@ -138,6 +135,15 @@ def __compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
         print('There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to '
               'check it.')
         exit()
+
+
+def __check_person_id_size(last_id_in_GH):
+    if int(last_id_in_GH[2:]) > 1999:
+        print("Warning: It is better to update all person_id in the database.")
+        if isinstance(row['note'], str):
+            row['note'] = row['note'].append('. Warning: It is better to update all person_id in the database.')
+        else:
+            row['note'] = 'Warning: It is better to update all person_id in the database.'
 
 
 if __name__ == "__main__":
@@ -206,7 +212,67 @@ if __name__ == "__main__":
                         break # Here, for now, we always only want the first one
                         # To Do: Need to check the order again
                     row = __compare_wikidata_ids(row, wikidata_id_U, df_person_GH)
-                print("\n\n\n\"row\", after updated: ", row)
+                # print("\n\n\n\"row\", after updated: ", row)
+                print("---$$$", index)
+
+            # When the given `person_id` is not in GitHub database
+            else:
+                print("---$$$", index)
+                __check_person_id_size(last_id_in_GH)
+
+                print('MOEWMOEW MOEWMOEW', row['person_id'])
+                if isinstance(row['wikidata_id'], str):
+                    if len(row['wikidata_id']) > 0:
+                        print(row['wikidata_id'])
+                        if 'wikidata_id' in df_person_GH.columns:
+                            if row['wikidata_id'] in df_person_GH['wikidata_id'].tolist():
+                                row_GH_index = df_person_GH.index[(df_person_GH['wikidata_id'] == row['wikidata_id']) & (df_person_GH['name_lang'] == row['name_lang'])].tolist()[0]
+                                row_GH = df_person_GH.iloc[row_GH_index]
+                                wikidata_id_GH = row_GH['wikidata_id']
+                                res = __compare_two_rows(row, row_GH)
+                                if not res:
+                                    __overwrite(row, row_GH)
+                                    row['person_id'] = row_GH['person_id']
+                            else:
+                                row['person_id'] = "AG" + str(int(last_id_in_GH[2:]) + 1)
+                                last_id_in_GH = row['person_id']
+                                wikidata_id_U = row['wikidata_id']
+                                person_dict = sparql_with_Qid(wikidata_id_U)
+                                for key in list(person_dict.keys()):
+                                    if key in ['birthyear', 'deathyear']:
+                                        row[key] = person_dict[key]
+                                    if key == 'birthplace':
+                                        row['place_of_birth'] = person_dict[key]
+                                    if key == 'gender':
+                                        row['sex'] = person_dict[key]
+                        else:
+                            print('There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to '
+              'check it.')
+                            exit()
+                    else:  # will the empty cell for `wikidata_id` be always `str` ? check the influence of how the
+                        # table is constructed
+                        names = order_name_by_language(row)
+                        person = sparql_by_name(names, row['name_lang'], 2)
+                        print('$$$$$$$', person)
+                        wikidata_id_U = ''
+                        for key in person.keys():
+                            wikidata_id_U = key
+                            break
+                        row['wikidata_id'] = wikidata_id_U
+                        person_dict = sparql_with_Qid(wikidata_id_U)
+                        print("~~~~~~~\n", person_dict)
+                        for key in list(person_dict.keys()):
+                            if key in ['birthyear', 'deathyear']:
+                                row[key] = person_dict[key]
+                            if key == 'birthplace':
+                                row['place_of_birth'] = person_dict[key]
+                            if key == 'gender':
+                                row['sex'] = person_dict[key]
+
+
+
+
+
 
 
                 # here we must check if wikidata is already existed after the checking of wikipedia link
@@ -246,8 +312,7 @@ if __name__ == "__main__":
                 #                              row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),'SemBot']
 
 
-            else:
-                pass
+
 
                 #     dict = sparql_with_Qid(row['wikidata_id'])
                 #     df = update(df, dict)
