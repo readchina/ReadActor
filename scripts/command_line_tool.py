@@ -99,7 +99,6 @@ def __overwrite(row, row_GH):
         if row[i] != row_GH[i]:
             row[i] = row_GH[i]
     if isinstance(row['note'], float):
-        print(row['note'])
         row['note'] = 'SemBot'
     elif isinstance(row['note'], str):
         row['note'] = row['note'].append(', SemBot')
@@ -108,8 +107,7 @@ def __overwrite(row, row_GH):
     return row
 
 
-
-def compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
+def __compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
     if 'wikidata_id' in df_person_GH.columns:
         row_GH_index = df_person_GH.index[(df_person_GH['person_id'] == row['person_id']) & (
                 df_person_GH['name_lang'] == row['name_lang'])].tolist()[0]
@@ -117,6 +115,8 @@ def compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
         wikidata_id_GH = row_GH['wikidata_id']
 
         if wikidata_id_GH == wikidata_id_U:
+            print("\n\nwikidata_id_GH:", wikidata_id_GH)
+            print("wikidata_id_U: ", wikidata_id_U)
             res = __compare_two_rows(row, row_GH)
             if not res:
                 row = __overwrite(row, row_GH)
@@ -124,6 +124,8 @@ def compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
             else:
                 return row
         else: # `person_id`s match but `wikidata_id`s are not matching
+            print("\n\nwikidata_id_GH:", wikidata_id_GH)
+            print("wikidata_id_U: ", wikidata_id_U)
             row['note'] = 'Error: `wikidata_id` is not matching with GitHub data. Please check.'
             print('\n\nError: \nFor row', index, ' :\nError: `wikidata_id` is not matching with '
                                                   'GitHub '
@@ -188,24 +190,23 @@ if __name__ == "__main__":
         else:
             if row['person_id'] in person_ids_GH:
                 #`person_id` on GitHub, `wikidata_id` is in this user inputted row
-                if isinstance(row['wikidata_id'], str):
+                if len(row['wikidata_id'])>0:
                     wikidata_id_U = row['wikidata_id']
                     # The same `person_id` on GitHub, there is an `wikidata_id` field on GitHub
-                    row = compare_wikidata_ids(row, wikidata_id_U, df_person_GH)
+                    row = __compare_wikidata_ids(row, wikidata_id_U, df_person_GH)
 
                 # `person_id` on GitHub, but `wikidata_id` not in this user inputted row
                 # Should use `family_name`, `first_name`, `name_lang`, to query for `wikidata_id`.
                 else:
                     names = order_name_by_language(row)
                     person = sparql_by_name(names, row['name_lang'], 2)
-                    print('@@@@@@@@@@@@')
+                    wikidata_id_U = ''
                     for key in person.keys():
-
                         wikidata_id_U = key
                         break # Here, for now, we always only want the first one
                         # To Do: Need to check the order again
-                    row = compare_wikidata_ids(row, wikidata_id_U, df_person_GH)
-
+                    row = __compare_wikidata_ids(row, wikidata_id_U, df_person_GH)
+                print("\n\n\n\"row\", after updated: ", row)
 
 
                 # here we must check if wikidata is already existed after the checking of wikipedia link
