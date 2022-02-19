@@ -210,6 +210,8 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                             row['note'] = 'Warning: Wrong wikidata_id. By SemBot.'
                         return row, last_person_id
             else:
+                row['person_id'] = "AG" + str(int(last_person_id[2:]) + 1)
+                last_person_id = row['person_id']
                 names = order_name_by_language(row)
                 person = sparql_by_name(names, row['name_lang'], 2)
                 if len(person) == 0:
@@ -271,9 +273,6 @@ if __name__ == "__main__":
         row, last_person_id = __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id)
     with open('../CSV/Person_updated_V2.csv', 'w') as f:
         f.write(df.to_csv())
-
-
-
 
 
 
