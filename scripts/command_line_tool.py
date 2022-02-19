@@ -152,27 +152,28 @@ def __get_last_id(df):
     return person_ids_GH[-1], person_ids_GH
 
 
-def __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_gh):
+def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
+    last_person_id = __get_last_id(person_ids_gh)
     if row['note'] == 'Skip':
-        return row
+        return row, last_person_id
     else:
         if row['person_id'] in person_ids_gh:
             if (isinstance(row['wikidata_id'], str) is True) and (len(row['wikidata_id']) > 0):
                 wikidata_id_usr = row['wikidata_id']
-                return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh)
+                return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh), last_person_id
             else:
                 names = order_name_by_language(row)
                 person = sparql_by_name(names, row['name_lang'], 2)
                 if len(person) > 0:
                     wikidata_id_usr = next(iter(person))
-                    return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh)
+                    return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh), last_person_id
                 else:
                     print('Warning: No match in Wikidata database. By SemBot.')
                     if isinstance(row['note'], str):
                         row['note'] = row['note'] + ' Warning: No match in Wikidata database. By SemBot.'
                     else:
                         row['note'] = 'Warning: No match in Wikidata database. By SemBot.'
-                    return row
+                    return row, last_person_id
 
         # When the given `person_id` is not in GitHub database
         else:
@@ -186,10 +187,10 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_gh):
                     if not res:
                         row = __overwrite(row, row_gh)
                         row['person_id'] = row_gh['person_id']
-                        return row
+                        return row, last_person_id
                 else:
-                    row['person_id'] = "AG" + str(int(last_id_gh[2:]) + 1)
-                    last_id_in_gh = row['person_id']
+                    row['person_id'] = "AG" + str(int(last_person_id[2:]) + 1)
+                    last_person_id = row['person_id']
                     wikidata_id_usr = row['wikidata_id']
                     person_dict = sparql_with_Qid(wikidata_id_usr)
                     for key in list(person_dict.keys()):
@@ -199,6 +200,7 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_gh):
                             row['place_of_birth'] = person_dict[key]
                         if key == 'gender':
                             row['sex'] = person_dict[key]
+                    return row, last_person_id
 
             else:  # will the empty cell for `wikidata_id` be always `str` ? check the influence of how the
                 # table is constructed
@@ -211,6 +213,7 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_gh):
                         row['note'] = row['note'] + ' Warning: No match in Wikidata database.'
                     else:
                         row['note'] = 'Warning: No match in Wikidata database.'
+                    return row, last_person_id
                 else:
                     wikidata_id_usr = ''
                     for key in person.keys():
@@ -227,7 +230,7 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_gh):
                             row['place_of_birth'] = person_dict[key]
                         if key == 'gender':
                             row['sex'] = person_dict[key]
-        return row
+        return row, last_person_id
 
 
 
@@ -266,7 +269,7 @@ if __name__ == "__main__":
     __check_gh(df_person_gh)
     last_id_GH, person_ids_gh = __get_last_id(df_person_gh)
     for index, row in df.iterrows():
-        row = __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_GH)
+        row, last_person_id = __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id)
     with open('../CSV/Person_updated_V2.csv', 'w') as f:
         f.write(df.to_csv())
 
