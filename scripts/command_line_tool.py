@@ -65,13 +65,13 @@ def validate(path='../CSV/Person.csv'):
     return valid, df
 
 
-def __compare_two_rows(row, row_GH):
+def __compare_two_rows(row, row_gh):
     """
     This function will be triggered when `person_id` and `wikidata_id` are the same.
     It will compare the rest fields of two rows from two dataframes seperately.
 
     :param row: one row from the user-uploaded Person.csv
-    :param row_GH: the row in Person.csv on GitHub which has the same `person_id` and `wikidata_id` with the other
+    :param row_gh: the row in Person.csv on GitHub which has the same `person_id` and `wikidata_id` with the other
     parameter
     :return: True if all are matching, otherwise False
     """
@@ -79,78 +79,156 @@ def __compare_two_rows(row, row_GH):
                              'place_of_birth', 'wikipedia_link', 'created', 'created_by',
                              'last_modified', 'last_modified_by', 'note']
     for i in fields_to_be_compared:
-        if row[i] != row_GH[i]:
+        if row[i] != row_gh[i]:
             return False
     return True
 
 
-def __overwrite(row, row_GH):
+def __overwrite(row, row_gh):
     """
     This function will overwrite all the fields except `person_id` and `wikidata_id`.
     :param row: one row from the user-uploaded Person.csv
-    :param row_GH: the row in Person.csv on GitHub which has the same `person_id` and `wikidata_id` with the other
+    :param row_gh: the row in Person.csv on GitHub which has the same `person_id` and `wikidata_id` with the other
     parameter
     :return: row which is modified
     """
     fields_to_be_overwritten = ['family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
                                 'place_of_birth', 'wikipedia_link', 'created', 'created_by',
                                 'last_modified', 'last_modified_by', 'note']
+    note_flag = False
     for i in fields_to_be_overwritten:
-        if row[i] != row_GH[i]:
-            row[i] = row_GH[i]
-    if isinstance(row['note'], str):
-        row['note'] = row['note'] + ', SemBot'
-    else:
-        row['note'] = 'SemBot'
+        if row[i] != row_gh[i]:
+            row[i] = row_gh[i]
+            note_flag = True
+    if note_flag:
+        if isinstance(row['note'], str):
+            row['note'] = row['note'] + ' Overwritten.  By SemBot.'
+        else:
+            row['note'] = ' Overwritten.  By SemBot.'
     return row
 
 
 def __compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
-    if 'wikidata_id' in df_person_GH.columns:
-        row_GH_index = df_person_GH.index[(df_person_GH['person_id'] == row['person_id']) & (
-                df_person_GH['name_lang'] == row['name_lang'])].tolist()[0]
-        row_GH = df_person_GH.iloc[row_GH_index]
-        wikidata_id_GH = row_GH['wikidata_id']
-
-        if wikidata_id_GH == wikidata_id_U:
-            print("\n\nwikidata_id_GH:", wikidata_id_GH)
-            print("wikidata_id_U: ", wikidata_id_U)
-            res = __compare_two_rows(row, row_GH)
-            if not res:
-                return __overwrite(row, row_GH)
-            else:
-                return row
-        else:  # `person_id`s match but `wikidata_id`s are not matching
-            print("\n\nwikidata_id_GH:", wikidata_id_GH)
-            print("wikidata_id_U: ", wikidata_id_U)
-            row['note'] = 'Error: `wikidata_id` is not matching with GitHub data. Please check.'
-            print('\n\nError: \nFor row', index, ' :\nError: `wikidata_id` is not matching with '
-                                                 'GitHub '
-                                                 'data. '
-                                                 'Please '
-                                                 'check your data')
-            return row
-    else:  # `person_id` on GitHub but `wikidata_id` columns does not exist on GitHub, which actually
-        # should not be this case
-        print('There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to '
-              'check it.')
-        exit()
+    row_gh_index = df_person_GH.index[(df_person_GH['person_id'] == row['person_id']) & (
+            df_person_GH['name_lang'] == row['name_lang'])].tolist()[0]
+    row_GH = df_person_GH.iloc[row_gh_index]
+    wikidata_id_GH = row_GH['wikidata_id']
+    print("\nwikidata_id_GH:", wikidata_id_GH)
+    print("\nwikidata_id_U: ", wikidata_id_U)
+    if wikidata_id_GH == wikidata_id_U:
+        res = __compare_two_rows(row, row_GH)
+        if not res:
+            return __overwrite(row, row_GH)
+    else:  # `person_id`s match but `wikidata_id`s are not matching
+        row['note'] = 'Error: `wikidata_id` is not matching with GitHub data. Please check. By SemBot.'
+        print('\n\nError: \nFor row', index, ' :\nError: `wikidata_id` is not matching with GitHub data. Please check. By SemBot.')
+    return row
 
 
-def __check_person_id_size(last_id_in_GH):
-    if int(last_id_in_GH[2:]) > 1999:
-        print("Warning: It is better to update all person_id in the database.")
+def __check_person_id_size(last_id_in_gh):
+    if int(last_id_in_gh[2:]) >= 1999:
+        print("Warning: It is better to update all person_id in the database. By SemBot.")
         if isinstance(row['note'], str):
-            row['note'] = row['note'] + '. Warning: It is better to update all person_id in the database.'
+            row['note'] = row['note'] + ' Warning: It is better to update all person_id in the database. By SemBot.'
         else:
-            row['note'] = 'Warning: It is better to update all person_id in the database.'
+            row['note'] = 'Warning: It is better to update all person_id in the database. By SemBot.'
 
 
-def __check_GH(df_person_GH): # a function to check if Person.csv on GitHub has `wikidata_id` column
-    if 'wikidata_id' not in df_person_GH.columns:
+def __check_gh(df):  # a function to check if Person.csv on GitHub has `wikidata_id` column and
+    # 'wikipedia_link' column
+    if 'wikidata_id' not in df.columns:
         print('There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to '
-              'check it.')
+              'check it. By SemBot.')
         exit()
+    if 'wikipedia_link' not in df.columns:
+        print('There is no `wikipedia_link` column in the Person.csv on GitHub. Please inform someone to '
+              'check it. By SemBot.')
+        exit()
+
+
+def __get_last_id(df):
+    person_ids_GH = df['person_id'].tolist()
+    person_ids_GH.sort()
+    return person_ids_GH[-1], person_ids_GH
+
+
+def __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_gh):
+    if row['note'] == 'Skip':
+        return row
+    else:
+        if row['person_id'] in person_ids_gh:
+            if (isinstance(row['wikidata_id'], str) is True) and (len(row['wikidata_id']) > 0):
+                wikidata_id_usr = row['wikidata_id']
+                return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh)
+            else:
+                names = order_name_by_language(row)
+                person = sparql_by_name(names, row['name_lang'], 2)
+                if len(person) > 0:
+                    wikidata_id_usr = next(iter(person))
+                    return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh)
+                else:
+                    print('Warning: No match in Wikidata database. By SemBot.')
+                    if isinstance(row['note'], str):
+                        row['note'] = row['note'] + ' Warning: No match in Wikidata database. By SemBot.'
+                    else:
+                        row['note'] = 'Warning: No match in Wikidata database. By SemBot.'
+                    return row
+
+        # When the given `person_id` is not in GitHub database
+        else:
+            __check_person_id_size(last_id_gh)
+            if (isinstance(row['wikidata_id'], str) is True) and (len(row['wikidata_id']) > 0):
+                if row['wikidata_id'] in df_person_gh['wikidata_id'].tolist():
+                    row_gh_index = df_person_gh.index[(df_person_gh['wikidata_id'] == row['wikidata_id']) & (
+                            df_person_gh['name_lang'] == row['name_lang'])].tolist()[0]
+                    row_gh = df_person_gh.iloc[row_gh_index]
+                    res = __compare_two_rows(row, row_gh)
+                    if not res:
+                        row = __overwrite(row, row_gh)
+                        row['person_id'] = row_gh['person_id']
+                        return row
+                else:
+                    row['person_id'] = "AG" + str(int(last_id_gh[2:]) + 1)
+                    last_id_in_gh = row['person_id']
+                    wikidata_id_usr = row['wikidata_id']
+                    person_dict = sparql_with_Qid(wikidata_id_usr)
+                    for key in list(person_dict.keys()):
+                        if key in ['birthyear', 'deathyear']:
+                            row[key] = person_dict[key]
+                        if key == 'birthplace':
+                            row['place_of_birth'] = person_dict[key]
+                        if key == 'gender':
+                            row['sex'] = person_dict[key]
+
+            else:  # will the empty cell for `wikidata_id` be always `str` ? check the influence of how the
+                # table is constructed
+                names = order_name_by_language(row)
+                person = sparql_by_name(names, row['name_lang'], 2)
+                print('$$$$$$$', person)
+                if len(person) == 0:
+                    print("Warning: No match in Wikidata database.")
+                    if isinstance(row['note'], str):
+                        row['note'] = row['note'] + ' Warning: No match in Wikidata database.'
+                    else:
+                        row['note'] = 'Warning: No match in Wikidata database.'
+                else:
+                    wikidata_id_usr = ''
+                    for key in person.keys():
+                        wikidata_id_usr = key
+                        break
+                    row['wikidata_id'] = wikidata_id_usr
+                    person_dict = person[wikidata_id_usr]
+                    wikidata_id_usr = ''
+                    print("~~~~~~~\n", person_dict)
+                    for key in list(person_dict.keys()):
+                        if key in ['birthyear', 'deathyear']:
+                            row[key] = person_dict[key]
+                        if key == 'birthplace':
+                            row['place_of_birth'] = person_dict[key]
+                        if key == 'gender':
+                            row['sex'] = person_dict[key]
+        return row
+
 
 
 if __name__ == "__main__":
@@ -173,7 +251,7 @@ if __name__ == "__main__":
     # df = pd.read_csv(args.person_csv, index_col=0)
     validate_result, df = validate('../CSV/Person.csv')
     if not validate_result:
-        print('Please check your Person.csv and re-run this tool.')
+        print('Please check your Person.csv and re-run this tool. By SemBot.')
         quit()
     print('\n======= Finished Checking ========')
 
@@ -184,166 +262,77 @@ if __name__ == "__main__":
     # df_person_Github = pd.read_csv(PERSON_CSV_GITHUB)
     # with open('../CSV/df_person_Github.csv', 'w') as f:
     #     f.write(df_person_Github.to_csv())
-    df_person_GH = pd.read_csv('../CSV/df_person_Github_fake.csv')  # unofficial version
-    __check_GH(df_person_GH)
-    # Get the person_id list from GitHub
-    person_ids_GH = df_person_GH['person_id'].tolist()
-    person_ids_GH.sort()
-    # Get the current last person_id
-    last_id_in_GH = person_ids_GH[-1]
-
+    df_person_gh = pd.read_csv('../CSV/df_person_Github_fake.csv')  # unofficial version
+    __check_gh(df_person_gh)
+    last_id_GH, person_ids_gh = __get_last_id(df_person_gh)
     for index, row in df.iterrows():
-        # if `note` field contains "Skip", skip this line, do nothing to this line
-        if row['note'] == 'Skip':
-            continue
-        # If `person_id` in GitHub database already:
-        # If yes, check if `wikidata_id` in GitHub database already
-        # If not, use `family_name`, `first_name`, and `name_lang` to query for `wikidata_id`
-        else:
-            if row['person_id'] in person_ids_GH:
-                # `person_id` on GitHub, `wikidata_id` is in this user inputted row
-                if len(row['wikidata_id']) > 0:
-                    wikidata_id_U = row['wikidata_id']
-                    # The same `person_id` on GitHub, there is an `wikidata_id` field on GitHub
-                    row = __compare_wikidata_ids(row, wikidata_id_U, df_person_GH)
-
-                # `person_id` on GitHub, but `wikidata_id` not in this user inputted row
-                # Should use `family_name`, `first_name`, `name_lang`, to query for `wikidata_id`.
-                else:
-                    names = order_name_by_language(row)
-                    person = sparql_by_name(names, row['name_lang'], 2)
-                    wikidata_id_U = ''
-                    for key in person.keys():
-                        wikidata_id_U = key
-                        break  # Here, for now, we always only want the first one
-                        # To Do: Need to check the order again
-                    row = __compare_wikidata_ids(row, wikidata_id_U, df_person_GH)
-                # print("\n\n\n\"row\", after updated: ", row)
-                print("---$$$", index)
-
-            # When the given `person_id` is not in GitHub database
-            else:
-                print("---$$$", index)
-                __check_person_id_size(last_id_in_GH)
-
-                print('MOEWMOEW MOEWMOEW', row['person_id'])
-                if (isinstance(row['wikidata_id'], str) == True) and (len(row['wikidata_id']) > 0):
-                    print(row['wikidata_id'])
-                    if 'wikidata_id' in df_person_GH.columns:
-                        if row['wikidata_id'] in df_person_GH['wikidata_id'].tolist():
-                            row_GH_index = df_person_GH.index[(df_person_GH['wikidata_id'] == row['wikidata_id']) & (
-                                        df_person_GH['name_lang'] == row['name_lang'])].tolist()[0]
-                            row_GH = df_person_GH.iloc[row_GH_index]
-                            wikidata_id_GH = row_GH['wikidata_id']
-                            res = __compare_two_rows(row, row_GH)
-                            if not res:
-                                __overwrite(row, row_GH)
-                                row['person_id'] = row_GH['person_id']
-                        else:
-                            row['person_id'] = "AG" + str(int(last_id_in_GH[2:]) + 1)
-                            last_id_in_GH = row['person_id']
-                            wikidata_id_U = row['wikidata_id']
-                            person_dict = sparql_with_Qid(wikidata_id_U)
-                            for key in list(person_dict.keys()):
-                                if key in ['birthyear', 'deathyear']:
-                                    row[key] = person_dict[key]
-                                if key == 'birthplace':
-                                    row['place_of_birth'] = person_dict[key]
-                                if key == 'gender':
-                                    row['sex'] = person_dict[key]
-                    else:
-                        print('There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to '
-                              'check it.')
-                        exit()
-                else:  # will the empty cell for `wikidata_id` be always `str` ? check the influence of how the
-                    # table is constructed
-                    names = order_name_by_language(row)
-                    person = sparql_by_name(names, row['name_lang'], 2)
-                    print('$$$$$$$', person)
-                    if len(person) == 0:
-                        print("Warning: No match in Wikidata database.")
-                        if isinstance(row['note'], str):
-                            row['note'] = row['note'] + '. Warning: It is better to update all person_id in the ' \
-                                                      'database.'
-                        else:
-                            row['note'] = 'Warning: No match in Wikidata database.'
-                    else:
-                        wikidata_id_U = ''
-                        for key in person.keys():
-                            wikidata_id_U = key
-                            break
-                        row['wikidata_id'] = wikidata_id_U
-                        person_dict = person[wikidata_id_U]
-                        wikidata_id_U = ''
-                        print("~~~~~~~\n", person_dict)
-                        for key in list(person_dict.keys()):
-                            if key in ['birthyear', 'deathyear']:
-                                row[key] = person_dict[key]
-                            if key == 'birthplace':
-                                row['place_of_birth'] = person_dict[key]
-                            if key == 'gender':
-                                row['sex'] = person_dict[key]
-
+        row = __check_each_row(index, row, df_person_gh, person_ids_gh, last_id_GH)
     with open('../CSV/Person_updated_V2.csv', 'w') as f:
         f.write(df.to_csv())
-                # here we must check if wikidata is already existed after the checking of wikipedia link
-                # if len(row['wikipedia_link']) < 1:
-                #     for index_GitHub, row_GitHub in df_person_Github.iterrows():
-                #         if row_GitHub['person_id'] == row['person_id']:
-                #             if isinstance(row_GitHub['source_1'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_1']:
-                #                 wikipdia_link = row_GitHub['source_1']
-                #             elif isinstance(row_GitHub['source_2'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_2']:
-                #                 wikipdia_link = row_GitHub['source_2']
-                #             else:
-                #                 wikipdia_link = ''
-                #
-                #             if wikipdia_link is not None:
-                #                 wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
-                #             else:
-                #                 wikidata_id = ''
 
-                #
-                # # And then check if wikipedia_link field is empty or not:
-                # for index_GitHub, row_GitHub in df_person_Github.iterrows():
-                #     if row_GitHub['person_id'] == row['person_id']:
-                #         if isinstance(row_GitHub['source_1'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_1']:
-                #             wikipdia_link = row_GitHub['source_1']
-                #         elif isinstance(row_GitHub['source_2'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_2']:
-                #             wikipdia_link = row_GitHub['source_2']
-                #         else:
-                #             wikipdia_link = ''
-                #
-                #         if wikipdia_link is not None:
-                #             wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
-                #         else:
-                #             wikidata_id = ''
-                #             df.loc[index] = [row['person_id'], row_GitHub['family_name'], row_GitHub['first_name'],row_GitHub[
-                #                              'name_lang'], row_GitHub['sex'], row_GitHub['birthyear'],row_GitHub['deathyear'],
-                #                              row_GitHub['place_of_birth'], wikipdia_link, wikidata_id, row_GitHub['created'],
-                #                              row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),'SemBot']
 
-                #     dict = sparql_with_Qid(row['wikidata_id'])
-                #     df = update(df, dict)
-                #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
-                #     # combinations.
-                # elif len(row['wikipedia_link']) > 0:
-                #     link = row['wikipedia_link']
-                #     if len(link) > 30:
-                #         language = link[8:10]
-                #         name = link[30:]
-                #         # Use MediaWiki API to query
-                #         link = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + \
-                #                name + "&format=json"
-                #         response = requests.get(link).json()
-                #         if 'pageprops' in list(response['query']['pages'].values())[0]:
-                #             pageprops = list(response['query']['pages'].values())[0]['pageprops']
-                #         if 'wikibase_item' in pageprops:
-                #             Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
-                #     df.at[index, 'wikidata_id'] = Qid
-                #     dict = sparql_with_Qid(Qid)
-                #     df = update(df, dict)
-                #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
-                #     # combinations.
+
+
+
+
+        # here we must check if wikidata is already existed after the checking of wikipedia link
+        # if len(row['wikipedia_link']) < 1:
+        #     for index_GitHub, row_GitHub in df_person_Github.iterrows():
+        #         if row_GitHub['person_id'] == row['person_id']:
+        #             if isinstance(row_GitHub['source_1'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_1']:
+        #                 wikipdia_link = row_GitHub['source_1']
+        #             elif isinstance(row_GitHub['source_2'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_2']:
+        #                 wikipdia_link = row_GitHub['source_2']
+        #             else:
+        #                 wikipdia_link = ''
+        #
+        #             if wikipdia_link is not None:
+        #                 wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
+        #             else:
+        #                 wikidata_id = ''
+
+        #
+        # # And then check if wikipedia_link field is empty or not:
+        # for index_GitHub, row_GitHub in df_person_Github.iterrows():
+        #     if row_GitHub['person_id'] == row['person_id']:
+        #         if isinstance(row_GitHub['source_1'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_1']:
+        #             wikipdia_link = row_GitHub['source_1']
+        #         elif isinstance(row_GitHub['source_2'], str) and ".wikipedia.org/wiki/" in row_GitHub['source_2']:
+        #             wikipdia_link = row_GitHub['source_2']
+        #         else:
+        #             wikipdia_link = ''
+        #
+        #         if wikipdia_link is not None:
+        #             wikidata_id = get_Qid_from_wikipedia_url(row_GitHub)
+        #         else:
+        #             wikidata_id = ''
+        #             df.loc[index] = [row['person_id'], row_GitHub['family_name'], row_GitHub['first_name'],row_GitHub[
+        #                              'name_lang'], row_GitHub['sex'], row_GitHub['birthyear'],row_GitHub['deathyear'],
+        #                              row_GitHub['place_of_birth'], wikipdia_link, wikidata_id, row_GitHub['created'],
+        #                              row_GitHub['created_by'], time.strftime("%Y-%m-%d", time.localtime()),'SemBot']
+
+        #     dict = sparql_with_Qid(row['wikidata_id'])
+        #     df = update(df, dict)
+        #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
+        #     # combinations.
+        # elif len(row['wikipedia_link']) > 0:
+        #     link = row['wikipedia_link']
+        #     if len(link) > 30:
+        #         language = link[8:10]
+        #         name = link[30:]
+        #         # Use MediaWiki API to query
+        #         link = "https://" + language + ".wikipedia.org/w/api.php?action=query&prop=pageprops&titles=" + \
+        #                name + "&format=json"
+        #         response = requests.get(link).json()
+        #         if 'pageprops' in list(response['query']['pages'].values())[0]:
+        #             pageprops = list(response['query']['pages'].values())[0]['pageprops']
+        #         if 'wikibase_item' in pageprops:
+        #             Qid = list(response['query']['pages'].values())[0]['pageprops']['wikibase_item']
+        #     df.at[index, 'wikidata_id'] = Qid
+        #     dict = sparql_with_Qid(Qid)
+        #     df = update(df, dict)
+        #     # Here, in the future, can check if name returned by SPARQL in a list of family_name, first_name
+        #     # combinations.
 
         #         else:
         #             name_ordered = order_name_by_language(row)
