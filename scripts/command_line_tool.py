@@ -11,25 +11,24 @@ EXPECTED_COL = ['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'b
                 'last_modified', 'last_modified_by', 'note']
 MINIMAL_COL = ['family_name', 'first_name', 'name_lang']
 
-
-def update(df, dict):
-    flag = False
-    if 'gender' in dict:
-        df.at[index, 'sex'] = dict['gender']
-        flag = True
-    if 'birthyear' in dict:
-        df.at[index, 'birthyear'] = dict['birthyear']
-        flag = True
-    if 'deathyear' in dict:
-        df.at[index, 'deathyear'] = dict['deathyear']
-        flag = True
-    if 'place_of_birth' in dict:
-        df.at[index, 'place_of_birth'] = dict['place_of_birth']
-        flag = True
-    if flag:
-        df.at[index, 'last_modified'] = time.strftime("%Y-%m-%d", time.localtime())
-        df.at[index, 'last_modified_by'] = 'SemBot'
-    return df
+# def update(df, dict):
+#     flag = False
+#     if 'gender' in dict:
+#         df.at[index, 'sex'] = dict['gender']
+#         flag = True
+#     if 'birthyear' in dict:
+#         df.at[index, 'birthyear'] = dict['birthyear']
+#         flag = True
+#     if 'deathyear' in dict:
+#         df.at[index, 'deathyear'] = dict['deathyear']
+#         flag = True
+#     if 'place_of_birth' in dict:
+#         df.at[index, 'place_of_birth'] = dict['place_of_birth']
+#         flag = True
+#     if flag:
+#         df.at[index, 'last_modified'] = time.strftime("%Y-%m-%d", time.localtime())
+#         df.at[index, 'last_modified_by'] = 'SemBot'
+#     return df
 
 
 def validate(path='../CSV/Person.csv'):
@@ -108,20 +107,21 @@ def __overwrite(row, row_gh):
     return row
 
 
-def __compare_wikidata_ids(row, wikidata_id_U, df_person_GH):
+def __compare_wikidata_ids(index, row, wikidata_id_usr, df_person_GH):
     row_gh_index = df_person_GH.index[(df_person_GH['person_id'] == row['person_id']) & (
             df_person_GH['name_lang'] == row['name_lang'])].tolist()[0]
     row_GH = df_person_GH.iloc[row_gh_index]
-    wikidata_id_GH = row_GH['wikidata_id']
-    print("\nwikidata_id_GH:", wikidata_id_GH)
-    print("\nwikidata_id_U: ", wikidata_id_U)
-    if wikidata_id_GH == wikidata_id_U:
+    wikidata_id_gh = row_GH['wikidata_id']
+    print("\nwikidata_id_gh:", wikidata_id_gh)
+    print("\nwikidata_id_usr: ", wikidata_id_usr)
+    if wikidata_id_gh == wikidata_id_usr:
         res = __compare_two_rows(row, row_GH)
         if not res:
             return __overwrite(row, row_GH)
     else:  # `person_id`s match but `wikidata_id`s are not matching
         row['note'] = 'Error: `wikidata_id` is not matching with GitHub data. Please check. By SemBot.'
-        print('\n\nError: \nFor row', index, ' :\nError: `wikidata_id` is not matching with GitHub data. Please check. By SemBot.')
+        print('\nFor row', index, ' :', 'Error: `wikidata_id` is not matching with GitHub data. Please check. By \
+                SemBot.')
     return row
 
 
@@ -160,15 +160,15 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
         if row['person_id'] in person_ids_gh:
             if (isinstance(row['wikidata_id'], str) is True) and (len(row['wikidata_id']) > 0):
                 wikidata_id_usr = row['wikidata_id']
-                return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh), last_person_id
+                return __compare_wikidata_ids(index, row, wikidata_id_usr, df_person_gh), last_person_id
             else:
                 names = order_name_by_language(row)
                 person = sparql_by_name(names, row['name_lang'], 2)
                 if len(person) > 0:
                     wikidata_id_usr = next(iter(person))
-                    return __compare_wikidata_ids(row, wikidata_id_usr, df_person_gh), last_person_id
+                    return __compare_wikidata_ids(index, row, wikidata_id_usr, df_person_gh), last_person_id
                 else:
-                    print('Warning: No match in Wikidata database. By SemBot.')
+                    print('\nFor row', index, ' :', 'Warning: No match in Wikidata database. By SemBot.')
                     if isinstance(row['note'], str):
                         row['note'] = row['note'] + ' Warning: No match in Wikidata database. By SemBot.'
                     else:
@@ -203,7 +203,7 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                                 row['sex'] = person_dict[key]
                         return row, last_person_id
                     else:
-                        print('Warning: Wrong wikidata_id. By SemBot.')
+                        print('\nFor row', index, ' :', 'Warning: Wrong wikidata_id. By SemBot.')
                         if isinstance(row['note'], str):
                             row['note'] = row['note'] + ' Warning: Wrong wikidata_id. By SemBot.'
                         else:
@@ -215,7 +215,7 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                 names = order_name_by_language(row)
                 person = sparql_by_name(names, row['name_lang'], 2)
                 if len(person) == 0:
-                    print("Warning: No match in Wikidata database.")
+                    print('\nFor row', index, ' :', "Warning: No match in Wikidata database.")
                     if isinstance(row['note'], str):
                         row['note'] = row['note'] + ' Warning: No match in Wikidata database.'
                     else:
