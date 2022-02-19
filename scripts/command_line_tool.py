@@ -153,7 +153,7 @@ def __get_last_id(df):
 
 
 def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
-    last_person_id = __get_last_id(person_ids_gh)
+
     if row['note'] == 'Skip':
         return row, last_person_id
     else:
@@ -177,7 +177,7 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
 
         # When the given `person_id` is not in GitHub database
         else:
-            __check_person_id_size(last_id_gh)
+            __check_person_id_size(last_person_id)
             if (isinstance(row['wikidata_id'], str) is True) and (len(row['wikidata_id']) > 0):
                 if row['wikidata_id'] in df_person_gh['wikidata_id'].tolist():
                     row_gh_index = df_person_gh.index[(df_person_gh['wikidata_id'] == row['wikidata_id']) & (
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     #     f.write(df_person_Github.to_csv())
     df_person_gh = pd.read_csv('../CSV/df_person_Github_fake.csv')  # unofficial version
     __check_gh(df_person_gh)
-    last_id_GH, person_ids_gh = __get_last_id(df_person_gh)
+    last_person_id, person_ids_gh = __get_last_id(df_person_gh)
     for index, row in df.iterrows():
         row, last_person_id = __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id)
     with open('../CSV/Person_updated_V2.csv', 'w') as f:
