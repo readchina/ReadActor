@@ -193,20 +193,25 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                     last_person_id = row['person_id']
                     wikidata_id_usr = row['wikidata_id']
                     person_dict = sparql_with_Qid(wikidata_id_usr)
-                    for key in list(person_dict.keys()):
-                        if key in ['birthyear', 'deathyear']:
-                            row[key] = person_dict[key]
-                        if key == 'birthplace':
-                            row['place_of_birth'] = person_dict[key]
-                        if key == 'gender':
-                            row['sex'] = person_dict[key]
-                    return row, last_person_id
-
-            else:  # will the empty cell for `wikidata_id` be always `str` ? check the influence of how the
-                # table is constructed
+                    if len([person_dict]) > 0:
+                        for key in list(person_dict.keys()):
+                            if key in ['birthyear', 'deathyear']:
+                                row[key] = person_dict[key]
+                            if key == 'birthplace':
+                                row['place_of_birth'] = person_dict[key]
+                            if key == 'gender':
+                                row['sex'] = person_dict[key]
+                        return row, last_person_id
+                    else:
+                        print('Warning: Wrong wikidata_id. By SemBot.')
+                        if isinstance(row['note'], str):
+                            row['note'] = row['note'] + ' Warning: Wrong wikidata_id. By SemBot.'
+                        else:
+                            row['note'] = 'Warning: Wrong wikidata_id. By SemBot.'
+                        return row, last_person_id
+            else:
                 names = order_name_by_language(row)
                 person = sparql_by_name(names, row['name_lang'], 2)
-                print('$$$$$$$', person)
                 if len(person) == 0:
                     print("Warning: No match in Wikidata database.")
                     if isinstance(row['note'], str):
@@ -215,14 +220,9 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                         row['note'] = 'Warning: No match in Wikidata database.'
                     return row, last_person_id
                 else:
-                    wikidata_id_usr = ''
-                    for key in person.keys():
-                        wikidata_id_usr = key
-                        break
+                    wikidata_id_usr = next(iter(person))
                     row['wikidata_id'] = wikidata_id_usr
                     person_dict = person[wikidata_id_usr]
-                    wikidata_id_usr = ''
-                    print("~~~~~~~\n", person_dict)
                     for key in list(person_dict.keys()):
                         if key in ['birthyear', 'deathyear']:
                             row[key] = person_dict[key]
@@ -230,8 +230,7 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                             row['place_of_birth'] = person_dict[key]
                         if key == 'gender':
                             row['sex'] = person_dict[key]
-        return row, last_person_id
-
+                    return row, last_person_id
 
 
 if __name__ == "__main__":
