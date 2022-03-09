@@ -7,7 +7,7 @@ from authenticity_person import order_name_by_language, get_Qid_from_wikipedia_u
 DATA_DICTIONARY_GITHUG = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data_dictionary.csv"
 PERSON_CSV_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
 EXPECTED_COL = ['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
-                'place_of_birth', 'wikipedia_link', 'wikidata_id', 'created', 'created_by',
+                'place_of_birth', 'wikidata_id', 'created', 'created_by',
                 'last_modified', 'last_modified_by', 'note']
 MINIMAL_COL = ['family_name', 'first_name', 'name_lang']
 
@@ -152,7 +152,6 @@ def __get_last_id(df):
 
 
 def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
-
     if row['note'] == 'Skip':
         return row, last_person_id
     else:
@@ -188,8 +187,8 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                         row['person_id'] = row_gh['person_id']
                         return row, last_person_id
                 else:
-                    row['person_id'] = "AG" + str(int(last_person_id[2:]) + 1)
-                    last_person_id = row['person_id']
+                    # row['person_id'] = "AG" + str(int(last_person_id[2:]) + 1)
+                    # last_person_id = row['person_id']
                     wikidata_id_usr = row['wikidata_id']
                     person_dict = sparql_with_Qid(wikidata_id_usr)
                     if len([person_dict]) > 0:
@@ -209,8 +208,11 @@ def __check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id):
                             row['note'] = 'Warning: Wrong wikidata_id. By SemBot.'
                         return row, last_person_id
             else:
-                row['person_id'] = "AG" + str(int(last_person_id[2:]) + 1)
-                last_person_id = row['person_id']
+                if isinstance(row['person_id'], str) and (len(row['person_id']) > 0):
+                    pass
+                else:
+                    row['person_id'] = "AG" + str(int(last_person_id[2:]) + 1)
+                    last_person_id = row['person_id']
                 names = order_name_by_language(row)
                 person = sparql_by_name(names, row['name_lang'], 2)
                 if len(person) == 0:
@@ -254,7 +256,7 @@ if __name__ == "__main__":
     # df = pd.read_csv(args.person_csv, index_col=0)
     validate_result, df = validate('../CSV/Person.csv')
     if not validate_result:
-        print('Please check your Person.csv and re-run this tool. By SemBot.')
+        print('Error: Please check your Person.csv and re-run this tool. By SemBot.')
         quit()
     print('\n======= Finished Checking ========')
 
