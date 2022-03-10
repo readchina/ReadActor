@@ -103,7 +103,7 @@ def __overwrite(row, row_gh):
         if isinstance(row['note'], str):
             row['note'] = row['note'] + ' Overwritten.  By SemBot.'
         else:
-            row['note'] = ' Overwritten.  By SemBot.'
+            row['note'] = 'Overwritten.  By SemBot.'
     return row
 
 
