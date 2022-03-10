@@ -75,7 +75,7 @@ def __compare_two_rows(row, row_gh):
     :return: True if all are matching, otherwise False
     """
     fields_to_be_compared = ['family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
-                             'place_of_birth', 'wikipedia_link', 'created', 'created_by',
+                             'place_of_birth', 'created', 'created_by',
                              'last_modified', 'last_modified_by', 'note']
     for i in fields_to_be_compared:
         if row[i] != row_gh[i]:
@@ -92,7 +92,7 @@ def __overwrite(row, row_gh):
     :return: row which is modified
     """
     fields_to_be_overwritten = ['family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
-                                'place_of_birth', 'wikipedia_link', 'created', 'created_by',
+                                'place_of_birth', 'created', 'created_by',
                                 'last_modified', 'last_modified_by', 'note']
     note_flag = False
     for i in fields_to_be_overwritten:
@@ -112,7 +112,7 @@ def __compare_wikidata_ids(index, row, wikidata_id_usr, df_person_GH):
             df_person_GH['name_lang'] == row['name_lang'])].tolist()[0]
     row_GH = df_person_GH.iloc[row_gh_index]
     wikidata_id_gh = row_GH['wikidata_id']
-    print("wikidata_id_gh:", wikidata_id_gh)
+    print("wikidata_id_gh: ", wikidata_id_gh)
     print("wikidata_id_usr: ", wikidata_id_usr)
     if wikidata_id_gh == wikidata_id_usr:
         res = __compare_two_rows(row, row_GH)
