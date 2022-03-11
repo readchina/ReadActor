@@ -3,7 +3,8 @@ import sys
 import time
 import pandas as pd
 
-from authenticity_person import order_name_by_language, get_Qid_from_wikipedia_url, sparql_with_Qid, sparql_by_name
+from scripts.authenticity_person import order_name_by_language, get_Qid_from_wikipedia_url, sparql_with_Qid, \
+    sparql_by_name
 
 DATA_DICTIONARY_GITHUG = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data_dictionary.csv"
 PERSON_CSV_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"

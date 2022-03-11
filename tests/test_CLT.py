@@ -1,7 +1,7 @@
 import unittest
 
 import pandas as pd
-from command_line_tool import check_each_row, get_last_id
+from scripts.command_line_tool import check_each_row, get_last_id
 
 
 class MyTestCase(unittest.TestCase):
