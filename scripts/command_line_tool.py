@@ -2,6 +2,7 @@ import argparse
 import sys
 import time
 import pandas as pd
+import logging
 
 from scripts.authenticity_person import order_name_by_language, get_Qid_from_wikipedia_url, sparql_with_Qid, \
     sparql_by_name
@@ -382,12 +383,23 @@ def check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id, wiki
 
 if __name__ == "__main__":
 
-    # parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
-    # parser.add_argument('person_csv', type=str, help="Path of the CSV file to be autofilled")
-    # parser.add_argument('--update', help='Iteration through CSV and update it')
-    # parser.add_argument('--version', action='version', version='version 1.0.0')
-    #
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Validate CSV columns and auto fill information for Person')
+    parser.add_argument('person_csv', type=str, help="Path of the CSV file to be autofilled")
+    parser.add_argument('--update', help='Iteration through CSV and update it')
+    parser.add_argument('--version', action='version', version='version 1.0.0', help="print version")
+    parser.add_argument('-v', '--verbose',
+                    action='count',
+                    dest='verbosity',
+                    default=0,
+                    help="verbose output (repeat for increased verbosity)")
+    parser.add_argument('-q', '--quiet',
+                    action='store_const',
+                    const=-1,
+                    default=0,
+                    dest='verbosity',
+                    help="quiet output (show errors only)")
+
+    args = parser.parse_args()
 
     # #################################################################
     # # 1. Check the input Person.csv
