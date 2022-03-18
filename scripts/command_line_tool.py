@@ -236,15 +236,19 @@ def check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id, wiki
                             note_flag = False
                             modified_fields = ['wikidata_id']
                             if 'gender' in person_dict and row['sex'] != person_dict['gender']:
+                                row['sex'] = person_dict['gender']
                                 modified_fields.append('sex')
                                 note_flag = True
                             if 'birthyear' in person_dict and row['birthyear'] != person_dict['birthyear']:
+                                row['birthyear'] = person_dict['birthyear']
                                 modified_fields.append('birthyear')
                                 note_flag = True
                             if 'deathyear' in person_dict and row['deathyear'] != person_dict['deathyear']:
+                                row['deathyear'] = person_dict['deathyear']
                                 modified_fields.append('deathyear')
                                 note_flag = True
                             if 'birthplace' in person_dict and row['place_of_birth'] != person_dict['birthplace']:
+                                row['place_of_birth'] = person_dict['birthplace']
                                 modified_fields.append('place_of_birth')
                                 note_flag = True
                             if note_flag:
@@ -295,15 +299,19 @@ def check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id, wiki
                     note_flag = False
                     modified_fields = ['person_id']
                     if 'gender' in person_dict and row['sex'] != person_dict['gender']:
+                        row['sex'] = person_dict['gender']
                         modified_fields.append('sex')
                         note_flag = True
                     if 'birthyear' in person_dict and row['birthyear'] != person_dict['birthyear']:
+                        row['birthyear'] = person_dict['birthyear']
                         modified_fields.append('birthyear')
                         note_flag = True
                     if 'deathyear' in person_dict and row['deathyear'] != person_dict['deathyear']:
+                        row['deathyear'] = person_dict['deathyear']
                         modified_fields.append('deathyear')
                         note_flag = True
                     if 'birthplace' in person_dict and row['place_of_birth'] != person_dict['birthplace']:
+                        row['place_of_birth'] = person_dict['birthplace']
                         modified_fields.append('place_of_birth')
                         note_flag = True
                     if note_flag:
