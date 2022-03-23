@@ -1,9 +1,12 @@
-
+# IDE and OS helpers
 .idea/
 .DS_Store
-Python scripts/queryLuXun.py
-Python scripts/extractWikidataProperties.py
-Python scripts/compareID.py
-scripts/__pycache__/authenticity_person.cpython-38.pyc
-scripts/__pycache__/authenticity_person.cpython-37.pyc
-scripts/__pycache__/authenticity_space.cpython-37.pyc
+.vscode/
+
+# These should be cleaned up before release see #36, #35
+# queryLuXun.py
+# extractWikidataProperties.py
+# compareID.py
+
+__pycache__/*.pyc
+
