@@ -30,7 +30,8 @@ jobs:
       - name: Check tool version
         run: python scripts/command_line_tool.py --version
       - name: Run Tests
-        run: echo "fix me"
+        working-directory: ./scripts
+        run: python command_line_tool.py test
 # see https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
   # deploy: 
   #   runs-on: ubuntu-latest
