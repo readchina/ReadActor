@@ -10,7 +10,14 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2.2.2
         with:
-          python-version: 3.9
+          python-version: 3.8
+      - name: Use pip Cache  
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-            
       - name: Install Python dependencies
         uses: py-actions/py-dependency-install@v3
         with:
