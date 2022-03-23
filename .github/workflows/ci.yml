@@ -28,7 +28,7 @@ jobs:
         with:
           path: "requirements.txt"
       - name: Check tool version
-        run: echo "fix me"
+        run: python scripts/command_line_tool.py --version
       - name: Run Tests
         run: echo "fix me"
 # see https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
