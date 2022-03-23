@@ -4,7 +4,7 @@ import time
 import pandas as pd
 import logging
 
-from scripts.authenticity_person import order_name_by_language, get_Qid_from_wikipedia_url, sparql_with_Qid, \
+from authenticity_person import order_name_by_language, get_Qid_from_wikipedia_url, sparql_with_Qid, \
     sparql_by_name
 
 DATA_DICTIONARY_GITHUG = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data_dictionary.csv"
