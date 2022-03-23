@@ -1,7 +1,12 @@
-
+# IDE and OS helpers
 .idea/
 .DS_Store
-Python scripts/queryLuXun.py
-Python scripts/extractWikidataProperties.py
-Python scripts/compareID.py
-*.pyc
+.vscode/
+
+# These should be cleaned up before release see #36, #35
+# queryLuXun.py
+# extractWikidataProperties.py
+# compareID.py
+
+__pycache__/*.pyc
+
