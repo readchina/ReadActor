@@ -4,13 +4,17 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.8', '3.9', '3.10' ]
+    name: Python ${{ matrix.python-version }} sample
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Python
-        uses: actions/setup-python@v2.2.2
+        uses: actions/setup-python@v3
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python-version }}
       - name: Use pip Cache  
         uses: actions/cache@v2
         with:
