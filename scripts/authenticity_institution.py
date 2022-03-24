@@ -11,7 +11,7 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 import time
 import requests
 from wikibaseintegrator import wbi_core
-from authenticity_space import read_space_csv
+from scripts.authenticity_space import read_space_csv
 
 URL = "https://query.wikidata.org/sparql"
 QUERY1 = """

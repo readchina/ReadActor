@@ -28,10 +28,11 @@ jobs:
         with:
           path: "requirements.txt"
       - name: Check tool version
-        run: python scripts/command_line_tool.py --version
-      - name: Run Tests
-        working-directory: ./scripts
-        run: python command_line_tool.py test
+        run: python -m scripts.command_line_tool --version
+      # - name: Run Old Tests
+      #   run: python -m test scripts.command_line_tool  
+      - name: Run New Tests
+        run: python -m tests.test_CLT -v        
 # see https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
   # deploy: 
   #   runs-on: ubuntu-latest
