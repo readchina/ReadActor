@@ -62,7 +62,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.code, "For row0 : Error: `wikidata_id` does not match GitHub data. Please "
                                             "check. By SemBot.")
 
-    def test_should_new_person_but_given_wikiId_already_in_ReadAct_expect_error(
+    def test_should_personID_NOT_in_ReadAct_but_wikiId_in_ReadAct_expect_error(
             self):
         self.l = ['AG1200', 'Monet', 'Claude', 'en', 'male', '1840', '1926', 'Paris', 'Q23114', '2021-12-22', 'QG', '',
                   '', '']
@@ -74,7 +74,7 @@ class MyTestCase(unittest.TestCase):
                          "For row0 :Error: `wikidata_id` already exists in GitHub data but the `person_id` does not "
                          "match. Please check.")
 
-    def test_should_two_new_ids_and_person_infos_match_WikiData_infos_expect_no_change(
+    def test_should_two_ids_NOT_in_ReadAct_and_person_infos_match_query_expect_no_change(
             self):
         self.l = ['AG1200', 'Monet', 'Claude', 'en', 'male', '1840', '1926', 'Paris', 'Q296', '2021-12-22', 'QG', '',
                   '', '']
@@ -85,7 +85,7 @@ class MyTestCase(unittest.TestCase):
                                                                                   'Q296',
                                                                                   '2021-12-22', 'QG', '', ''])
 
-    def test_should_two_new_ids_and_person_infos_NOT_match_WikiData_expect_updating_unmached_cells(
+    def test_should_two_ids_NOT_in_ReadAct_and_person_infos_NOT_match_query_expect_update_unmached_cells(
             self):
         self.l = ['AG1200', 'Monet', 'Claude', 'en', '', '', '', '', 'Q296', '2021-12-22', 'QG', '',
                   '', '']
@@ -95,7 +95,7 @@ class MyTestCase(unittest.TestCase):
                                                                                   'male', '1840', '1926', 'Paris',
                                                                                   'Q296', '2021-12-22', 'QG', '', ''])
 
-    def test_should_new_person_but_queried_wikiId_already_in_ReadAct_expect_errorß(
+    def test_should_queried_WikiID_in_ReadAct_for_new_person_expect_error(
             self):
         self.l = ['AG1200', '鲁', '迅', 'zh', '', '', '', '', '', '2021-12-22', 'QG', '', '', '']
         self.df.loc[0] = self.l
@@ -110,7 +110,7 @@ class MyTestCase(unittest.TestCase):
                                             "in Wikidata database. Please put \"skip\" in \"note\" column for this "
                                             "row and run this program again. By SemBot.")
 
-    def test_should_new_person_has_infos_match_WikiData_infos_expect_only_update_WikiId(
+    def test_should_new_person_has_infos_match_WikiData_info_expect_only_update_WikiId(
             self):
         self.l = ['AG1200', 'Monet', 'Claude', 'en', 'male', '1840', '1926', 'Paris', '', '2021-12-22', 'QG', '',
                   '', '']
