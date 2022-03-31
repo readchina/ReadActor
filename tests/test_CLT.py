@@ -95,7 +95,7 @@ class MyTestCase(unittest.TestCase):
                                                                                   'male', '1840', '1926', 'Paris',
                                                                                   'Q296', '2021-12-22', 'QG', '', ''])
 
-    def test_should_new_person_but_queried_wikiId_already_in_ReadAct_expect_errorß(
+    def test_should_new_person_but_queried_wikiId_already_in_ReadAct_expect_error(
             self):
         self.l = ['AG1200', '鲁', '迅', 'zh', '', '', '', '', '', '2021-12-22', 'QG', '', '', '']
         self.df.loc[0] = self.l
