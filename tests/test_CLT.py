@@ -95,7 +95,7 @@ class MyTestCase(unittest.TestCase):
                                                                                   'male', '1840', '1926', 'Paris',
                                                                                   'Q296', '2021-12-22', 'QG', '', ''])
 
-    def test_should_person_id_not_in_readact_and_no_input_wikidata_id_and_get_a_wikidata_id_by_query_by_name_and_this_wikidata_id_in_readcact_expect_error_require_check(
+    def test_should_queried_WikiID_in_ReadAct_for_new_person_expect_error(
             self):
         self.l = ['AG1200', '鲁', '迅', 'zh', '', '', '', '', '', '2021-12-22', 'QG', '', '', '']
         self.df.loc[0] = self.l
@@ -110,7 +110,7 @@ class MyTestCase(unittest.TestCase):
                                             "in Wikidata database. Please put \"skip\" in \"note\" column for this "
                                             "row and run this program again. By SemBot.")
 
-    def test_should_person_id_not_in_readact_and_no_input_wikidata_id_and_get_a_wikidata_id_by_query_by_name_and_this_wikidata_id_not_in_readcact_and_4_fields_match_query_result_expect_no_change(
+    def test_should_new_person_has_infos_match_WikiData_info_expect_only_update_WikiId(
             self):
         self.l = ['AG1200', 'Monet', 'Claude', 'en', 'male', '1840', '1926', 'Paris', '', '2021-12-22', 'QG', '',
                   '', '']
@@ -120,8 +120,7 @@ class MyTestCase(unittest.TestCase):
                                                                                   'male', '1840', '1926', 'Paris',
                                                                                   'Q296', '2021-12-22', 'QG', '', ''])
 
-    # def test_11_should_query_wiki_id_without_person_wiki_id_
-    def should_person_id_not_in_readact_and_no_input_wikidata_id_and_get_a_wikidata_id_by_query_by_name_and_this_wikidata_id_not_in_readcact_but_4_fields_not_matched_wikidata_query_result_expect_update_unmached_cells(
+    def should_new_person_has_infos_NOT_match_WikiData_expect_update_with_WikiData(
             self):
         self.l = ['AG1200', 'Monet', 'Claude', 'en', 'male', '1840', '1926', 'Tokyo', '', '2021-12-22', 'QG', '',
                   '', '']
