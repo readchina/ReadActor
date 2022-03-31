@@ -4,13 +4,15 @@
 .vscode/
 
 # These should be cleaned up before release see #36, #35
-# queryLuXun.py
 # extractWikidataProperties.py
 # compareID.py
 
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Logging
+*.log
 
 # C extensions
 *.so

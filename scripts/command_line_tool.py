@@ -7,6 +7,14 @@ from scripts.authenticity_person import order_name_by_language, get_Qid_from_wik
     sparql_by_name
 from datetime import date
 
+# Create and configure logger
+logging.basicConfig(filename="sembot.log",
+                    format='%(asctime)s %(message)s',
+                    filemode='w')
+
+# Creating an object
+logger = logging.getLogger()
+
 DATA_DICTIONARY_GITHUG = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data_dictionary.csv"
 PERSON_CSV_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
 EXPECTED_COL = ['person_id', 'family_name', 'first_name', 'name_lang', 'sex', 'birthyear', 'deathyear',
