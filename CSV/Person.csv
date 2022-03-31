@@ -1,6 +1,6 @@
 ,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,created,created_by,last_modified,last_modified_by,note
 0,AG2000,Zhang,San,en,male,1999,,Berlin,,2021-12-22,QG,,,skip
-1,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114000,2021-12-22,QG,,,
+1,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,
 ,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,
