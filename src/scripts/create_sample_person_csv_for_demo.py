@@ -51,5 +51,5 @@ df.loc[df.shape[0]] = ['', 'Neruda', 'Jan', 'en', '', '', '', '',
 ##########################################################
 # Write dataframe into a tab-seperated CSV in the CSV file.
 ##########################################################
-with open('../CSV/Person.csv', 'w') as f:
+with open('../src/CSV/Person.csv', 'w') as f:
     f.write(df.to_csv())
