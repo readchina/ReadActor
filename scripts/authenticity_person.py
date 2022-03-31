@@ -1,5 +1,5 @@
 """
-This is a python script to check authenticity of Named Entities in /Readact/csv/CSV and in SCB.
+This is a python script to cross-reference Person entities in Readact and SCB with wikidata.
 Main idea:
 - Read ReadAct CSV files, get names as lookups
 - Get the Q-identifier with library wikibaseintegrator for each lookup

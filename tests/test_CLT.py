@@ -103,7 +103,7 @@ class MyTestCase(unittest.TestCase):
                            self.wikidata_ids_GH)
         self.assertEqual(cm.exception.code, "For row0 :Error: `wikidata_id` queried by family_name, first_name, "
                                             "name_lang already exists in "
-                                            "ReadAct data, but your inputted person_id does not match. Please check "
+                                            "ReadAct data, but your provided person_id does not match. Please check "
                                             "your data carefully. If you are 100% sure that your input is correct, "
                                             "then it is likely that this person has an identical name with a person "
                                             "in Wikidata database. Please put \"skip\" in \"note\" column for this "
