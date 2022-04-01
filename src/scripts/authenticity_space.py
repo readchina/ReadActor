@@ -9,13 +9,16 @@ This is a python script to check authenticity of Named Entities in /Readact/csv/
 """
 
 import csv
-import requests
+
 import pandas as pd
+import requests
 from wikibaseintegrator import wbi_core
 from wikidataintegrator import wdi_core
 
 
-def read_space_csv(space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"):
+def read_space_csv(
+    space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
+):
     """
     A function to read "Space.csv" for now.
     :param filename: "Space.csv" for now
@@ -45,8 +48,13 @@ def compare_to_openstreetmap(geo_code_dict):
         if v[1] != "L" and v[0] != "unknown":
             lat = str(v[2])
             lon = str(v[3])
-            url = "https://nominatim.openstreetmap.org/reverse?format=xml&lat=" + lat + "&lon=" + lon + \
-                  "&zoom=18&addressdetails=1&format=json&accept-language=en"
+            url = (
+                "https://nominatim.openstreetmap.org/reverse?format=xml&lat="
+                + lat
+                + "&lon="
+                + lon
+                + "&zoom=18&addressdetails=1&format=json&accept-language=en"
+            )
             data = requests.get(url)
             if v[0].lower() not in str(data.json()).lower():
                 no_match_list.append(v)
@@ -75,8 +83,15 @@ def geo_code_compare(no_match_list):
                 break
             for i_wiki in coordinate_list:
                 # If the difference are within +-0.9, consider a match, no collection, break nested loop
-                if (float(abs(i_wiki[0])) - 0.9 <= float(i[2]) <= float(abs(i_wiki[0])) + 0.9) and \
-                        (float(abs(i_wiki[1])) - 0.9 <= float(i[3]) <= float(abs(i_wiki[1])) + 0.9):
+                if (
+                    float(abs(i_wiki[0])) - 0.9
+                    <= float(i[2])
+                    <= float(abs(i_wiki[0])) + 0.9
+                ) and (
+                    float(abs(i_wiki[1])) - 0.9
+                    <= float(i[3])
+                    <= float(abs(i_wiki[1])) + 0.9
+                ):
                     i = ""
                     break
             if len(i) > 0:
@@ -93,8 +108,7 @@ def _get_q_ids(lookup=None):
     :return: a list of item identifiers (all)
     """
     e = wbi_core.FunctionsEngine()
-    instance = e.get_search_results(search_string=lookup,
-                                    search_type='item')
+    instance = e.get_search_results(search_string=lookup, search_type="item")
 
     if len(instance) > 0:
         # Speed up with less accuracy, use:
@@ -122,14 +136,19 @@ def _get_coordinate_from_wikidata(q_ids):
         if "P625" in data["claims"]:
             # Iteration, in case one wikidata entity has several coordinate entries.
             for element in data["claims"]["P625"]:
-                coordinate_value = element['mainsnak']['datavalue']['value']
-                coordinate_list.append((coordinate_value['latitude'], coordinate_value['longitude']))
+                coordinate_value = element["mainsnak"]["datavalue"]["value"]
+                coordinate_list.append(
+                    (coordinate_value["latitude"],
+                     coordinate_value["longitude"])
+                )
     return coordinate_list
 
 
 if __name__ == "__main__":
     # To compare the extracting coordinate location with the info in Space.csv
-    space_url = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
+    space_url = (
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
+    )
     geo_code_dict = read_space_csv(space_url)
     print(geo_code_dict)
     print("---------")

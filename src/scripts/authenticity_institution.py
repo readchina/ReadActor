@@ -6,11 +6,13 @@ Main idea:
 - Use SPARQL to retrieve the property we need
 - Compare wikidata item properties with CSV in ReadAct
 """
-import pandas as pd
-from SPARQLWrapper import SPARQLWrapper, JSON
 import time
+
+import pandas as pd
 import requests
+from SPARQLWrapper import JSON, SPARQLWrapper
 from wikibaseintegrator import wbi_core
+
 from scripts.authenticity_space import read_space_csv
 
 URL = "https://query.wikidata.org/sparql"
@@ -68,8 +70,11 @@ GROUP BY ?inst ?instLabel ?headquartersLabel ?administrativeTerritorialEntityLab
 LIMIT 150
 """
 
-def read_institution_csv(inst_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
-                                  "/Institution.csv"):
+
+def read_institution_csv(
+    inst_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
+    "/Institution.csv",
+):
     """
     A function to read "Person.csv".
     :param filename: "Person.csv".
@@ -110,32 +115,32 @@ def compare(inst_dict, sleep=2):
         if not inst_wiki_dict or len(inst_wiki_dict) == 0:
             no_match_list.append((k, v))
             continue
-        elif 'headquarters' in inst_wiki_dict:
-            for h in inst_wiki_dict['headquarters']:
+        elif "headquarters" in inst_wiki_dict:
+            for h in inst_wiki_dict["headquarters"]:
                 if h == v[0]:
                     print("A match: ", k, v)
                     break
                 else:
                     no_match_list.append((k, v))
                     continue
-        elif 'administrativeTerritorialEntity' in inst_wiki_dict:
-            for a in inst_wiki_dict['administrativeTerritorialEntity']:
+        elif "administrativeTerritorialEntity" in inst_wiki_dict:
+            for a in inst_wiki_dict["administrativeTerritorialEntity"]:
                 if a == v[0]:
                     print("A match: ", k, v)
                     break
                 else:
                     no_match_list.append((k, v))
                     continue
-        elif 'locationOfFormation' in inst_wiki_dict:
-            for l in inst_wiki_dict['locationOfFormation']:
+        elif "locationOfFormation" in inst_wiki_dict:
+            for l in inst_wiki_dict["locationOfFormation"]:
                 if l == v[0]:
                     print("A match: ", k, v)
                     break
                 else:
                     no_match_list.append((k, v))
                     continue
-        elif 'inception' in inst_wiki_dict:
-            for i in inst_wiki_dict['inception']:
+        elif "inception" in inst_wiki_dict:
+            for i in inst_wiki_dict["inception"]:
                 if i[0:4] == v[1][0:4]:
                     print("A match: ", k, v)
                     break
@@ -157,24 +162,33 @@ def _sparql(q_ids, sleep=2):
             if response.status_code == 200:  # a successful response
                 results = response.json().get("results", {}).get("bindings")
                 # print(results)
-                inst_wiki["name"], inst_wiki["headquarters"], inst_wiki[
-                    "administrativeTerritorialEntity"], inst_wiki["locationOfFormation"], inst_wiki[
-                    "inception"] = [], [], [], [], []
+                (
+                    inst_wiki["name"],
+                    inst_wiki["headquarters"],
+                    inst_wiki["administrativeTerritorialEntity"],
+                    inst_wiki["locationOfFormation"],
+                    inst_wiki["inception"],
+                ) = ([], [], [], [], [])
                 if results:
                     for b in results:
                         if "itemLabel" in b:
                             inst_wiki["name"] = b["itemLabel"]["value"]
                         if "headquartersLabel" in b:
-                            headquarters = b['headquartersLabel']['value']
+                            headquarters = b["headquartersLabel"]["value"]
                             inst_wiki["headquarters"].append(headquarters)
                         if "administrativeTerritorialEntityLabel" in b:
-                            administrativeTerritorialEntity = b['administrativeTerritorialEntityLabel']['value']
-                            inst_wiki["administrativeTerritorialEntity"].append(administrativeTerritorialEntity)
+                            administrativeTerritorialEntity = b[
+                                "administrativeTerritorialEntityLabel"
+                            ]["value"]
+                            inst_wiki["administrativeTerritorialEntity"].append(
+                                administrativeTerritorialEntity
+                            )
                         if "locationOfFormationLabel" in b:
-                            locationOfFormation = b['locationOfFormationLabel']['value']
-                            inst_wiki["locationOfFormation"].append(locationOfFormation)
+                            locationOfFormation = b["locationOfFormationLabel"]["value"]
+                            inst_wiki["locationOfFormation"].append(
+                                locationOfFormation)
                         if "inceptionLabel" in b:
-                            inception = b['inceptionLabel']['value']
+                            inception = b["inceptionLabel"]["value"]
                             inst_wiki["inception"].append(inception)
             # print("------------\nTime to sleep. 10 seconds~ ")
             time.sleep(sleep)
@@ -189,8 +203,7 @@ def _get_q_ids(lookup=None):
     :return: a list of item identifiers (first 10)
     """
     e = wbi_core.FunctionsEngine()
-    instance = e.get_search_results(search_string=lookup,
-                                    search_type='item')
+    instance = e.get_search_results(search_string=lookup, search_type="item")
     if len(instance) > 0:
         return instance[0:1]
     else:
@@ -199,13 +212,14 @@ def _get_q_ids(lookup=None):
 
 
 if __name__ == "__main__":
-    inst_dict = read_institution_csv("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
-                                       "/Institution.csv")
+    inst_dict = read_institution_csv(
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
+        "/Institution.csv"
+    )
     print(inst_dict)
     no_match_list = compare(inst_dict, 10)
     print("no_match_list: ", no_match_list)
     print("length of the no_match_list: ", len(no_match_list))
-
 
     # sample_dict = {'Ансамбль песни и пляски Российской армии имени А. В. Александрова': ['Moscow', 1928.0, 'NaN'],
     #                '亚历山德罗夫红旗歌舞团': ['Moscow', 1928.0, 'NaN'], 'Hubei Opera and Dance Theatre': ['Hubei', 1952.0, 'NaN'], '湖北省歌舞剧院': ['Hubei', 1952.0, 'NaN'], 'Jin Opera Group of Liulin County, Shanxi Province': ['Warszawa', 'NaN', 'NaN'], '山西省柳林县晋剧团': ['Warszawa', 'NaN', 'NaN'], 'China Writers Association': ['Beijing', 1949.0, 'NaN'], '中国作家协会': ['Beijing', 1949.0, 'NaN'], 'Hunan Federation of Literary and Art Circles': ['Changsha', 1950.0, 'NaN']}
@@ -217,7 +231,6 @@ if __name__ == "__main__":
     # no_match_list = compare(sample_dict, 10)
     # print(no_match_list)
     # print(len(no_match_list))
-
 
     """
     no_match_list:  [('Association of overseas Chinese in Vietnam', ['unknown', nan, nan]), ('越南华侨协会', ['unknown', nan, nan]), ('English Language Services', ['unknown', nan, nan]), ('Central Committee of the Communist Party in China', ['Beijing', 1921.0, nan]), ('Baiyangdian literary society', ['Baiyangdian', 1968.0, 1976.0]), ('白洋淀派', ['Baiyangdian', 1968.0, 1976.0]), ('School of Foreign Studies', ['Nanjing', 1917.0, nan]), ('Beijing No. 4 High School', ['Beijing', 1906.0, nan]), ('中国共产党', ['Beijing', 1921.0, nan]), ('Voice of America', ['Washington D.C.', 1942.0, nan]), ('Hubei Opera and Dance Theatre', ['Hubei', 1952.0, nan]), ('湖北省歌舞剧院', ['Hubei', 1952.0, nan]), ('Jin Opera Group of Liulin County, Shanxi Province', ['Warszawa', nan, nan]), ('山西省柳林县晋剧团', ['Warszawa', nan, nan]), ('Hunan Federation of Literary and Art Circles', ['Changsha', 1950.0, nan]), ('湖南省文学艺术界联合会', ['Changsha', 1950.0, nan]), ('Jiangxi Jiujiang Cultural Work Group', ['Jiujiang', nan, nan]), ('江西九江文工团', ['Jiujiang', nan, nan]), ('Shanghai Youth Art Theatre', ['Shanghai', nan, nan]), ('上海青年艺术剧院', ['Shanghai', nan, nan]), ('Beijing Peking Opera Troupe', ['Beijing', 1955.0, nan]), ('北京京剧团', ['Beijing', 1955.0, nan]), ('China Central Ballet Company', ['Beijing', 1959.0, nan]), ('Hunan Opera and Dance Theatre', ['Changsha', 1953.0, nan]), ('湖南省歌舞剧院', ['Changsha', 1953.0, nan]), ('Lu Xun Academy of Fine Arts', ["Yan'an", 1938.0, nan]), ('鲁迅艺术学院', ["Yan'an", 1938.0, nan]), ('The Commercial Press', ['Shanghai', 1897.0, nan]), ('商务印书馆', ['Shanghai', 1897.0, nan]), ('中国美术家协会', ['Beijing', 1949.0, nan]), ("People's Liberation Army of China", ['Beijing', 1927.0, nan]), ('World Economic Research Institute', ['Shanghai', 1964.0, nan]), ('世界经济研究所', ['Shanghai', 1964.0, nan]), ('Xinhua Bookstore', ["Yan'an", 1937.0, nan]), ('Xinhua Bookstore', ["Yan'an", 1937.0, nan]), ('新华书店', ["Yan'an", 1937.0, nan]), ('新华书店', ["Yan'an", 1937.0, nan])]
