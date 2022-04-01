@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml/badge.svg)](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml)
 
-This repo contains a command line tool for verifying named entities in [ReadAct](https://github.com/readchina/ReadAct).
+This repo contains a Python package for verifying named entities in [ReadAct](https://github.com/readchina/ReadAct).
 
 The goal is to automately extract data about **person**, **space**, and **institutions** from ReadAct's data tables, and to use [Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page) for verification and to extract missing data points.
 
@@ -43,7 +43,7 @@ The tables need to adhere to ReadAct's data model, you can check the definitions
 To read a user defined `Person.csv`, check the column names and to update it if necessary. Updated rows will be marked as modified by `SemBot`:
 
 ```bash
-python -m scripts.command_line_tool ../CSV/Person.csv
+python -m src.scripts.command_line_tool src/CSV/Person.csv
 ```
   
 The updating can be  based on:
