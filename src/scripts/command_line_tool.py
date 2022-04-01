@@ -3,7 +3,8 @@ import sys
 import pandas as pd
 import logging
 
-from authenticity_person import order_name_by_language, get_Qid_from_wikipedia_url, sparql_with_Qid, \
+
+from src.scripts.authenticity_person import order_name_by_language, get_Qid_from_wikipedia_url, sparql_with_Qid, \
     sparql_by_name
 from datetime import date
 
@@ -24,8 +25,13 @@ MINIMAL_COL = ['family_name', 'first_name', 'name_lang']
 FIELDS_OF_WIKIDATA = ['sex', 'birthyear', 'deathyear',
                       'place_of_birth']  # gender, birthplace
 
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s: - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S')
 
-def validate(path='../CSV/Person.csv'):
+def validate(path):
     valid = False
     df = pd.read_csv(path)  #index_col=0
     df = df.fillna('')  # Replace all the nan into empty string
@@ -386,11 +392,7 @@ def check_each_row(index, row, df_person_gh, person_ids_gh, last_person_id, wiki
 
 if __name__ == "__main__":
 
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s: - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S')
+
 
     # TODO(DP): This should be a .log file, e.g. "sembot.log" see L10-13 above
     fh = logging.FileHandler('../log.txt')
@@ -422,7 +424,7 @@ if __name__ == "__main__":
     else:
         print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
 
-    validate_result, df = validate('../CSV/Person.csv')  #TODO: should be replaced with "args.person_csv"
+    validate_result, df = validate(args.person_csv)  #TODO: should be replaced with "args.person_csv"
     if not validate_result:
         print('Error: Please check your Person.csv and re-run this tool. By SemBot.')
         quit()
@@ -435,7 +437,7 @@ if __name__ == "__main__":
     # df_person_Github = pd.read_csv(PERSON_CSV_GITHUB)
     # with open('../CSV/df_person_Github.csv', 'w') as f:
     #     f.write(df_person_Github.to_csv())
-    df_person_gh = pd.read_csv('../CSV/df_person_Github_fake.csv')
+    df_person_gh = pd.read_csv('src/CSV/df_person_Github_fake.csv')
     df_person_gh = df_person_gh.fillna('')  # Replace all the nan into empty string
     check_gh(df_person_gh)
     last_person_id, person_ids_gh, wikidata_ids_GH = get_last_id(df_person_gh)

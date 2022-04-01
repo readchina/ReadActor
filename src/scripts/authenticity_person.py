@@ -9,7 +9,7 @@ Main idea:
 import pandas as pd
 import requests
 import time
-from authenticity_space import read_space_csv
+from src.scripts.authenticity_space import read_space_csv
 from itertools import islice
 import json
 import requests
