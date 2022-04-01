@@ -23,7 +23,7 @@ pip install -r requirements.txt
 To check if the tool is working:
 
 ```bash
-python -m scripts.command_line_tool --version
+python -m src.scripts.command_line_tool --version
 ```
 
 You should see:

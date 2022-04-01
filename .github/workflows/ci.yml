@@ -28,7 +28,7 @@ jobs:
         with:
           path: "requirements.txt"
       - name: Check tool version
-        run: python -m scripts.command_line_tool --version
+        run: python -m src.scripts.command_line_tool --version
       # - name: Run Old Tests
       #   run: python -m test scripts.command_line_tool  
       - name: Run New Tests
