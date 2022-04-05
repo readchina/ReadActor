@@ -5,9 +5,12 @@ from datetime import date
 
 import pandas as pd
 
-from src.scripts.authenticity_person import (get_Qid_from_wikipedia_url,
-                                             order_name_by_language,
-                                             sparql_by_name, sparql_with_Qid)
+from src.scripts.authenticity_person import (
+    get_Qid_from_wikipedia_url,
+    order_name_by_language,
+    sparql_by_name,
+    sparql_with_Qid,
+)
 
 # Create and configure logger
 logging.basicConfig(
@@ -433,19 +436,16 @@ def check_each_row(
                     else:
                         if isinstance(row["note"], str):
                             row["note"] = (
-                                row["note"] +
-                                " No match in Wikidata.  By SemBot."
+                                row["note"] + " No match in Wikidata.  By SemBot."
                             )
                         else:
                             row["note"] = "No match in Wikidata.  By SemBot."
                         # Todo: "note" is changed, does it count as modified?
-                        logger.info(
-                            "Row %s in this table is checked. Pass.", index)
+                        logger.info("Row %s in this table is checked. Pass.", index)
                         return row, last_person_id
         else:  # No user provided `person_id`
             __check_person_id_size(last_person_id)
-            row["person_id"] = last_person_id[0:2] + \
-                str(int(last_person_id[2:]) + 1)
+            row["person_id"] = last_person_id[0:2] + str(int(last_person_id[2:]) + 1)
             if (isinstance(row["wikidata_id"], str) is True) and (
                 len(row["wikidata_id"]) > 0
             ):  # no person_id, but has wikidata_id
@@ -642,8 +642,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "person_csv", type=str, help="Path to the loal CSV file to be updated"
     )
-    parser.add_argument(
-        "--update", help="Iterate through CSV rows and update entries")
+    parser.add_argument("--update", help="Iterate through CSV rows and update entries")
     parser.add_argument(
         "--version", action="version", version="version 1.0.0", help="print version"
     )
