@@ -30,7 +30,9 @@ jobs:
         with:
           path: "requirements.txt"
       - name: Check code format
-        run: black --check .    
+        run: |
+          black --check .
+          isort --profile black --check . 
       - name: Check tool version
         run: python -m src.scripts.command_line_tool --version
       # - name: Run Old Tests
