@@ -22,11 +22,15 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-            
-      - name: Install Python dependencies
+            ${{ runner.os }}-pip-
+      - name: Install Dev dependencies
+        run: pip install black isort                
+      - name: Install App dependencies
         uses: py-actions/py-dependency-install@v3
         with:
           path: "requirements.txt"
+      - name: Check code format
+        run: black --check .    
       - name: Check tool version
         run: python -m src.scripts.command_line_tool --version
       # - name: Run Old Tests
