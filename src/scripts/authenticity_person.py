@@ -381,8 +381,7 @@ def get_Qid_from_wikipedia_url(row):
         )
         response = requests.get(url).json()
         if "pageprops" in list(response["query"]["pages"].values())[0]:
-            pageprops = list(response["query"]["pages"].values())[
-                0]["pageprops"]
+            pageprops = list(response["query"]["pages"].values())[0]["pageprops"]
             if "wikibase_item" in pageprops:
                 Qid = list(response["query"]["pages"].values())[0]["pageprops"][
                     "wikibase_item"

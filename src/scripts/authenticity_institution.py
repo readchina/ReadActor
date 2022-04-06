@@ -185,8 +185,7 @@ def _sparql(q_ids, sleep=2):
                             )
                         if "locationOfFormationLabel" in b:
                             locationOfFormation = b["locationOfFormationLabel"]["value"]
-                            inst_wiki["locationOfFormation"].append(
-                                locationOfFormation)
+                            inst_wiki["locationOfFormation"].append(locationOfFormation)
                         if "inceptionLabel" in b:
                             inception = b["inceptionLabel"]["value"]
                             inst_wiki["inception"].append(inception)

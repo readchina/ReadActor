@@ -12,6 +12,23 @@ The goal is to automately extract data about **person**, **space**, and **instit
 
 The tool is tested on macOS and linux.
 
+## Development
+
+We use [black](https://pypi.org/project/black/) and [isort](https://pypi.org/project/isort/) code formaters to format the code. To install them, run:
+
+```bash
+pip install black isort
+```
+
+To avoid CI rejecting your code contribution, you should run:
+
+```bash
+isort --profile black .
+black .
+```
+
+before commiting code.
+
 ## Installation
 
 Install dependencies:

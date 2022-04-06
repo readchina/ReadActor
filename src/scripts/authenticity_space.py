@@ -138,8 +138,7 @@ def _get_coordinate_from_wikidata(q_ids):
             for element in data["claims"]["P625"]:
                 coordinate_value = element["mainsnak"]["datavalue"]["value"]
                 coordinate_list.append(
-                    (coordinate_value["latitude"],
-                     coordinate_value["longitude"])
+                    (coordinate_value["latitude"], coordinate_value["longitude"])
                 )
     return coordinate_list
 
