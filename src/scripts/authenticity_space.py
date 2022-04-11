@@ -78,6 +78,16 @@ WHERE{{
         LIMIT 250
         """
 
+QUERY_COORDINATE = """
+SELECT DISTINCT ?item ?coordinate
+WHERE {{
+  values ?item {{ wd:{} }}
+  OPTIONAL {{ ?item  wdt:P625  ?coordinate . }}
+
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+}}
+"""
+
 
 def read_space_csv(
     space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
@@ -131,43 +141,39 @@ def geo_code_compare(no_match_list):
     :return: None or list of entries which can't match
     """
     still_no_match_list = []
-    break_out_flag = False
     for i in no_match_list:
         query_result = __sparql_by_space_name(i[0], "en")
         if query_result is None:
             still_no_match_list.append(i)
         else:
             q_ids = list(query_result.keys())
-            print("q_ids: \n", q_ids)
+            coordinate_list = __get_coordinate_from_wikidata(q_ids)
 
-    #     # if no q_ids, collect item into list, break current loop
-    #     if q_ids is None:
-    #         still_no_match_list.append(i)
-    #     else:
-    #         coordinate_list = __get_coordinate_from_wikidata(q_ids)
-    #         print("coordinate_list: ", coordinate_list)
-    #         # if no coordinate_list, collect item into list, break nested loop
-    #         if coordinate_list is None:
-    #             still_no_match_list.append(i)
-    #             break
-    #         for i_wiki in coordinate_list:
-    #             # If the difference are within +-0.9, consider a match, no collection, break nested loop
-    #             if (
-    #                     float(abs(i_wiki[0])) - 0.9
-    #                     <= float(i[2])
-    #                     <= float(abs(i_wiki[0])) + 0.9
-    #             ) and (
-    #                     float(abs(i_wiki[1])) - 0.9
-    #                     <= float(i[3])
-    #                     <= float(abs(i_wiki[1])) + 0.9
-    #             ):
-    #                 i = ""
-    #                 break
-    #         if len(i) > 0:
-    #             still_no_match_list.append(i)
-    #
-    # if len(still_no_match_list) != 0:
-    #     return still_no_match_list
+            # if no coordinate_list, collect item into list, break nested loop
+            if len(coordinate_list) == 0:
+                still_no_match_list.append(i)
+                break
+            for c in coordinate_list:
+                # If the difference are within +-0.9, consider a match, no collection, break nested loop
+                # Pay attention that Wikidata coordinate have the longitude first, and the latitude later. It is the
+                # opposite in ReadAct if we read the table from left to right.
+                if (
+                    float(abs(float(c[0]))) - 0.9
+                    <= float(i[3])
+                    <= float(abs(float(c[0]))) + 0.9
+                ) and (
+                    float(abs(float(c[1]))) - 0.9
+                    <= float(i[2])
+                    <= float(abs(float(c[1]))) + 0.9
+                ):
+                    i = ""
+                    break
+            if len(i) > 0:
+                still_no_match_list.append(i)
+
+    if len(still_no_match_list) != 0:
+        print("still_no_match_list: ", still_no_match_list)
+        return still_no_match_list
 
 
 def __sparql_by_space_name(lookup, lang):
@@ -175,7 +181,6 @@ def __sparql_by_space_name(lookup, lang):
         return None
     space = {}  # To collect entities which is found for a space/location
     with requests.Session() as s:
-        # print("++++ For this name: \n", lookup)
         response = s.get(
             URL,
             params={
@@ -220,14 +225,12 @@ def __sparql_by_space_name(lookup, lang):
             results = response.json().get("results", {}).get("bindings")
             if len(results) == 0:
                 pass
-                # print("Didn't find the entity with this name \"", lookup, "\" on Wikidata")
             else:
                 for r in results:
                     space_wiki = {}
                     # If this entity is not recorded in this space_wiki dictionary yet:
                     if "space" in r:
                         if r["space"]["value"][31:] not in space:
-
                             space_wiki["Q-id"] = r["space"]["value"][
                                 31:
                             ]  # for example, 'Q8646'
@@ -247,45 +250,42 @@ def __get_coordinate_from_wikidata(q_ids):
     :return: a list with tuples, each tuple is a (lat, long) combination
     """
     coordinate_list = []
-    if q_ids is None:
-        return None
     for q in q_ids:
-        wdi = wdi_core.WDItemEngine(wd_item_id=q)
-        # to check successful installation and retrieval of the CSV, one can print the json representation of the item
-        data = wdi.get_wd_json_representation()
-
-        if "P625" in data["claims"]:
-            # Iteration, in case one wikidata entity has several coordinate entries.
-            for element in data["claims"]["P625"]:
-                coordinate_value = element["mainsnak"]["datavalue"]["value"]
-                coordinate_list.append(
-                    (coordinate_value["latitude"], coordinate_value["longitude"])
-                )
+        with requests.Session() as s:
+            response = s.get(
+                URL, params={"format": "json", "query": QUERY_COORDINATE.format(q),},
+            )
+            if response.status_code == 200:  # a successful response
+                results = response.json().get("results", {}).get("bindings")
+                if len(results) == 0:
+                    pass
+                else:
+                    for r in results:
+                        # If this entity is not recorded in this space_wiki dictionary yet:
+                        if "coordinate" in r:
+                            if "value" in r["coordinate"]:
+                                c = r["coordinate"]["value"][6:-1].split()
+                                coordinate_list.append(
+                                    c
+                                )  # for example, '[114.158611111,22.278333333]'
     return coordinate_list
 
 
 if __name__ == "__main__":
-    # # To compare the extracting coordinate location with the info in Space.csv
-    # space_url = (
-    #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
-    # )
-    # geo_code_dict = read_space_csv(space_url)
-    # # sample_geo_code_dict = dict(itertools.islice(geo_code_dict.items(), 30))
-    # # """
-    # # {'SP0001': ['library', 'L', 0.0, 0.0], 'SP0002': ['prison', 'L', 0.0, 0.0], 'SP0003': ['book store', 'L', 0.0,
-    # # 0.0], 'SP0004': ['China', 'PL', 35.86166, 104.195397], 'SP0005': ['Beijing', 'PL', 39.9042, 116.407396]}
-    # # """
-    #
-    # # To filter CSV entries with comparing to openstreetmap first
-    # no_match_list = compare_to_openstreetmap(sample_geo_code_dict)
+    # To compare the extracting coordinate location with the info in Space.csv
+    space_url = (
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
+    )
+    geo_code_dict = read_space_csv(space_url)
 
-    no_match_list = [
-        ["Hongkong", "PL", 22.396428, 114.109497],
-        ["Baiyangdian", "PL", 38.941441, 115.969465],
-        ["Breslau", "PL", 51.107885, 17.038538],
-        ["Sheker", "PL", 42.544292, 71.171379],
-        ["Bolshoy Fontan", "PL", 46.482526, 30.72331],
-    ]
+    # sample_geo_code_dict = dict(itertools.islice(geo_code_dict.items(), 30))
+    # """
+    # {'SP0001': ['library', 'L', 0.0, 0.0], 'SP0002': ['prison', 'L', 0.0, 0.0], 'SP0003': ['book store', 'L', 0.0,
+    # 0.0], 'SP0004': ['China', 'PL', 35.86166, 104.195397], 'SP0005': ['Beijing', 'PL', 39.9042, 116.407396]}
+    # """
+
+    # To filter CSV entries with comparing to openstreetmap first
+    no_match_list = compare_to_openstreetmap(geo_code_dict)
 
     # To compare the rest with wikidata info
     still_no_match_list = geo_code_compare(no_match_list)
