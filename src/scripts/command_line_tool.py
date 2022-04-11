@@ -699,5 +699,5 @@ if __name__ == "__main__":
         row, last_person_id = check_each_row(
             index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
         )
-    with open("../CSV/Person_updated_V2.csv", "w") as f:
+    with open("src/CSV/Person_updated.csv", "w") as f:
         f.write(df.to_csv())
