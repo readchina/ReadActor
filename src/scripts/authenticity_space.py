@@ -305,7 +305,6 @@ still_no_match_list (with using the python library):  [['Bolshoy Fontan', 'PL', 
 """
 
 
-
 """
 still_no_match_list (with using direct wikidata SPARQL service) :  [['Baiyangdian', 'PL', 38.941441, 115.969465], 
 ['Breslau', 'PL', 
