@@ -79,9 +79,8 @@ WHERE{{
         """
 
 
-
 def read_space_csv(
-        space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
+    space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
 ):
     """
     A function to read "Space.csv" for now.
@@ -113,11 +112,11 @@ def compare_to_openstreetmap(geo_code_dict):
             lat = str(v[2])
             lon = str(v[3])
             url = (
-                    "https://nominatim.openstreetmap.org/reverse?format=xml&lat="
-                    + lat
-                    + "&lon="
-                    + lon
-                    + "&zoom=18&addressdetails=1&format=json&accept-language=en"
+                "https://nominatim.openstreetmap.org/reverse?format=xml&lat="
+                + lat
+                + "&lon="
+                + lon
+                + "&zoom=18&addressdetails=1&format=json&accept-language=en"
             )
             data = requests.get(url)
             if v[0].lower() not in str(data.json()).lower():
@@ -134,12 +133,12 @@ def geo_code_compare(no_match_list):
     still_no_match_list = []
     break_out_flag = False
     for i in no_match_list:
-        query_result = __sparql_by_space_name(i[0], 'en')
+        query_result = __sparql_by_space_name(i[0], "en")
         if query_result is None:
             still_no_match_list.append(i)
         else:
-            q_ids = [query_result.keys()]
-            print('q_ids: \n', q_ids)
+            q_ids = list(query_result.keys())
+            print("q_ids: \n", q_ids)
 
     #     # if no q_ids, collect item into list, break current loop
     #     if q_ids is None:
@@ -174,14 +173,47 @@ def geo_code_compare(no_match_list):
 def __sparql_by_space_name(lookup, lang):
     if len(lookup) == 0:
         return None
-    space = {} # To collect entities which is found for a space/location
+    space = {}  # To collect entities which is found for a space/location
     with requests.Session() as s:
         # print("++++ For this name: \n", lookup)
         response = s.get(
             URL,
             params={
                 "format": "json",
-                "query": QUERY_SPACE.format(lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang, lookup, lang),
+                "query": QUERY_SPACE.format(
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                    lookup,
+                    lang,
+                ),
             },
         )
         if response.status_code == 200:  # a successful response
@@ -247,9 +279,13 @@ if __name__ == "__main__":
     # # To filter CSV entries with comparing to openstreetmap first
     # no_match_list = compare_to_openstreetmap(sample_geo_code_dict)
 
-    no_match_list = [['Hongkong', 'PL', 22.396428, 114.109497], ['Baiyangdian', 'PL', 38.941441, 115.969465],
-                     ['Breslau', 'PL', 51.107885, 17.038538], ['Sheker', 'PL', 42.544292, 71.171379],
-                     ['Bolshoy Fontan', 'PL', 46.482526, 30.72331]]
+    no_match_list = [
+        ["Hongkong", "PL", 22.396428, 114.109497],
+        ["Baiyangdian", "PL", 38.941441, 115.969465],
+        ["Breslau", "PL", 51.107885, 17.038538],
+        ["Sheker", "PL", 42.544292, 71.171379],
+        ["Bolshoy Fontan", "PL", 46.482526, 30.72331],
+    ]
 
     # To compare the rest with wikidata info
     still_no_match_list = geo_code_compare(no_match_list)
