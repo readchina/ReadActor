@@ -7,18 +7,8 @@ This is a python script to check authenticity of Named Entities in /Readact/csv/
     - retrieve the properties of coordinates from wikidata
     - Compare the retrieved coordinate with the coordinate stored in ReadAct
 """
-
-import csv
-import itertools
-import time
-
 import pandas as pd
 import requests
-
-
-# from wikibaseintegrator import wbi_core
-# from wikidataintegrator import wdi_core
-
 
 URL = "https://query.wikidata.org/sparql"
 
@@ -278,22 +268,18 @@ if __name__ == "__main__":
     )
     geo_code_dict = read_space_csv(space_url)
 
-    # sample_geo_code_dict = dict(itertools.islice(geo_code_dict.items(), 30))
-    # """
-    # {'SP0001': ['library', 'L', 0.0, 0.0], 'SP0002': ['prison', 'L', 0.0, 0.0], 'SP0003': ['book store', 'L', 0.0,
-    # 0.0], 'SP0004': ['China', 'PL', 35.86166, 104.195397], 'SP0005': ['Beijing', 'PL', 39.9042, 116.407396]}
-    # """
-
     # To filter CSV entries with comparing to openstreetmap first
     no_match_list = compare_to_openstreetmap(geo_code_dict)
 
     # To compare the rest with wikidata info
     still_no_match_list = geo_code_compare(no_match_list)
-    #
-    # print("still_no_match_list: ", still_no_match_list)
+
 
 """
-still_no_match_list:  [['Bolshoy Fontan', 'PL', 46.482526, 30.723309999999998], ['Vonu', 'PL', 40.141308, 19.692947], 
+still_no_match_list (with using the python library):  [['Bolshoy Fontan', 'PL', 46.482526, 30.723309999999998], 
+['Vonu', 
+'PL', 40.141308, 
+19.692947], 
 ['Beidahuang', 'PL', 45.73722, 126.69244099999999], ['Jinjiang (Fujian)', 'PL', 24.781681, 118.552365], 
 ['Gobi Desert', 'PL', 42.795154, 105.03236299999999], ['Luoyang', 'PL', 23.16244, 114.27342], ['Saratow', 'PL', 
 51.592365, 45.960803999999996], ['Huangbei', 'PL', 29.758889, 118.534167], ['Yizhen', 'PL', 34.203246, 
@@ -316,4 +302,13 @@ still_no_match_list:  [['Bolshoy Fontan', 'PL', 46.482526, 30.723309999999998], 
 52.70488, 51.50281], ['Коsа (Kosinsky District)', 'PL', 59.94537, 54.99187], ['Pucheng (Shaanxi)', 'PL', 34.957, 
 109.58], ['Lliulin (Shanxi)', 'PL', 37.430833, 110.88916699999999], ['Xiaxian', 'PL', 35.138333, 111.22083300000001], 
 ['Sora (Lazio)', 'PL', 41.71667, 13.6176], ['Jiner', 'PL', 31.6153, 107.654], ['Lixian', 'PL', 29.631807000000002, 111.76076200000001]]
+"""
+
+
+
+"""
+still_no_match_list (with using direct wikidata SPARQL service) :  [['Baiyangdian', 'PL', 38.941441, 115.969465], 
+['Breslau', 'PL', 
+51.107885, 17.038538], 
+['Bolshoy Fontan', 'PL', 46.482526, 30.72331], ['Birmendreïs', 'PL', 36.735349, 3.050374], ['Vonu', 'PL', 40.141308, 19.692947], ['Sveaborg', 'PL', 60.1454, 24.98814], ['Beidahuang', 'PL', 45.73722, 126.692441], ['Urumqi', 'PL', 43.825592, 87.616848], ['Jinjiang (Fujian)', 'PL', 24.781681, 118.552365], ['Lufeng', 'PL', 23.165614, 116.210632], ['Ningbo', 'PL', 29.868336, 121.54399], ['Thornton', 'PL', 53.7833, -1.85], ['Dréan', 'PL', 36.6848, 7.7511], ['Gobi Desert', 'PL', 42.795154, 105.032363], ['Luoyang', 'PL', 23.16244, 114.27342], ['Saratow', 'PL', 51.592365, 45.960804], ['Huangbei', 'PL', 29.758889, 118.534167], ['Hankou', 'PL', 30.541831166, 114.32583203], ['Düsseldorf', 'PL', 51.227741, 6.773456], ['Yizhen', 'PL', 34.203246, 108.945896], ['Xixian', 'PL', 32.342792, 114.740456], ['Kalinovka', 'PL', 51.893853, 34.509259], ['Kislowodsk', 'PL', 43.905601, 42.728095], ['Shanghexi', 'PL', 39.4065, 112.9054], ['Chaocheng', 'PL', 36.05627, 115.590164], ['Xibaipo', 'PL', 38.351264, 113.940554], ['Chadian', 'PL', 39.262324, 117.805932], ['Kiev', 'PL', 50.4501, 30.5234], ['St. Louis', 'PL', 38.627003, -90.199404], ['Saint Denis', 'PL', 48.936181, 2.357443], ['Zhongxian', 'PL', 30.355948, 107.83845], ['Jiutai', 'PL', 44.135246, 125.977127], ['Suibin Nongchang', 'PL', 47.523305, 131.69029], ['Viliya', 'PL', 50.193612, 26.260522], ['Fengshan', 'PL', 41.208899, 116.645932], ['Wanxian', 'PL', 30.807667, 108.408661], ['Osino-Gay', 'PL', 53.037391, 42.402225], ['Ji’an', 'PL', 27.0875, 114.9645], ['Zhanhai', 'PL', 29.95481, 121.70961], ['Xiangchuan', 'PL', 28.515646, 112.134533], ['Yasnaya Polyana', 'PL', 54.069504, 37.523205], ['Welyki Sorotschynzi', 'PL', 50.019808, 33.941673], ['Washington D.C.', 'PL', 38.907192, -77.036871], ['Calcutta', 'PL', 22.572646, 88.363895], ['Hannibal', 'PL', 36.151664, -95.991926], ['Groot-Zundert', 'PL', 51.469834, 4.654992], ['Trmanje', 'PL', 42.647545, 19.344489], ['Zima (Siberia)', 'PL', 53.922585, 102.042387], ['Strelkovka', 'PL', 55.002389, 36731.0], ['Gudalovka', 'PL', 49.307427, 19.937017], ['St. Thomas', 'PL', 18.338096, -64.894095], ['Albany NY', 'PL', 42.652579, -73.756232], ['Chuguyev', 'PL', 49.836316, 36.681312], ['Slawno', 'PL', 54.36262, 16.67836], ['Zavosse', 'PL', 53.289514, 26.099846], ['Jiangxi Province', 'PL', 27.28597, 116.01609], ['Chicago', 'PL', 41.8781, 87.6298], ['Vyoshenskaya', 'PL', 49.6316, 41.7147], ['Haining', 'PL', 30.5107, 120.6808], ['Salinas', 'PL', 36.6777, 121.6555], ['Friend', 'PL', 40.6536, 97.2862], ['Marbach am Necker', 'PL', 48.9396, 9.2646], ['Milan (OH)', 'PL', 41.293333, -82.601389], ['Jianyang', 'PL', 30.24, 104.32], ['Chuansha Xian', 'PL', 31.301395, 121.516652], ['Sichuan Second Prison', 'PL', 29.58921, 106.538559], ['Laoting', 'PL', 22.88778, 120.46356], ['Shuiyuan county', 'PL', 23.84967, 110.40083], ['Hubei', 'PL', 37.59857, 114.60758], ['Warszawa', 'PL', 52.229675, 21.01223], ['Salamis Island', 'PL', 37.96421, 23.49645], ['Eleusis', 'PL', 38.043228, 23.54212]]
 """
