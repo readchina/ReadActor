@@ -243,7 +243,11 @@ def __get_coordinate_from_wikidata(q_ids):
     for q in q_ids:
         with requests.Session() as s:
             response = s.get(
-                URL, params={"format": "json", "query": QUERY_COORDINATE.format(q),},
+                URL,
+                params={
+                    "format": "json",
+                    "query": QUERY_COORDINATE.format(q),
+                },
             )
             if response.status_code == 200:  # a successful response
                 results = response.json().get("results", {}).get("bindings")
