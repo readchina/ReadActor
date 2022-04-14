@@ -65,3 +65,4 @@ cover/
 #Pipfile.lock
 
 venv/
+env/

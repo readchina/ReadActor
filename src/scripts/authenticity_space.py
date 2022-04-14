@@ -230,9 +230,6 @@ def __sparql_by_space_name(lookup, lang):
     if len(space) == 0:
         return None
     else:
-        print("Lookup not in database")
-        return None
-    else:
         return space
 
 
