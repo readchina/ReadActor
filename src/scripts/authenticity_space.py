@@ -80,7 +80,7 @@ WHERE {{
 
 
 def read_space_csv(
-        space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
+    space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
 ):
     """
     A function to read "Space.csv" for now.
@@ -112,11 +112,11 @@ def compare_to_openstreetmap(geo_code_dict):
             lat = str(v[2])
             lon = str(v[3])
             url = (
-                    "https://nominatim.openstreetmap.org/reverse?format=xml&lat="
-                    + lat
-                    + "&lon="
-                    + lon
-                    + "&zoom=18&addressdetails=1&format=json&accept-language=en"
+                "https://nominatim.openstreetmap.org/reverse?format=xml&lat="
+                + lat
+                + "&lon="
+                + lon
+                + "&zoom=18&addressdetails=1&format=json&accept-language=en"
             )
             data = requests.get(url)
             if v[0].lower() not in str(data.json()).lower():
@@ -148,13 +148,13 @@ def geo_code_compare(no_match_list):
                 # Pay attention that Wikidata coordinate have the longitude first, and the latitude later. It is the
                 # opposite in ReadAct if we read the table from left to right.
                 if (
-                        float(abs(float(c[0]))) - 0.9
-                        <= float(i[3])
-                        <= float(abs(float(c[0]))) + 0.9
+                    float(abs(float(c[0]))) - 0.9
+                    <= float(i[3])
+                    <= float(abs(float(c[0]))) + 0.9
                 ) and (
-                        float(abs(float(c[1]))) - 0.9
-                        <= float(i[2])
-                        <= float(abs(float(c[1]))) + 0.9
+                    float(abs(float(c[1]))) - 0.9
+                    <= float(i[2])
+                    <= float(abs(float(c[1]))) + 0.9
                 ):
                     i = ""
                     break
@@ -222,8 +222,8 @@ def __sparql_by_space_name(lookup, lang):
                     if "space" in r:
                         if r["space"]["value"][31:] not in space:
                             space_wiki["Q-id"] = r["space"]["value"][
-                                                 31:
-                                                 ]  # for example, 'Q8646'
+                                31:
+                            ]  # for example, 'Q8646'
                         if "spaceLabel" in r:
                             space_wiki["name"] = r["spaceLabel"]["value"]
                     space[space_wiki["Q-id"]] = space_wiki
@@ -339,7 +339,6 @@ still_no_match_list (with using direct wikidata SPARQL service) :  [['Baiyangdia
 29.58921, 106.538559], ['Laoting', 'PL', 22.88778, 120.46356], ['Shuiyuan county', 'PL', 23.84967, 110.40083], 
 ['Hubei', 'PL', 37.59857, 114.60758], ['Warszawa', 'PL', 52.229675, 21.01223], ['Salamis Island', 'PL', 37.96421, 23.49645], ['Eleusis', 'PL', 38.043228, 23.54212]]
 """
-
 
 
 """
