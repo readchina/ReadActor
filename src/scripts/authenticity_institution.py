@@ -210,6 +210,14 @@ def _get_q_ids(lookup=None):
         return None
 
 
+def __get_QIDs_by_lookup_with_institution_name(lookup=None):
+    print(lookup)
+
+
+
+
+
+
 if __name__ == "__main__":
     inst_dict = read_institution_csv(
         "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
