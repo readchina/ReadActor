@@ -31,10 +31,10 @@ before commiting code.
 
 ## Installation
 
-Install dependencies:
+Install the current project in editable mode:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 To check if the tool is working:
@@ -57,12 +57,18 @@ The tables need to adhere to ReadAct's data model, you can check the definitions
 
 ### Person Lookup
 
+To install the package ReadChinaLookup 1.0.0:
+
+```
+pip install -i https://test.pypi.org/simple/ ReadChinaLookup==1.0.0
+```
+
 To read a user defined `Person.csv`, check the column names and to update it if necessary. Updated rows will be marked as modified by `SemBot`:
 
 ```bash
 python -m src.scripts.command_line_tool src/CSV/Person.csv
 ```
-  
+
 The updating can be  based on:
 
 - `wikipedia link`
