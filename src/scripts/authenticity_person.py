@@ -13,7 +13,6 @@ from itertools import islice
 
 import pandas as pd
 import requests
-
 from src.scripts.authenticity_space import read_space_csv
 
 URL = "https://query.wikidata.org/sparql"
