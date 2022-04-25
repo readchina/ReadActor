@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Use pip Cache  
+      - name: Use pip Cache
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
@@ -30,31 +30,31 @@ jobs:
       - name: Check code format
         run: |
           black --check .
-          isort --profile black --check . 
+          isort --profile black --check .
       - name: Check tool version
         run: python -m src.scripts.command_line_tool --version
       # - name: Run Old Tests
-      #   run: python -m test scripts.command_line_tool  
+      #   run: python -m test scripts.command_line_tool
       - name: Run New Tests
         run: python -m tests.test_CLT -v
 # see https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
-  deploy: 
+  deploy:
     runs-on: ubuntu-latest
-    needs: build    
+    needs: build
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.10
-      - name: Use pip Cache  
+          python-version: 3.8
+      - name: Use pip Cache
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-            
+            ${{ runner.os }}-pip-
       - name: Install Python dependencies
         uses: py-actions/py-dependency-install@v3
         with:
@@ -73,24 +73,14 @@ jobs:
           --wheel
           --outdir dist/
           .
-#      # According to https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
-#      - name: Publish distribution 📦 to Test PyPI
-#        uses: pypa/gh-action-pypi-publish@master
-#        with:
-#          password: ${{ secrets.TESTPYPI_API_TOKEN_FOR_READCHINALOOKUP }}
-#          repository_url: https://test.pypi.org/legacy/
-
-      # According to https://github.com/marketplace/actions/pypi-publish
-      - name: Publish package to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.TESTPYPI_API_TOKEN_FOR_READCHINALOOKUP }}
-          repository_url: https://test.pypi.org/legacy/
-
-
-  #     - name: Publish distribution 📦 to PyPI
-  #       if: startsWith(github.ref, 'refs/tags')
-  #       uses: pypa/gh-action-pypi-publish@v1
-  #       with:
-  #         password: ${{ secrets.PYPI_API_TOKEN }}        
+     - name: Publish distribution 📦 to Test PyPI
+       uses: pypa/gh-action-pypi-publish@v1
+       with:
+         password: ${{ secrets.TESTPYPI_API_TOKEN_FOR_READCHINALOOKUP }}
+         repository_url: https://test.pypi.org/legacy/
+         skip_existing: true
+#     - name: Publish distribution 📦 to PyPI
+#     TODO: release precedure needs documentation
+#       uses: pypa/gh-action-pypi-publish@v1
+#       with:
+#         password: ${{ secrets.PYPI_API_TOKEN }}

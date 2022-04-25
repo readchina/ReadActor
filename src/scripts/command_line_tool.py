@@ -4,7 +4,6 @@ import sys
 from datetime import date
 
 import pandas as pd
-
 from src.scripts.authenticity_person import (
     get_Qid_from_wikipedia_url,
     order_name_by_language,
