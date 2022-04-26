@@ -33,10 +33,13 @@ jobs:
           isort --profile black --check .
       - name: Check tool version
         run: python -m src.scripts.command_line_tool --version
+
       # - name: Run Old Tests
       #   run: python -m test scripts.command_line_tool
+
       - name: Run New Tests
         run: python -m tests.test_CLT -v
+
 # see https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
   deploy:
     runs-on: ubuntu-latest
@@ -73,14 +76,16 @@ jobs:
           --wheel
           --outdir dist/
           .
-     - name: Publish distribution 📦 to Test PyPI
-       uses: pypa/gh-action-pypi-publish@v1
-       with:
-         password: ${{ secrets.TESTPYPI_API_TOKEN_FOR_READCHINALOOKUP }}
-         repository_url: https://test.pypi.org/legacy/
-         skip_existing: true
-#     - name: Publish distribution 📦 to PyPI
-#     TODO: release precedure needs documentation
-#       uses: pypa/gh-action-pypi-publish@v1
-#       with:
-#         password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish test 📦 to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TESTPYPI_API_TOKEN_FOR_READCHINALOOKUP }}
+          repository_url: https://test.pypi.org/legacy/
+          skip_existing: true
+
+  #     - name: Publish distribution 📦 to PyPI
+  # Note(QG): this section should be replaced with git action of python semantic release
+  # TODO: release precedure needs documentation
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         password: ${{ secrets.PYPI_API_TOKEN }}
