@@ -4,6 +4,7 @@ import logging
 import sys
 
 import pandas as pd
+
 from src.scripts.authenticity_person import (
     order_name_by_language,
     sparql_by_name,

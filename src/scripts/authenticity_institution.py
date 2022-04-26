@@ -11,6 +11,7 @@ import time
 
 import pandas as pd
 import requests
+
 from src.scripts.authenticity_space import read_space_csv
 
 MEDIAWIKI_API_URL = "https://www.wikidata.org/w/api.php"
