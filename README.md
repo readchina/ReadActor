@@ -30,11 +30,17 @@ black .
 before commiting code.
 
 ## Installation
+You can install the tool using pip:
 
-Install the current project in editable mode:
+```bash 
+pip install ReadChinaLookup
+```
+### From Source
+
+From the root directory of this repository, run:
 
 ```bash
-pip install -e .
+pip install -r requirements.txt
 ```
 
 To check if the tool is working:
@@ -52,6 +58,7 @@ version 1.0.0
 <!-- Something about which version of the programm and the first compatible ReadAct version here -->
 
 ## Version
+
 Every PR will trigger the release of a new version. [Python semantic release](https://python-semantic-release.readthedocs.io/en/latest/) is used for version control. 
 
 See  [Parsing of commit logs](https://python-semantic-release.readthedocs.io/en/latest/commit-log-parsing.html#commit-log-parsing) for commit conventions.
@@ -99,7 +106,7 @@ There are two approaches for checking person entries:
 
 For the former, names (include alt_name) are used to lookup with SPARQL query statements, and features like name, alt_name, gender or sex, birth year, death year, place of birth are used in a weighting mechanism to choose the most likely candidate.
 
-For the latter, using MediaWiki API, Q-identifiers are acquired based on Wikipedia links and then be used for SPARQL queyring.
+For the latter, using [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), Q-identifiers are acquired based on Wikipedia links and then queried via SPARQL.
 
 ### Space
 
@@ -107,5 +114,5 @@ Two APIs (OpenStreetMap and MediaWiki) are under using.
 
 ### Institution
 
-MediaWiki API is under using.
+To look up Institutions we use MediaWiki API.
 

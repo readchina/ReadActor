@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="ReadChinaLookup",
-    version="1.0.0-alpha",
+    version="1.0.1-alpha",
     author="Qin Gu",
     author_email="guqin7@gmail.com",
     description="A lookup tool for ReadChina project",
