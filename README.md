@@ -51,17 +51,6 @@ version 1.0.0
 
 <!-- Something about which version of the programm and the first compatible ReadAct version here -->
 
-## Version
-Every PR will trigger the release of a new version. [Python semantic release](https://python-semantic-release.readthedocs.io/en/latest/) is used for version control. 
-
-See  [Parsing of commit logs](https://python-semantic-release.readthedocs.io/en/latest/commit-log-parsing.html#commit-log-parsing) for commit conventions.
-
-Here is an example:
-<!-- ToDo: an exmaple to show how to tell the CI that this is the time of a new release -->
-```
-```
-
-
 ## Usage
 
 The tables need to adhere to ReadAct's data model, you can check the definitions in its [Data Dictionary](https://github.com/readchina/ReadAct/blob/master/csv/data_dictionary.csv).
@@ -73,7 +62,7 @@ To read a user defined `Person.csv`, check the column names and to update it if 
 ```bash
 python -m src.scripts.command_line_tool src/CSV/Person.csv
 ```
-
+  
 The updating can be  based on:
 
 - `wikipedia link`
@@ -97,9 +86,4 @@ For the latter, using MediaWiki API, Q-identifiers are acquired based on Wikiped
 
 ### Space
 
-Two APIs (OpenStreetMap and MediaWiki) are under using.
-
-### Institution
-
-MediaWiki API is under using.
-
+Two APIs (OpenStreetMap and Wikidata) are under using.
