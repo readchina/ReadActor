@@ -103,7 +103,7 @@ def compare(inst_dict, sleep=2):
     no_match = {}
     match = {}
     for k, v in inst_dict.items():
-        results = __get_QID(k[1])
+        results = get_QID(k[1])
         if results is None:
             no_match[k] = v
             continue
@@ -190,22 +190,7 @@ def __sparql(q_ids, sleep=2):
     return inst_wiki
 
 
-# def _get_q_ids(lookup=None):
-#     """
-#     A function to search qnames in wikidata with a lookup string.
-#     :param lookup: a string
-#     :return: a list of item identifiers (first 10)
-#     """
-#     e = wbi_core.FunctionsEngine()
-#     instance = e.get_search_results(search_string=lookup, search_type="item")
-#     if len(instance) > 0:
-#         return instance[0:1]
-#     else:
-#         print("Lookup '", lookup, "' not in Wikidata. Didn't find Q-ids.")
-#         return None
-
-
-def __get_QID(lookup):
+def get_QID(lookup):
     params = {
         "action": "wbsearchentities",
         "language": "en",
@@ -231,6 +216,7 @@ def __get_QID(lookup):
 
 
 if __name__ == "__main__":
+
     inst_dict = read_institution_csv(
         "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data"
         "/Institution.csv"
