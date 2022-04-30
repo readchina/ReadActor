@@ -642,8 +642,14 @@ if __name__ == "__main__":
         "person_csv", type=str, help="Path to the loal CSV file to be updated"
     )
     parser.add_argument("--update", help="Iterate through CSV rows and update entries")
+
+    # TODO(DP): Do not hardcode version number, read it from setup.py or similar
+    # see https://packaging.python.org/en/latest/guides/single-sourcing-package-version/
     parser.add_argument(
-        "--version", action="version", version="version 1.0.0", help="print version"
+        "--version",
+        action="version",
+        version="version 1.0.1-alpha",
+        help="print version",
     )
     parser.add_argument(
         "-v",

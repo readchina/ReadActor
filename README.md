@@ -116,6 +116,7 @@ Two APIs (OpenStreetMap and MediaWiki) are under using.
 
 To look up Institutions we use MediaWiki API.
 
+
 ## The time it takes
 To run this tool on your own data, it takes from a few seconds to several hours according to the amount of data.
 
