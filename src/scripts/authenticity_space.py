@@ -13,6 +13,7 @@ The standards for macthing are:
 less or equal to 0.9.
 """
 
+import json
 import time
 from itertools import islice
 
@@ -73,7 +74,8 @@ def compare_to_openstreetmap(geo_code_dict):
             )
             data = requests.get(url)
             if v[0].lower() not in str(data.json()).lower():
-                no_match_list.append(v)
+                item = v + [k]
+                no_match_list.append(item)
     return no_match_list
 
 
@@ -84,13 +86,18 @@ def geo_code_compare(no_match_list):
     :return: None or list of entries which don't match
     """
     still_no_match_list = []
+    space_with_QID = {}  # To collect QIDs for Space.csv
     count = 0
     for i in no_match_list:
+
         if i[0] is None:
             res = None
         else:
             count += 1
-            res = get_QID(i[0])
+            res = get_QID(
+                i[0]
+            )  # If there is more than one returned QID and we want to check all of them,
+            # the following code must be modified as well.
 
         if count == 20:
             time.sleep(30)
@@ -105,9 +112,10 @@ def geo_code_compare(no_match_list):
                 still_no_match_list.append(i)
                 continue
             for c in coordinate_list:
-                # If the difference are within +-0.9, consider a match, no collection, break nested loop
-                # Pay attention that Wikidata coordinate have the longitude first, and the latitude later. It is the
-                # opposite in ReadAct if we read the table from left to right.
+                # If the difference are within +-0.9, consider a match, no collection for no_match_list,
+                # but one collect action for space_with_QID dictionary, then break nested loop
+                # Pay attention that Wikidata coordinate have the longitude first, and the latitude later.
+                # It is the pposite in ReadAct if we read the table from left to right.
                 if (
                     float(abs(float(c[0]))) - 0.9
                     <= float(i[3])
@@ -117,13 +125,13 @@ def geo_code_compare(no_match_list):
                     <= float(i[2])
                     <= float(abs(float(c[1]))) + 0.9
                 ):
+                    space_with_QID[i[-1]] = i[:-1] + [res]
                     i = ""
                     break
             if len(i) > 0:
                 still_no_match_list.append(i)
-
-    if len(still_no_match_list) != 0:
-        return still_no_match_list
+    print("space_with_QID", space_with_QID)
+    return still_no_match_list, space_with_QID
 
 
 def get_QID(lookup):
@@ -146,7 +154,8 @@ def get_QID(lookup):
     if len(results) == 0:
         return None
     else:
-        # Note(QG): this can be easily extended into a longer list to increase the possibility of matching. Only return the first one now due to efficiency.
+        # Note(QG): this can be easily extended into a longer list to increase the possibility of matching. Only
+        # return the first one now due to efficiency.
         return results[0]
 
 
@@ -200,14 +209,21 @@ if __name__ == "__main__":
 
     # To compare the rest with wikidata info
     all_still_no_match_list = []
+    dictionary_list = []
     for chunk in chunks(no_match_list, 30):  # the digit here controls the batch size
         if len(chunk) > 0:
-            l = geo_code_compare(chunk)
+            l, d = geo_code_compare(chunk)
             if l is not None:
                 all_still_no_match_list += l
+            dictionary_list += [d]
             print("\n I am taking a break XD \n")
             time.sleep(
                 10
             )  # for every a few  entries, let this script take a break of 90 seconds
     print("Finished the whole iteration")
     print(all_still_no_match_list)
+    print("dictionary_list", dictionary_list)
+    match_for_space = {k: v for x in dictionary_list for k, v in dict(x).items()}
+    print(match_for_space)
+    with open("../results/match_for_space.json", "w") as f:
+        json.dump(match_for_space, f)
