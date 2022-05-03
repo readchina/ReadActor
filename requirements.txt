@@ -1,5 +1,2 @@
-lxml==4.8.0
 pandas==1.4.1
 requests>=2.26
-textblob==0.17.1
-wikidata==0.7.0

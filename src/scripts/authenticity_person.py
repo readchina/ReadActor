@@ -1,14 +1,14 @@
 """
-This is a python script to cross-reference Person entities in Readact and SCB with wikidata.
-Main idea:
-- Read ReadAct CSV files, get names as lookups
-- Get the Q-identifier with library wikibaseintegrator for each lookup
-- Use SPARQL to retrieve the property we need
-- Compare wikidata item properties with CSV in ReadAct
+This is a python script to cross-reference Person entities in ReadAct with wikidata.
+Strategy:
+- Read ReadAct CSV files, get names (or Wikidata link) as lookups
+- Get the QIDs: look up with name (or look up with Wikipedia link (if available))
+- Use SPARQL to retrieve properties from the found QIDs
+- Compare wikidata item properties with data in the CSV table
+
 """
 import json
 import time
-from collections import defaultdict
 from itertools import islice
 
 import pandas as pd
@@ -17,7 +17,6 @@ import requests
 from src.scripts.authenticity_space import read_space_csv
 
 URL = "https://query.wikidata.org/sparql"
-
 QUERY = """
         SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
         WHERE {{ 
@@ -36,7 +35,6 @@ QUERY = """
         LIMIT 250
         """
 
-
 QUERY_WITH_QID = """
 SELECT ?person ?personLabel ?ybirth ?ydeath ?birthplaceLabel ?genderLabel
 WHERE {{ 
@@ -54,15 +52,14 @@ LIMIT 1
 
 
 #################################################################
-################## Approach 1 : Query by name ##################
+################## Approach 1 : look up with name ##################
 def read_person_csv(
     person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv",
 ):
     """
     A function to read "Person.csv", preprocess CSV.
-    :param filename: "Person.csv".
-    :return: a dictionary: key: (person_id, name_lang); value: [name ordered,sex,birthyear, deathyear,
-    altname, place of birth]
+    :param person_url
+    :return: a dictionary
     """
     df = pd.read_csv(person_url, error_bad_lines=False)
     person_dict = {}
@@ -162,8 +159,8 @@ def __clean_birth_death_year_format(default_year):
             cleaned_year.replace("X", "0").replace("x", "0"),
             cleaned_year.replace("X", "9").replace("x", "0"),
         ]
-        # Maybe consider to tickle the weight at this step already? since range(1000,2000) covers 1000 years and it
-        # does not offer really useful information
+        # Note(QG): Maybe consider to tickle the weight at this step already? since range(1000,2000)
+        # covers 1000 years and it does not offer really useful information
         years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
     elif "," in cleaned_year:
         cleaned_year = cleaned_year.split(",")
@@ -188,14 +185,13 @@ def get_person_weight(person_dict, sleep=2):
             if len(value[lang][4]) != 0:
                 lookup_names.append(v[4])
 
-            # print("====lookup_names:\n", lookup_names)
             if lookup_names != ["anonymous"] and lookup_names != ["无名"]:
                 person = sparql_by_name(lookup_names, lang, sleep)
             else:
                 continue
 
             if len(person) == 0:
-                # print("There is no match for the person unique id ", person_id, " with language ", lang)
+                # There is no match
                 pass
 
             else:
@@ -253,8 +249,8 @@ def sparql_by_name(lookup_names, lang, sleep=2):
             if response.status_code == 200:  # a successful response
                 results = response.json().get("results", {}).get("bindings")
                 if len(results) == 0:
+                    # Didn't find the entity with this name on Wikidata
                     pass
-                    # print("Didn't find the entity with this name \"", lookup, "\" on Wikidata")
                 else:
                     for r in results:
                         person_wiki = {}
@@ -276,19 +272,18 @@ def sparql_by_name(lookup_names, lang, sleep=2):
                                 person_wiki["birthplace"] = r["birthplaceLabel"][
                                     "value"
                                 ]
-
                             person[person_wiki["Q-id"]] = person_wiki
             time.sleep(sleep)
     return person
 
 
 def compare_weights(person_weight_dict):
-    no_match = []
-    person_match_dict = {}
+    no_match_person = []
+    match_person = {}
     for id, p in person_weight_dict.items():
         # No match at all
         if len(p) < 1:
-            no_match.append(id)
+            no_match_person.append(id)
         # At least one match for one name_lang, no match for the rest name_lang
         elif len(p) == 1:
             lang = p[0][0]
@@ -299,7 +294,7 @@ def compare_weights(person_weight_dict):
             index = weights.index(max_weight)
             Qid = p[0][2][index]
             wi = p[0][3][index]
-            person_match_dict[id] = [Qid, wi]
+            match_person[id] = [Qid, wi]
         # There are at least one match for each name_lang
         else:
             m = 0
@@ -322,10 +317,8 @@ def compare_weights(person_weight_dict):
                     m = max_weight
                     q = Qid
                     w = wiki
-
-                person_match_dict[id] = [q, w]
-
-    return no_match, person_match_dict
+                match_person[id] = [q, w]
+    return no_match_person, match_person
 
 
 def chunks(person_dict, SIZE=30):
@@ -335,7 +328,7 @@ def chunks(person_dict, SIZE=30):
 
 
 ########################################################################
-################## Approach 2 : query by Q-identifier ##################
+################## Approach 2 : look up with Wikipedia link ##################
 def get_matched_by_wikipedia_url(
     person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv",
 ):
@@ -428,7 +421,7 @@ if __name__ == "__main__":
     )
 
     #################################################################
-    ################## Approach 1 : Query by name ##################
+    ################## Approach 1 : look up with name ##################
     person_dict = read_person_csv(
         "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
     )
@@ -473,7 +466,7 @@ if __name__ == "__main__":
         json.dump(matched_by_name, f)
 
     ########################################################################
-    ################## Approach 2 : query by Q-identifier ##################
+    ################## Approach 2 : look up with wikidata link ##################
     # matched_by_wikipedia = get_matched_by_wikipedia_url("https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv")
     #
     # print('===========\n', matched_by_wikipedia)
@@ -552,46 +545,16 @@ if __name__ == "__main__":
     with open("../results/match_after_choosing_longest_match.json", "w") as f:
         json.dump(longest_match, f)
 
-#################################################################
-################## Difference between the results of two approaches ##################
-# print(len(wikipedia))
-# print(len(name))
-#
-# difference_between_two_approaches = []
-# l = [x for x in wikipedia.keys() if x in name.keys()]
-#
-# print("number of intersection: ", len(l)) # 374
-# for key in l:
-#     if name[key] != wikipedia[key]:
-#         print("\nFor person with id ", key, ':')
-#         print("name[key]: ", "\n", name[key])
-#         print("wikipedia[key]: ", "\n", wikipedia[key], '\n')
-#         difference_between_two_approaches.append(key)
+    #################################################################
+    ################## Difference between the results of two approaches ##################
 
+    difference_between_two_approaches = []
+    l = [x for x in wikipedia.keys() if x in name.keys()]
 
-#################################################################
-################## Some tests for Approach 1  ##################
-# sample_dict = {
-#     'AG0089': {'en': [['Konstantin Balmont', 'Balmont Konstantin'], 'male', [1876], [1942], '', 'Shuya'], 'ru': [['Константи́н ''Бальмо́нт','Бальмо́нт Константи́н'], 'male', [1876], [1942], '', 'Shuya'], 'zh': [['巴尔蒙特康斯坦丁'], 'male', [1876], [1942], '', 'Shuya']},
-#     'AG0090': {'en': [['Honoré de Balzac', 'Balzac Honoré de'], 'male', [1799], [1850], '', 'Tours'], 'zh': [['巴尔扎克奥诺雷·德'], 'male', [1799], [1850], '', 'Tours']},
-#     'AG0091': {'en': [['Charles Baudelaire', 'Baudelaire Charles'], 'male', [1821], [1867], '', 'Paris'], 'zh': [['波德莱尔夏尔'], 'male', [1821], [1867], '', 'Paris']},
-#     'AG0092': {'en': [['Samuel Beckett', 'Beckett Samuel'], 'male', [1906], [1989], '', 'Foxrock'],
-#             'zh': [['贝克特萨缪尔'], 'male', [1906], [1989], '', 'Foxrock']},
-#     'AG0097': {'en': [['Ruxie Bi', 'Bi Ruxie'], 'male', [], [], '', 'unknown'], 'zh': [['毕汝协'], 'male', [], [], '毕汝谐', 'unknown']},
-#     'AG0098': {'en': [['Zhilin Bian', 'Bian Zhilin'], 'male', [1910], [2000], '', 'Haimen'], 'zh': [['卞之琳'], 'male', [1910], [2000], '', 'Haimen']},
-#     'AG0511': {'en': [['Er Nie', 'Nie Er'], 'male', [1912], [1935], 'Nie Shouxin', 'Vinci'], 'zh': [['聂耳'], 'male', [1912], [1935], '聂守信', 'Vinci']}
-# }
-#
-# person_weight_dict = get_person_weight(sample_dict, 2)
-#
-# print(person_weight_dict)
-
-# sample_person_weight_dict = {
-#     'AG0089': [['en', [1], ['Q314498'], [{'Q-id': 'Q314498', 'name': 'Konstantin Balmont', 'gender': 'male', 'birthyear': '1867', 'deathyear': '1942', 'birthplace': 'Q50074884'}]]],
-#     'AG0090': [['en', [1], ['Q9711'], [{'Q-id': 'Q9711', 'name': 'Honoré de Balzac', 'gender': 'male', 'birthyear': '1799', 'deathyear': '1850', 'birthplace': 'Tours'}]]],
-#     'AG0091': [['en', [1, 1], ['Q501', 'Q481146'], [{'Q-id': 'Q501', 'name': 'Charles Baudelaire', 'gender': 'male', 'birthyear': '1821', 'deathyear': '1867', 'birthplace': 'Paris'}, {'Q-id': 'Q481146', 'name': 'Pascal Pia', 'gender': 'male', 'birthyear': '1903', 'deathyear': '1979', 'birthplace': '10th arrondissement of Paris'}]]]
-# }
-
-# no_match, person_match_dict = compare_weights(sample_person_weight_dict)
-# print("no match: ", no_match)
-# print("person_match_dict: ", person_match_dict)
+    print("number of intersection: ", len(l))  # 374
+    for key in l:
+        if name[key] != wikipedia[key]:
+            print("\nFor person with id ", key, ":")
+            print("name[key]: ", "\n", name[key])
+            print("wikipedia[key]: ", "\n", wikipedia[key], "\n")
+            difference_between_two_approaches.append(key)

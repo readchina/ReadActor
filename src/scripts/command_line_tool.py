@@ -1,12 +1,11 @@
 import argparse
+import datetime
 import logging
 import sys
-from datetime import date
 
 import pandas as pd
 
 from src.scripts.authenticity_person import (
-    get_Qid_from_wikipedia_url,
     order_name_by_language,
     sparql_by_name,
     sparql_with_Qid,
@@ -261,7 +260,7 @@ def get_last_id(df):
 def check_each_row(
     index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
 ):
-    today = date.today().strftime("%Y-%m-%d")
+    today = datetime.date.today().strftime("%Y-%m-%d")
     if row["note"] == "skip" or row["note"] == "Skip":
         return row, last_person_id
     else:

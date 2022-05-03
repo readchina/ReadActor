@@ -10,7 +10,27 @@ The goal is to automately extract data about **person**, **space**, and **instit
 
 - Python: `>=3.8`
 
-The tool is tested on macOS and linux.
+The tool is tested on macOS and linux. 
+
+## Installation
+
+You can install the tool using pip:
+
+```bash 
+pip install ReadChinaLookup
+```
+
+To check if the tool is working:
+
+```bash
+python -m src.scripts.command_line_tool --version
+```
+
+You should see:
+
+```bash
+version 1.0.0
+```
 
 ## Development
 
@@ -29,12 +49,6 @@ black .
 
 before commiting code.
 
-## Installation
-You can install the tool using pip:
-
-```bash 
-pip install ReadChinaLookup
-```
 ### From Source
 
 From the root directory of this repository, run:
@@ -43,16 +57,10 @@ From the root directory of this repository, run:
 pip install -r requirements.txt
 ```
 
-To check if the tool is working:
+To run the testsuite:
 
 ```bash
-python -m src.scripts.command_line_tool --version
-```
-
-You should see:
-
-```bash
-version 1.0.0
+python -m unittest discover -v
 ```
 
 <!-- Something about which version of the programm and the first compatible ReadAct version here -->
@@ -101,10 +109,10 @@ At the end, a `statistic` message will be printed out to tell the user how many 
 
 There are two approaches for checking person entries:
 
-- **lookup by name** or
-- **query with Wikipedia links**.
+- **look up with name** or
+- **look up with Wikipedia link**.
 
-For the former, names (include alt_name) are used to lookup with SPARQL query statements, and features like name, alt_name, gender or sex, birth year, death year, place of birth are used in a weighting mechanism to choose the most likely candidate.
+For the former, names (include alt_name) are used to look up with SPARQL query statements, and features like name, alt_name, gender or sex, birth year, death year, place of birth are used in a weighting mechanism to choose the most likely candidate.
 
 For the latter, using [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), Q-identifiers are acquired based on Wikipedia links and then queried via SPARQL.
 
@@ -115,4 +123,14 @@ Two APIs (OpenStreetMap and MediaWiki) are under using.
 ### Institution
 
 To look up Institutions we use MediaWiki API.
+
+
+## The time it takes
+To run this tool on your own data, it takes from a few seconds to several hours according to the amount of data.
+
+For example, using the data in [ReadAct](https://github.com/readchina/ReadAct), to run this tool on the [Person.csv](https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv) (data until 30.04.2022), it takes up to several hours. But if you only add and commit one or two new Person entries, or run this tool on your own CVS table which consists of one or two lines, it should take only a few seconds or one minute.
+
+It is similar if you want to run scripts in this tool by yourselves, like `authenticity_person.py`, `authenticity_space.py`, `authenticity_institution.py`, it takes from a few minutes to several hours depending on the amount of data. 
+
+For example, it takes a few minutes to run `authenticity_space.py` for [Space.csv](https://github.com/readchina/ReadAct/blob/master/csv/data/Space.csv) (data until 30.04.2022).
 
