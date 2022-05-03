@@ -37,7 +37,7 @@ class MyTestCase(unittest.TestCase):
             compare_to_openstreetmap(
                 {"SP0025": ["Baiyangdian", "PL", 38.941441, 115.969465]}
             ),
-            [["Baiyangdian", "PL", 38.941441, 115.969465]],
+            [['Baiyangdian', 'PL', 38.941441, 115.969465, 'SP0025']],
         )
 
 
