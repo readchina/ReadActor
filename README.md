@@ -10,7 +10,27 @@ The goal is to automately extract data about **person**, **space**, and **instit
 
 - Python: `>=3.8`
 
-The tool is tested on macOS and linux.
+The tool is tested on macOS and linux. 
+
+## Installation
+
+You can install the tool using pip:
+
+```bash 
+pip install ReadChinaLookup
+```
+
+To check if the tool is working:
+
+```bash
+python -m src.scripts.command_line_tool --version
+```
+
+You should see:
+
+```bash
+version 1.0.0
+```
 
 ## Development
 
@@ -29,12 +49,6 @@ black .
 
 before commiting code.
 
-## Installation
-You can install the tool using pip:
-
-```bash 
-pip install ReadChinaLookup
-```
 ### From Source
 
 From the root directory of this repository, run:
@@ -43,16 +57,10 @@ From the root directory of this repository, run:
 pip install -r requirements.txt
 ```
 
-To check if the tool is working:
+To run the testsuite:
 
 ```bash
-python -m src.scripts.command_line_tool --version
-```
-
-You should see:
-
-```bash
-version 1.0.0
+python -m unittest discover -v
 ```
 
 <!-- Something about which version of the programm and the first compatible ReadAct version here -->

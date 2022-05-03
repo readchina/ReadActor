@@ -42,7 +42,7 @@ jobs:
       #   run: python -m test scripts.command_line_tool
 
       - name: Run New Tests
-        run: python -m tests.test_CLT -v
+        run: python -m unittest discover -v
 
 # see https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
   deploy:
