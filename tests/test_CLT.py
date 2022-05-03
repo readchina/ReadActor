@@ -28,7 +28,7 @@ class MyTestCase(unittest.TestCase):
         self.df = pd.DataFrame([self.l])
         self.df.columns = self.column_names
         self.df_person_gh = pd.read_csv(
-            "../tests/fixtures/df_person_Github_fake.csv"
+            "tests/fixtures/df_person_Github_fake.csv"
         )  # unofficial version
         self.last_person_id, self.person_ids_gh, self.wikidata_ids_GH = get_last_id(
             self.df_person_gh
