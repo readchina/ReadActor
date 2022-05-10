@@ -92,7 +92,7 @@ pip install -i https://test.pypi.org/simple/ ReadChinaLookup==1.0.0
 To read a user defined `Person.csv`, check the column names and to update it if necessary. Updated rows will be marked as modified by `SemBot`:
 
 ```bash
-python -m src.scripts.command_line_tool src/CSV/Person.csv
+python3.8 -m src.scripts.command_line_tool src/CSV/Person.csv
 ```
 
 The updating can be  based on:

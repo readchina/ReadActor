@@ -3,6 +3,7 @@ import datetime
 import logging
 import sys
 
+import click
 import pandas as pd
 
 from src.scripts.authenticity_person import (
@@ -11,117 +12,24 @@ from src.scripts.authenticity_person import (
     sparql_with_Qid,
 )
 
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
 # Create and configure logger
 logging.basicConfig(
-    filename="sembot.log", format="%(asctime)s %(message)s", filemode="w"
+    filename="ReadActor.log", format="%(asctime)s %(message)s", filemode="w"
 )
 
 # Creating an object
 logger = logging.getLogger()
 
-DATA_DICTIONARY_GITHUB = (
-    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data_dictionary.csv"
-)
-PERSON_CSV_GITHUB = (
-    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
-)
-EXPECTED_COL = [
-    "person_id",
-    "family_name",
-    "first_name",
-    "name_lang",
-    "sex",
-    "birthyear",
-    "deathyear",
-    "place_of_birth",
-    "wikidata_id",
-    "created",
-    "created_by",
-    "last_modified",
-    "last_modified_by",
-    "note",
-]
-MINIMAL_COL = ["family_name", "first_name", "name_lang"]
-FIELDS_OF_WIKIDATA = [
-    "sex",
-    "birthyear",
-    "deathyear",
-    "place_of_birth",
-]  # gender, birthplace
+# QG: this is the file on a branch which is not master.
+PERSON_CSV_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s: - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
-
-
-def validate(path):
-    valid = False
-    df = pd.read_csv(path)  # index_col=0
-    df = df.fillna("")  # Replace all the nan into empty string
-
-    if not set(MINIMAL_COL).issubset(df.columns.tolist()):
-        print(set(MINIMAL_COL) - set(df.columns.tolist()))
-        logger.error("Your file is missing the following mandatory column(s):")
-    elif not set(EXPECTED_COL).issubset(set(df.columns.tolist())):
-        missing_columns = set(EXPECTED_COL) - set(df.columns.tolist())
-        valid = True
-        print(
-            "There are 15 expected columns in Person.csv.\nYour file has missing column(s):"
-        )
-        print(list(missing_columns))
-        for i in missing_columns:
-            df[i] = ""
-        df = df[
-            [
-                "person_id",
-                "family_name",
-                "first_name",
-                "name_lang",
-                "sex",
-                "birthyear",
-                "deathyear",
-                "place_of_birth",
-                "wikidata_id",
-                "created",
-                "created_by",
-                "last_modified",
-                "last_modified_by",
-                "note",
-            ]
-        ]
-        print(
-            "All missing columns are inserted to your csv table now.\nNote that columns outside the 15 expected "
-            "columns are dropped."
-        )
-        # To Do: rewrite to make sure that each column has a fixed position in any Person.csv
-    else:
-        df = df[
-            [
-                "person_id",
-                "family_name",
-                "first_name",
-                "name_lang",
-                "sex",
-                "birthyear",
-                "deathyear",
-                "place_of_birth",
-                "wikidata_id",
-                "created",
-                "created_by",
-                "last_modified",
-                "last_modified_by",
-                "note",
-            ]
-        ]
-        valid = True
-        print(
-            "--> Validate 2/2 \nAll 15 expected columns are included.\nPlease note that any irrelevant column will "
-            "be "
-            "dropped.\n"
-        )
-    return valid, df
 
 
 def __compare_two_rows(row, row_gh):
@@ -245,7 +153,11 @@ def check_gh(
     df,
 ):  # a function to check if Person.csv on GitHub has `wikidata_id` column
     if "wikidata_id" not in df.columns:
-        error_msg = "There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to check it. By SemBot."
+        error_msg = (
+            "There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to check it. "
+            ""
+            "By SemBot."
+        )
         logger.error(error_msg)
         exit()
 
@@ -272,9 +184,10 @@ def check_each_row(
                     len(row["wikidata_id"]) > 0
                 ):
                     if row["wikidata_id"] in wikidata_ids_GH:
-                        row[
-                            "note"
-                        ] = "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. Please check. By SemBot."
+                        row["note"] = (
+                            "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
+                            "Please check. By SemBot."
+                        )
                         error_msg = (
                             "For row "
                             + str(int(index))
@@ -341,16 +254,25 @@ def check_each_row(
                     if len(person) > 0:
                         wikidata_id_usr = next(iter(person))
                         if wikidata_id_usr in wikidata_ids_GH:
-                            row[
-                                "note"
-                            ] = 'Error: `wikidata_id` queried by family_name, first_name, name_lang already exists in ReadAct data, but your provided person_id does not match. Please check your data carefully. If you are 100% sure that your input is correct, then it is likely that this person has an identical name with a person in Wikidata database. Please put "skip" in "note" column for this row and run this program again. By SemBot.'
+                            row["note"] = (
+                                "Error: `wikidata_id` queried by family_name, first_name, name_lang already exists in "
+                                ""
+                                "ReadAct data, but your provided person_id does not match. Please check your data "
+                                "carefully. If you are 100% sure that your input is correct, then it is likely that "
+                                "this person has an identical name with a person in Wikidata database. Please put "
+                                '"skip" in "note" column for this row and run this program again. By SemBot.'
+                            )
                             error_msg = (
                                 "For row "
                                 + str(int(index))
                                 + " :"
                                 + " `wikidata_id` queried by "
                                 "family_name, "
-                                'first_name, name_lang already exists in ReadAct data, but your provided person_id does not match. Please check your data carefully. If you are 100% sure that your input is correct, then it is likely that this person has an identical name with a person in Wikidata database. Please put "skip" in "note" column for this row and run this program again. By SemBot.'
+                                "first_name, name_lang already exists in ReadAct data, but your provided "
+                                "person_id does not match. Please check your data carefully. If you are 100% "
+                                "sure that your input is correct, then it is likely that this person has an "
+                                'identical name with a person in Wikidata database. Please put "skip" in "note" '
+                                "column for this row and run this program again. By SemBot."
                             )
                             logger.error(error_msg)
                             sys.exit()
@@ -449,14 +371,20 @@ def check_each_row(
                 len(row["wikidata_id"]) > 0
             ):  # no person_id, but has wikidata_id
                 if row["wikidata_id"] in wikidata_ids_GH:
-                    row[
-                        "note"
-                    ] = 'Error: this `wikidata_id` already exists in ReadAct. Please check carefully. If you are 100% sure that your input is correct, then it is likely that this person has an identical name with a person in Wikidata database. Please put "skip" in "note" column for this row and run this program again.  By SemBot.'
+                    row["note"] = (
+                        "Error: this `wikidata_id` already exists in ReadAct. Please check carefully. If you are 100% "
+                        ""
+                        "sure that your input is correct, then it is likely that this person has an identical name "
+                        'with a person in Wikidata database. Please put "skip" in "note" column for this row and run '
+                        "this program again.  By SemBot."
+                    )
                     error_msg = (
                         "For row "
                         + str(index)
                         + " : this `wikidata_id` already exists in ReadAct. "
-                        'Please check carefully. If you are 100% sure that your input is correct, then it is likely that this person has an identical name with a person in Wikidata database. Please put "skip" in "note" column for this row and run this program again.  By SemBot.'
+                        "Please check carefully. If you are 100% sure that your input is correct, then it is "
+                        "likely that this person has an identical name with a person in Wikidata database. "
+                        'Please put "skip" in "note" column for this row and run this program again.  By SemBot.'
                     )
                     logger.error(error_msg)
                     sys.exit()
@@ -527,14 +455,22 @@ def check_each_row(
                 if len(person) > 0:
                     wikidata_id_usr = next(iter(person))
                     if wikidata_id_usr in wikidata_ids_GH:
-                        row[
-                            "note"
-                        ] = 'Error: `wikidata_id` queried by family_name, first_name, name_lang already exists in ReadAct data, but your provided person_id does not match. Please check your data carefully. If you are 100% sure that your input is correct, then it is likely that this person has an identical name with a person in Wikidata database. Please put "skip" in "note" column for this row and run this program again. By SemBot.'
+                        row["note"] = (
+                            "Error: `wikidata_id` queried by family_name, first_name, name_lang already exists in "
+                            "ReadAct data, but your provided person_id does not match. Please check your data "
+                            "carefully. If you are 100% sure that your input is correct, then it is likely that this "
+                            'person has an identical name with a person in Wikidata database. Please put "skip" in '
+                            '"note" column for this row and run this program again. By SemBot.'
+                        )
                         error_msg = (
                             "For row "
                             + str(int(index))
                             + " : `wikidata_id` queried by family_name, "
-                            'first_name, name_lang already exists in ReadAct data, but your provided person_id does not match. Please check your data carefully. If you are 100% sure that your input is correct, then it is likely that this person has an identical name with a person in Wikidata database. Please put "skip" in "note" column for this row and run this program again. By SemBot.'
+                            "first_name, name_lang already exists in ReadAct data, but your provided person_id "
+                            "does not match. Please check your data carefully. If you are 100% sure that your "
+                            "input is correct, then it is likely that this person has an identical name with a "
+                            'person in Wikidata database. Please put "skip" in "note" column for this row and '
+                            "run this program again. By SemBot."
                         )
                         logger.error(error_msg)
                         sys.exit()
@@ -621,10 +557,11 @@ def check_each_row(
                     return row, last_person_id
 
 
-if __name__ == "__main__":
-
-    # TODO(DP): This should be a .log file, e.g. "sembot.log" see L10-13 above
-    fh = logging.FileHandler("../log.txt")
+# Todo(QG): check again for the support of full URI.
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument("path")
+def update_person_csv(path):
+    fh = logging.FileHandler("ReadActor.log")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
 
@@ -635,65 +572,10 @@ if __name__ == "__main__":
     logger.addHandler(ch)
     logger.addHandler(fh)
 
-    parser = argparse.ArgumentParser(
-        description="Validate CSV columns and update information on ReadAct's person.csv"
-    )
-    parser.add_argument(
-        "person_csv", type=str, help="Path to the loal CSV file to be updated"
-    )
-    parser.add_argument("--update", help="Iterate through CSV rows and update entries")
+    df = pd.read_csv(path)  # index_col=0
+    df = df.fillna("")  # Replace all the nan into empty string
 
-    # TODO(DP): Do not hardcode version number, read it from setup.py or similar
-    # see https://packaging.python.org/en/latest/guides/single-sourcing-package-version/
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="version 1.0.1-alpha",
-        help="print version",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        dest="verbosity",
-        default=0,
-        help="verbose output (repeat " "for increased verbosity)",
-    )
-    parser.add_argument(
-        "-q",
-        "--quiet",
-        action="store_const",
-        const=-1,
-        default=0,
-        dest="verbosity",
-        help="quiet " "output (show errors only)",
-    )
-    args = parser.parse_args()
-
-    # #################################################################
-    # # 1. Check the input Person.csv
-    # #################################################################
-    if not args.person_csv.endswith("Person.csv"):
-        print("File invalid. You should use only Person.csv as the first argument\n")
-    else:
-        print("--> Validate 1/2 \nPerson.csv is going to be checked.\n")
-
-    validate_result, df = validate(
-        args.person_csv
-    )  # TODO: should be replaced with "args.person_csv"
-    if not validate_result:
-        print("Error: Please check your Person.csv and re-run this tool. By SemBot.")
-        quit()
-    print("\n======= Finished Checking ========")
-
-    #################################################################
-    # 2. Update Person.csv
-    #################################################################
-    # TODO: The following 3 lines should be activaed once this script is done
-    # df_person_Github = pd.read_csv(PERSON_CSV_GITHUB)
-    # with open('../CSV/df_person_Github.csv', 'w') as f:
-    #     f.write(df_person_Github.to_csv())
-    df_person_gh = pd.read_csv("src/CSV/df_person_Github_fake.csv")
+    df_person_gh = pd.read_csv(PERSON_CSV_GITHUB)
     # Replace all the nan into empty string
     df_person_gh = df_person_gh.fillna("")
     check_gh(df_person_gh)
@@ -706,3 +588,49 @@ if __name__ == "__main__":
         )
     with open("src/CSV/Person_updated.csv", "w") as f:
         f.write(df.to_csv())
+
+
+# Todo(QG): check for debug
+@click.command()
+@click.option("-d", "--debug")
+def debug(debug):
+    click.echo("ReadActor.log")
+
+
+if __name__ == "__main__":
+    update_person_csv()
+    debug()
+    # parser = argparse.ArgumentParser(
+    #     description="Validate CSV columns and update information on ReadAct's person.csv"
+    # )
+    # parser.add_argument(
+    #     "person_csv", type=str, help="Path to the loal CSV file to be updated"
+    # )
+    # parser.add_argument("--update", help="Iterate through CSV rows and update entries")
+    #
+    # # TODO(DP): Do not hardcode version number, read it from setup.py or similar
+    # # see https://packaging.python.org/en/latest/guides/single-sourcing-package-version/
+    # parser.add_argument(
+    #     "--version",
+    #     action="version",
+    #     version="version 1.0.1-alpha",
+    #     help="print version",
+    # )
+    # parser.add_argument(
+    #     "-v",
+    #     "--verbose",
+    #     action="count",
+    #     dest="verbosity",
+    #     default=0,
+    #     help="verbose output (repeat " "for increased verbosity)",
+    # )
+    # parser.add_argument(
+    #     "-q",
+    #     "--quiet",
+    #     action="store_const",
+    #     const=-1,
+    #     default=0,
+    #     dest="verbosity",
+    #     help="quiet " "output (show errors only)",
+    # )
+    # args = parser.parse_args()
