@@ -1,10 +1,10 @@
-import setuptools
+from setuptools import find_packages, setup
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-setuptools.setup(
-    name="ReadChinaLookup",
+setup(
+    name="ReadActor",
     version="1.0.1-alpha",
     author="Qin Gu",
     author_email="guqin7@gmail.com",
@@ -20,7 +20,15 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src"),
     python_requires=">=3.8",
+    packages=find_packages(),
+    include_package_data=True,
+    install_requires=[
+        "Click",
+    ],
+    entry_points={
+        "console_scripts": [
+            "command_line_tool = src.scripts.command_line_tool:cli",
+        ],
+    },
 )

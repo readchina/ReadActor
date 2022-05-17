@@ -1,10 +1,13 @@
 import argparse
 import datetime
+import importlib
 import logging
 import sys
+from importlib.metadata import version
 
 import click
 import pandas as pd
+import pkg_resources
 
 from src.scripts.authenticity_person import (
     order_name_by_language,
@@ -557,10 +560,15 @@ def check_each_row(
                     return row, last_person_id
 
 
-# Todo(QG): check again for the support of full URI.
-@click.command(context_settings=CONTEXT_SETTINGS)
+# Todo(QG): double check for the support of full URI.
+@click.group(context_settings=CONTEXT_SETTINGS)
+@click.option("--version", "-v")
 @click.argument("path")
-def update_person_csv(path):
+def cli(path, version):
+    if version:
+        version = __version__ = importlib.metadata.version("ReadActor")
+        # version = pkg_resources.require("ReadActor")[0].version
+        click.echo(version)
     fh = logging.FileHandler("ReadActor.log")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
@@ -590,16 +598,16 @@ def update_person_csv(path):
         f.write(df.to_csv())
 
 
-# Todo(QG): check for debug
-@click.command()
+# Todo(QG)
+@cli.command()
 @click.option("-d", "--debug")
 def debug(debug):
     click.echo("ReadActor.log")
 
 
 if __name__ == "__main__":
-    update_person_csv()
-    debug()
+    cli()
+
     # parser = argparse.ArgumentParser(
     #     description="Validate CSV columns and update information on ReadAct's person.csv"
     # )
