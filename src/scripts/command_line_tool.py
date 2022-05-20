@@ -560,15 +560,35 @@ def check_each_row(
                     return row, last_person_id
 
 
+# eager
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    version = __version__ = importlib.metadata.version("yourscript")
+    click.echo(version)
+    ctx.exit()
+
+
+def abort_if_false(ctx, param, value):
+    if not value:
+        ctx.abort()
+
+
 # Todo(QG): double check for the support of full URI.
-@click.group(context_settings=CONTEXT_SETTINGS)
-@click.option("--version", "-v")
-@click.argument("path")
-def cli(path, version):
-    if version:
-        version = __version__ = importlib.metadata.version("ReadActor")
-        # version = pkg_resources.require("ReadActor")[0].version
-        click.echo(version)
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('-v', '--version', is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True, help='Package version')
+@click.option('-d', '--debug', default=False, is_flag=True, help='Print full log output to console')
+@click.option('-q', '--quiet', default=False, is_flag=True,
+              help='Print no log output to console other then completion message and error level events')
+# @click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
+#               expose_value=False,
+#               prompt='Please type anything for confirnation?')
+@click.confirmation_option('-i', '--interactive', prompt='Confirm the action with type anything')
+@click.option('-f', '--file', default=False, is_flag=True,
+              help='Check a single table at <path> (must be a supported ReadAct file name)')
+@click.argument('path', default=False, type=str)
+def cli(debug, quiet, interactive, file, path):
     fh = logging.FileHandler("ReadActor.log")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
@@ -579,6 +599,18 @@ def cli(path, version):
 
     logger.addHandler(ch)
     logger.addHandler(fh)
+
+    if quiet:
+        logger.setLevel(logging.ERROR)
+    if debug:
+        click.echo('./ud.py')
+    if interactive == "yes":
+        click.echo('update')
+    if file:
+        pass
+    else:
+        logger.setLevel(logging.INFO)
+        click.echo('argument')
 
     df = pd.read_csv(path)  # index_col=0
     df = df.fillna("")  # Replace all the nan into empty string
@@ -596,13 +628,6 @@ def cli(path, version):
         )
     with open("src/CSV/Person_updated.csv", "w") as f:
         f.write(df.to_csv())
-
-
-# Todo(QG)
-@cli.command()
-@click.option("-d", "--debug")
-def debug(debug):
-    click.echo("ReadActor.log")
 
 
 if __name__ == "__main__":
