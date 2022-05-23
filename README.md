@@ -1,4 +1,4 @@
-# Wikidata Lookup
+# ReadActor
 
 [![CI](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml/badge.svg)](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml)
 
@@ -17,7 +17,7 @@ The tool is tested on macOS and linux.
 You can install the tool using pip:
 
 ```bash 
-pip install ReadChinaLookup
+pip install ReadActor
 ```
 
 To check if the tool is working:
@@ -83,10 +83,10 @@ The tables need to adhere to ReadAct's data model, you can check the definitions
 
 ### Person Lookup
 
-To install the package ReadChinaLookup 1.0.0:
+To install the package ReadActor 1.0.0:
 
 ```
-pip install -i https://test.pypi.org/simple/ ReadChinaLookup==1.0.0
+pip install -i https://test.pypi.org/simple/ ReadActor==1.0.0
 ```
 
 To read a user defined `Person.csv`, check the column names and to update it if necessary. Updated rows will be marked as modified by `SemBot`:

@@ -11,9 +11,9 @@ setup(
     description="A lookup tool for ReadChina project",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/readchina/WikidataLookup",
+    url="https://github.com/readchina/ReadActor",
     project_urls={
-        "Bug Tracker": "https://github.com/pypa/ReadChinaLookup/issues",
+        "Bug Tracker": "https://github.com/pypa/ReadActor/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",

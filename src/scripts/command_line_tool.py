@@ -612,7 +612,8 @@ def abort_if_false(ctx, param, value):
     is_flag=True,
     help="Check a single table at <path> (must be a supported ReadAct file name)",
 )
-def cli(debug, quiet, interactive, file):
+@click.argument("path", default=False, type=str)
+def cli(debug, quiet, interactive, file, path):
     fh = logging.FileHandler("ReadActor.log")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
