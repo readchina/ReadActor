@@ -3,7 +3,7 @@ from datetime import date
 
 import pandas as pd
 
-from src.scripts.command_line_tool import check_each_row, get_last_id
+from src.scripts.readactor import check_each_row, get_last_id
 
 
 class MyTestCase(unittest.TestCase):

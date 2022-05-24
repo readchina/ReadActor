@@ -15,24 +15,16 @@ from src.scripts.authenticity_person import (
     sparql_with_Qid,
 )
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-
-# Create and configure logger
-logging.basicConfig(
-    filename="ReadActor.log", format="%(asctime)s %(message)s", filemode="w"
-)
-
 # Creating an object
 logger = logging.getLogger()
-
-# QG: this is the file on a branch which is not master.
-PERSON_CSV_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
-
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s: - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
+# QG: this is the file on a branch which is not master.
+PERSON_CSV_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
 
 
 def __compare_two_rows(row, row_gh):
@@ -564,14 +556,32 @@ def check_each_row(
 def print_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    version = __version__ = importlib.metadata.version("ReadActor")
-    click.echo(version)
+    s = "version " + importlib.metadata.version("ReadActor")
+    click.echo(s)
     ctx.exit()
 
 
-def abort_if_false(ctx, param, value):
-    if not value:
-        ctx.abort()
+# eager
+def print_log(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    with open("ReadActor.log", "r") as f:
+        data = f.read()
+        click.echo(data)
+    ctx.exit()
+
+
+def log(level):
+    fh = logging.FileHandler("ReadActor.log")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    ch.setFormatter(formatter)
+
+    logger.addHandler(ch)
+    logger.addHandler(fh)
 
 
 # Todo(QG): double check for the support of full URI.
@@ -588,54 +598,36 @@ def abort_if_false(ctx, param, value):
 @click.option(
     "-d",
     "--debug",
-    default=False,
     is_flag=True,
+    callback=print_log,
+    expose_value=False,
+    is_eager=True,
     help="Print full log output to console",
 )
 @click.option(
     "-q",
     "--quiet",
-    default=False,
     is_flag=True,
     help="Print no log output to console other then completion message and error level events",
 )
-# @click.option('-y', '--yes', is_flag=True, callback=abort_if_false,
-#               expose_value=False,
-#               prompt='Please type anything for confirnation?')
-@click.confirmation_option(
-    "-i", "--interactive", prompt="Confirm the action with type anything"
-)
-@click.option(
-    "-f",
-    "--file",
-    default=False,
-    is_flag=True,
-    help="Check a single table at <path> (must be a supported ReadAct file name)",
-)
-@click.argument("path", default=False, type=str)
-def cli(debug, quiet, interactive, file, path):
-    fh = logging.FileHandler("ReadActor.log")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(formatter)
-
-    logger.addHandler(ch)
-    logger.addHandler(fh)
-
+@click.argument("path", default=".", type=str)
+def cli(quiet, path):
     if quiet:
-        logger.setLevel(logging.ERROR)
-    if debug:
-        click.echo("./ud.py")
-    if interactive == "yes":
-        click.echo("update")
-    if file:
-        pass
+        level = logging.ERROR
     else:
-        logger.setLevel(logging.INFO)
-        click.echo("argument")
+        level = logging.DEBUG
+    # if quiet:
+    #     for handlers in logger.handlers:
+    #         if type(handlers) == logging.StreamHandler:
+    #             handlers.setLevel(logging.ERROR)
+    #         else:
+    #             handlers.setLevel(logging.NOTSET)
+    # else:
+    #     for handlers in logger.handlers:
+    #         if type(handlers) == logging.StreamHandler:
+    #             handlers.setLevel(logging.NOTSET)
+
+    log(level)
 
     df = pd.read_csv(path)  # index_col=0
     df = df.fillna("")  # Replace all the nan into empty string

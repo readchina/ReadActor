@@ -28,7 +28,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "command_line_tool = src.scripts.command_line_tool:cli",
+            "readactor = src.scripts.readactor:cli",
         ],
     },
 )

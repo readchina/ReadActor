@@ -36,10 +36,13 @@ jobs:
           black --check .
           isort --profile black --check .
       - name: Check tool version
-        run: command_line_tool --version
+        run: readactor --version
 
       # - name: Run Old Tests
       #   run: python -m test scripts.command_line_tool
+
+#      - name: Run Click Test of Version
+#        run: python -m tests.test_click
 
       - name: Run New Tests
         run: python -m unittest discover -v
