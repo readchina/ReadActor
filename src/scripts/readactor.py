@@ -573,10 +573,13 @@ def print_log(ctx, param, value):
 
 def log(level):
     fh = logging.FileHandler("ReadActor.log")
+    ch = logging.StreamHandler()
+
+    logger.setLevel(logging.DEBUG)
+
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
 
-    ch = logging.StreamHandler()
     ch.setLevel(level)
     ch.setFormatter(formatter)
 
@@ -613,19 +616,9 @@ def log(level):
 @click.argument("path", default=".", type=str)
 def cli(quiet, path):
     if quiet:
-        level = logging.ERROR
+        level = logging.INFO
     else:
         level = logging.DEBUG
-    # if quiet:
-    #     for handlers in logger.handlers:
-    #         if type(handlers) == logging.StreamHandler:
-    #             handlers.setLevel(logging.ERROR)
-    #         else:
-    #             handlers.setLevel(logging.NOTSET)
-    # else:
-    #     for handlers in logger.handlers:
-    #         if type(handlers) == logging.StreamHandler:
-    #             handlers.setLevel(logging.NOTSET)
 
     log(level)
 
