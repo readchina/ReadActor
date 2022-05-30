@@ -7,7 +7,6 @@ from importlib.metadata import version
 
 import click
 import pandas as pd
-import pkg_resources
 
 from src.scripts.authenticity_person import (
     order_name_by_language,
@@ -608,17 +607,34 @@ def log(level):
     help="Print full log output to console",
 )
 @click.option(
+    "-i",
+    "--interactive",
+    is_flag=True,
+    default=False,
+    is_eager=True,
+    help="Prompt user for confirmation to continue",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
     help="Print no log output to console other then completion message and error level events",
 )
+@click.option(
+    "-o",
+    "--output",
+    is_flag=True,
+    help="Do not update input table, but create a new file at <path> instead",
+)
 @click.argument("path", default=".", type=str)
-def cli(quiet, path):
+def cli(path, interactive, quiet, output):
+    if interactive:
+        click.confirm("Do you want to update the table?", default=False, abort=True)
+
     if quiet:
-        level = logging.INFO
+        level = logging.ERROR
     else:
-        level = logging.DEBUG
+        level = logging.INFO
 
     log(level)
 
@@ -626,6 +642,7 @@ def cli(quiet, path):
     df = df.fillna("")  # Replace all the nan into empty string
 
     df_person_gh = pd.read_csv(PERSON_CSV_GITHUB)
+
     # Replace all the nan into empty string
     df_person_gh = df_person_gh.fillna("")
     check_gh(df_person_gh)
@@ -636,44 +653,14 @@ def cli(quiet, path):
         row, last_person_id = check_each_row(
             index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
         )
-    with open("src/CSV/Person_updated.csv", "w") as f:
-        f.write(df.to_csv())
+
+    if output:
+        with open(path[:-4] + "_updated.csv", "w") as f:
+            f.write(df.to_csv())
+    else:
+        with open(path, "w") as f:
+            f.write(df.to_csv())
 
 
 if __name__ == "__main__":
     cli()
-
-    # parser = argparse.ArgumentParser(
-    #     description="Validate CSV columns and update information on ReadAct's person.csv"
-    # )
-    # parser.add_argument(
-    #     "person_csv", type=str, help="Path to the loal CSV file to be updated"
-    # )
-    # parser.add_argument("--update", help="Iterate through CSV rows and update entries")
-    #
-    # # TODO(DP): Do not hardcode version number, read it from setup.py or similar
-    # # see https://packaging.python.org/en/latest/guides/single-sourcing-package-version/
-    # parser.add_argument(
-    #     "--version",
-    #     action="version",
-    #     version="version 1.0.1-alpha",
-    #     help="print version",
-    # )
-    # parser.add_argument(
-    #     "-v",
-    #     "--verbose",
-    #     action="count",
-    #     dest="verbosity",
-    #     default=0,
-    #     help="verbose output (repeat " "for increased verbosity)",
-    # )
-    # parser.add_argument(
-    #     "-q",
-    #     "--quiet",
-    #     action="store_const",
-    #     const=-1,
-    #     default=0,
-    #     dest="verbosity",
-    #     help="quiet " "output (show errors only)",
-    # )
-    # args = parser.parse_args()
