@@ -1,9 +1,8 @@
-,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,created,created_by,last_modified,last_modified_by,note
-0,AG2000,Zhang,San,en,male,1999,,Berlin,,2021-12-22,QG,,,skip
-1,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,
-,,,,,,,,,,,,,,
-2,,盖曼,尼尔,zh,,,,,Q210059,2021-12-22,QG,,,
-3,,Gaiman,Neil,en,,,,,,2021-12-22,QG,,,
-4,,,Sanmao,en,,0,1234,,,2021-12-22,QG,,,
-5,,Neruda,Jan,en,,,,,,2021-12-22,QG,,,
-6,AG0210,Doyle,Arthur Conan,en,male,1859,1930,Edinburgh,Q35610,20222-02-17,QG,,,
+1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,created,created_by,last_modified,last_modified_by,note
+2,AG2000,Zhang,San,en,male,1999,,Berlin,,2021-12-22,QG,,,skip
+3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,
+4,,盖曼,尼尔,zh,,,,,,2021-12-22,QG,,,
+5,,Gaiman,Neil,en,,,,,,2021-12-22,QG,,,
+6,,,Sanmao,en,,0,1234,,,2021-12-22,QG,,,
+7,,Neruda,Jan,en,,,,,,2021-12-22,QG,,,
+8,AG0210,Doyle,Arthur Conan,en,male,1859,1930,Edinburgh,Q35610,20222-02-17,QG,,,

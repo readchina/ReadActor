@@ -1,7 +1,7 @@
-import argparse
 import datetime
 import importlib
 import logging
+import os
 import sys
 from importlib.metadata import version
 
@@ -127,7 +127,7 @@ def __compare_wikidata_ids(index, row, df_person_GH):
         sys.exit()
 
 
-def __check_person_id_size(last_id_in_gh):
+def __check_person_id_size(row, last_id_in_gh):
     if int(last_id_in_gh[2:]) >= 9999:
         logger.warning(
             "It is better to update all person_id in the database. By SemBot."
@@ -359,7 +359,7 @@ def check_each_row(
                         logger.info("Row %s in this table is checked. Pass.", index)
                         return row, last_person_id
         else:  # No user provided `person_id`
-            __check_person_id_size(last_person_id)
+            __check_person_id_size(row, last_person_id)
             row["person_id"] = last_person_id[0:2] + str(int(last_person_id[2:]) + 1)
             if (isinstance(row["wikidata_id"], str) is True) and (
                 len(row["wikidata_id"]) > 0
@@ -626,8 +626,14 @@ def log(level):
     is_flag=True,
     help="Do not update input table, but create a new file at <path> instead",
 )
+@click.option(
+    "-s",
+    "--summary",
+    is_flag=True,
+    help="Do not update input table, but summarise results in console",
+)
 @click.argument("path", default=".", type=str)
-def cli(path, interactive, quiet, output):
+def cli(path, interactive, quiet, output, summary):
     if interactive:
         click.confirm("Do you want to update the table?", default=False, abort=True)
 
@@ -648,18 +654,23 @@ def cli(path, interactive, quiet, output):
     check_gh(df_person_gh)
     last_person_id, person_ids_gh, wikidata_ids_GH = get_last_id(df_person_gh)
     for index, row in df.iterrows():
-        print("-------------\nFor row ", index, " :")
+        print(
+            "-------------\nFor row ", index + 2, " :"
+        )  # Because the header line in Person.csv is already row 1
+        # Todo: adjust other row index output
         print(row.tolist())
         row, last_person_id = check_each_row(
             index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
         )
-
     if output:
-        with open(path[:-4] + "_updated.csv", "w") as f:
-            f.write(df.to_csv())
+        new_csv_path = path[:-4] + "_updated.csv"
+        with open(new_csv_path, "w+") as f:
+            f.write(df.to_csv(index=False))
+    elif summary:
+        print(df.to_csv(index=False))
     else:
         with open(path, "w") as f:
-            f.write(df.to_csv())
+            f.write(df.to_csv(index=False))
 
 
 if __name__ == "__main__":
