@@ -27,23 +27,33 @@ class TestSum(unittest.TestCase):
 
     def test_debug_1_should_return_log_text(self):
         runner = CliRunner()
-        result = runner.invoke(cli, ["--debug"])
-        pattern_log = (
-            "^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (\d\d:){2}\d{2} - (\w.)+\s-\s("
-            "DEBUG|INFO|WARNING|ERROR|CRITICAL|NOTSET):\s-\s(.*?)+"
-        )
-        assert result.exit_code == 0
-        assert bool(re.search(pattern_log, result.output))
+        with runner.isolated_filesystem():
+            with open("ReadActor.log", "w") as f:
+                f.write(
+                    '2022-05-24 21:11:23 - root - WARNING: - For row 6, you should input at least a person_id even if there is no matched wikidata_id. By SemBot.\n2022-05-24 21:25:48 - root - INFO: - Fields "birthyear, deathyear, place_of_birth, created, created_by, last_modified, last_modified_by" is/are overwritten.  By SemBot.\n2022-05-24 21:25:48 - urllib3.connectionpool - DEBUG: - Starting new HTTPS connection (1): query.wikidata.org:443\n'
+                )
+            result = runner.invoke(cli, ["--debug"])
+            pattern_log = (
+                "^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (\d\d:){2}\d{2} - (\w.)+\s-\s("
+                "DEBUG|INFO|WARNING|ERROR|CRITICAL|NOTSET):\s-\s(.*?)+"
+            )
+            assert result.exit_code == 0
+            assert bool(re.search(pattern_log, result.output))
 
     def test_debug_2_should_return_log_text(self):
         runner = CliRunner()
-        result = runner.invoke(cli, ["-d"])
-        pattern_log = (
-            "^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (\d\d:){2}\d{2} - (\w.)+\s-\s("
-            "DEBUG|INFO|WARNING|ERROR|CRITICAL|NOTSET):\s-\s(.*?)+"
-        )
-        assert result.exit_code == 0
-        assert bool(re.search(pattern_log, result.output))
+        with runner.isolated_filesystem():
+            with open("ReadActor.log", "w") as f:
+                f.write(
+                    '2022-05-24 21:11:23 - root - WARNING: - For row 6, you should input at least a person_id even if there is no matched wikidata_id. By SemBot.\n2022-05-24 21:25:48 - root - INFO: - Fields "birthyear, deathyear, place_of_birth, created, created_by, last_modified, last_modified_by" is/are overwritten.  By SemBot.\n2022-05-24 21:25:48 - urllib3.connectionpool - DEBUG: - Starting new HTTPS connection (1): query.wikidata.org:443\n'
+                )
+            result = runner.invoke(cli, ["-d"])
+            pattern_log = (
+                "^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (\d\d:){2}\d{2} - (\w.)+\s-\s("
+                "DEBUG|INFO|WARNING|ERROR|CRITICAL|NOTSET):\s-\s(.*?)+"
+            )
+            assert result.exit_code == 0
+            assert bool(re.search(pattern_log, result.output))
 
     def test_interactive_1_should_be_aborted(self):
         runner = CliRunner()
