@@ -9,6 +9,46 @@ from src.scripts.readactor import cli
 
 
 class TestSum(unittest.TestCase):
+    def test_help_1_should_return_documentation(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--help"])
+        print(result.output.splitlines())
+        assert result.exit_code == 0
+        assert result.output.splitlines() == [
+            "Usage: cli [OPTIONS] [PATH]",
+            "",
+            "Options:",
+            "  -v, --version      Package version",
+            "  -d, --debug        Print full log output to console",
+            "  -i, --interactive  Prompt user for confirmation to continue",
+            "  -q, --quiet        Print no log output to console other then completion",
+            "                     message and error level events",
+            "  -o, --output       Do not update input table, but create a new file at <path>",
+            "                     instead",
+            "  -s, --summary      Do not update input table, but summarise results in console",
+            "  -h, --help         Show this message and exit.",
+        ]
+
+    def test_help_2_should_return_documentation(self):
+        runner = CliRunner()
+        result = runner.invoke(cli, ["-h"])
+        print(result.output.splitlines())
+        assert result.exit_code == 0
+        assert result.output.splitlines() == [
+            "Usage: cli [OPTIONS] [PATH]",
+            "",
+            "Options:",
+            "  -v, --version      Package version",
+            "  -d, --debug        Print full log output to console",
+            "  -i, --interactive  Prompt user for confirmation to continue",
+            "  -q, --quiet        Print no log output to console other then completion",
+            "                     message and error level events",
+            "  -o, --output       Do not update input table, but create a new file at <path>",
+            "                     instead",
+            "  -s, --summary      Do not update input table, but summarise results in console",
+            "  -h, --help         Show this message and exit.",
+        ]
+
     def test_version_1_should_return_version(self):
         runner = CliRunner()
         result = runner.invoke(cli, ["--version"])
@@ -30,7 +70,11 @@ class TestSum(unittest.TestCase):
         with runner.isolated_filesystem():
             with open("ReadActor.log", "w") as f:
                 f.write(
-                    '2022-05-24 21:11:23 - root - WARNING: - For row 6, you should input at least a person_id even if there is no matched wikidata_id. By SemBot.\n2022-05-24 21:25:48 - root - INFO: - Fields "birthyear, deathyear, place_of_birth, created, created_by, last_modified, last_modified_by" is/are overwritten.  By SemBot.\n2022-05-24 21:25:48 - urllib3.connectionpool - DEBUG: - Starting new HTTPS connection (1): query.wikidata.org:443\n'
+                    "2022-05-24 21:11:23 - root - WARNING: - For row 6, you should input at least a person_id even if "
+                    "there is no matched wikidata_id. By SemBot.\n2022-05-24 21:25:48 - root - INFO: - Fields "
+                    '"birthyear, deathyear, place_of_birth, created, created_by, last_modified, last_modified_by" '
+                    "is/are overwritten.  By SemBot.\n2022-05-24 21:25:48 - urllib3.connectionpool - DEBUG: - "
+                    "Starting new HTTPS connection (1): query.wikidata.org:443\n"
                 )
             result = runner.invoke(cli, ["--debug"])
             pattern_log = (
@@ -45,7 +89,11 @@ class TestSum(unittest.TestCase):
         with runner.isolated_filesystem():
             with open("ReadActor.log", "w") as f:
                 f.write(
-                    '2022-05-24 21:11:23 - root - WARNING: - For row 6, you should input at least a person_id even if there is no matched wikidata_id. By SemBot.\n2022-05-24 21:25:48 - root - INFO: - Fields "birthyear, deathyear, place_of_birth, created, created_by, last_modified, last_modified_by" is/are overwritten.  By SemBot.\n2022-05-24 21:25:48 - urllib3.connectionpool - DEBUG: - Starting new HTTPS connection (1): query.wikidata.org:443\n'
+                    "2022-05-24 21:11:23 - root - WARNING: - For row 6, you should input at least a person_id even if "
+                    "there is no matched wikidata_id. By SemBot.\n2022-05-24 21:25:48 - root - INFO: - Fields "
+                    '"birthyear, deathyear, place_of_birth, created, created_by, last_modified, last_modified_by" '
+                    "is/are overwritten.  By SemBot.\n2022-05-24 21:25:48 - urllib3.connectionpool - DEBUG: - "
+                    "Starting new HTTPS connection (1): query.wikidata.org:443\n"
                 )
             result = runner.invoke(cli, ["-d"])
             pattern_log = (
@@ -160,7 +208,11 @@ class TestSum(unittest.TestCase):
         #     print(content)
         # y = result.output.strip().splitlines()
         # print("######\n", y, "\n")
-        # x = ['-------------', 'For row  2  :', "[3, 'AG0001', '鲁', '迅', 'zh', '', '', '', '', 'Q234', '2021-12-22', 'QG', '', '', '']", '1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,created,created_by,last_modified,last_modified_by,note', '3,AG0001,鲁,迅,zh,male,1881,1936,SP0048,Q23114,2017-07-03,LH,2022-05-03,ReActor," Fields -sex, birthyear, deathyear, place_of_birth, created, created_by, last_modified, last_modified_by- is/are overwritten.  By SemBot."']
+        # x = ['-------------', 'For row  2  :', "[3, 'AG0001', '鲁', '迅', 'zh', '', '', '', '', 'Q234', '2021-12-22',
+        # 'QG', '', '', '']", '1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,
+        # wikidata_id,created,created_by,last_modified,last_modified_by,note', '3,AG0001,鲁,迅,zh,male,1881,1936,
+        # SP0048,Q23114,2017-07-03,LH,2022-05-03,ReActor," Fields -sex, birthyear, deathyear, place_of_birth,
+        # created, created_by, last_modified, last_modified_by- is/are overwritten.  By SemBot."']
         # print("\n", x, "\n")
         # with open("abc.txt", "w") as f2:
         #     for item in x:
