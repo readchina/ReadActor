@@ -1,7 +1,6 @@
 import datetime
 import importlib
 import logging
-import os
 import sys
 from importlib.metadata import version
 
@@ -87,9 +86,9 @@ def __overwrite(row, row_gh):
             note_flag = True
     if note_flag:
         message = (
-            'Fields "'
+            "Fields -"
             + ", ".join(modified_fields)
-            + '" is/are overwritten.  By SemBot.'
+            + "- is/are overwritten.  By ReadActor."
         )
         if isinstance(row["note"], str):
             row["note"] = row["note"] + " " + message
@@ -116,12 +115,12 @@ def __compare_wikidata_ids(index, row, df_person_GH):
     else:
         row[
             "note"
-        ] = "Error: `wikidata_id` is not matching with GitHub data. Please check. By SemBot."
+        ] = "Error: `wikidata_id` is not matching with GitHub data. Please check. By ReadActor."
         error_msg = (
             "For row "
             + str(int(index))
             + " : `wikidata_id` does not match GitHub data. Please check. By "
-            "SemBot."
+            "ReadActor."
         )
         logger.error(error_msg)
         sys.exit()
@@ -130,17 +129,17 @@ def __compare_wikidata_ids(index, row, df_person_GH):
 def __check_person_id_size(row, last_id_in_gh):
     if int(last_id_in_gh[2:]) >= 9999:
         logger.warning(
-            "It is better to update all person_id in the database. By SemBot."
+            "It is better to update all person_id in the database. By ReadActor."
         )
         if isinstance(row["note"], str):
             row["note"] = (
                 row["note"]
-                + " Warning: It is better to update all person_id in the database. By SemBot."
+                + " Warning: It is better to update all person_id in the database. By ReadActor."
             )
         else:
             row[
                 "note"
-            ] = "Warning: It is better to update all person_id in the database. By SemBot."
+            ] = "Warning: It is better to update all person_id in the database. By ReadActor."
 
 
 def check_gh(
@@ -150,7 +149,7 @@ def check_gh(
         error_msg = (
             "There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to check it. "
             ""
-            "By SemBot."
+            "By ReadActor."
         )
         logger.error(error_msg)
         exit()
@@ -180,7 +179,7 @@ def check_each_row(
                     if row["wikidata_id"] in wikidata_ids_GH:
                         row["note"] = (
                             "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
-                            "Please check. By SemBot."
+                            "Please check. By ReadActor."
                         )
                         error_msg = (
                             "For row "
@@ -227,9 +226,9 @@ def check_each_row(
                             note_flag = True
                         if note_flag:
                             message = (
-                                'Fields "'
+                                "Fields -"
                                 + ", ".join(modified_fields)
-                                + '" is/are overwritten.  By SemBot.'
+                                + "- is/are overwritten.  By ReadActor."
                             )
                             if isinstance(row["note"], str):
                                 row["note"] = row["note"] + " " + message
@@ -237,7 +236,7 @@ def check_each_row(
                                 row["note"] = message
                             logger.info(message)
                             row["last_modified"] = today
-                            row["last_modified_by"] = "SemBot"
+                            row["last_modified_by"] = "ReadActor"
                             return row, last_person_id
                         else:
                             logger.info("Row %s is checked. Pass ", index)
@@ -254,7 +253,7 @@ def check_each_row(
                                 "ReadAct data, but your provided person_id does not match. Please check your data "
                                 "carefully. If you are 100% sure that your input is correct, then it is likely that "
                                 "this person has an identical name with a person in Wikidata database. Please put "
-                                '"skip" in "note" column for this row and run this program again. By SemBot.'
+                                '"skip" in "note" column for this row and run this program again. By ReadActor.'
                             )
                             error_msg = (
                                 "For row "
@@ -266,7 +265,7 @@ def check_each_row(
                                 "person_id does not match. Please check your data carefully. If you are 100% "
                                 "sure that your input is correct, then it is likely that this person has an "
                                 'identical name with a person in Wikidata database. Please put "skip" in "note" '
-                                "column for this row and run this program again. By SemBot."
+                                "column for this row and run this program again. By ReadActor."
                             )
                             logger.error(error_msg)
                             sys.exit()
@@ -309,13 +308,13 @@ def check_each_row(
                                         row["note"]
                                         + " Fields "
                                         + ", ".join(modified_fields)
-                                        + " in this table is/are updated.  By SemBot."
+                                        + " in this table is/are updated.  By ReadActor."
                                     )
                                 else:
                                     row["note"] = (
                                         "Fields "
                                         + ", ".join(modified_fields)
-                                        + " is/are updated.  By SemBot."
+                                        + " is/are updated.  By ReadActor."
                                     )
                                 logger.warning(
                                     "You should look row %s up in Wikidata again. If it does not "
@@ -324,7 +323,7 @@ def check_each_row(
                                     index,
                                 )
                                 row["last_modified"] = today
-                                row["last_modified_by"] = "SemBot"
+                                row["last_modified_by"] = "ReadActor"
                                 return row, last_person_id
                             else:
                                 logger.warning(
@@ -335,26 +334,26 @@ def check_each_row(
                                 if isinstance(row["note"], str):
                                     row["note"] = (
                                         row["note"]
-                                        + " Field `wikidata_id` in this table is updated.  By SemBot."
+                                        + " Field `wikidata_id` in this table is updated.  By ReadActor."
                                     )
                                 else:
                                     row[
                                         "note"
-                                    ] = "Field `wikidata_id` in this table is updated.  By SemBot."
+                                    ] = "Field `wikidata_id` in this table is updated.  By ReadActor."
                                 logger.info(
-                                    "'Field `wikidata_id` in row %s of this table is updated.  By SemBot.'",
+                                    "'Field `wikidata_id` in row %s of this table is updated.  By ReadActor.'",
                                     index,
                                 )
                                 row["last_modified"] = today
-                                row["last_modified_by"] = "SemBot"
+                                row["last_modified_by"] = "ReadActor"
                                 return row, last_person_id
                     else:
                         if isinstance(row["note"], str):
                             row["note"] = (
-                                row["note"] + " No match in Wikidata.  By SemBot."
+                                row["note"] + " No match in Wikidata.  By ReadActor."
                             )
                         else:
-                            row["note"] = "No match in Wikidata.  By SemBot."
+                            row["note"] = "No match in Wikidata.  By ReadActor."
                         # Todo: "note" is changed, does it count as modified?
                         logger.info("Row %s in this table is checked. Pass.", index)
                         return row, last_person_id
@@ -370,7 +369,7 @@ def check_each_row(
                         ""
                         "sure that your input is correct, then it is likely that this person has an identical name "
                         'with a person in Wikidata database. Please put "skip" in "note" column for this row and run '
-                        "this program again.  By SemBot."
+                        "this program again.  By ReadActor."
                     )
                     error_msg = (
                         "For row "
@@ -378,7 +377,7 @@ def check_each_row(
                         + " : this `wikidata_id` already exists in ReadAct. "
                         "Please check carefully. If you are 100% sure that your input is correct, then it is "
                         "likely that this person has an identical name with a person in Wikidata database. "
-                        'Please put "skip" in "note" column for this row and run this program again.  By SemBot.'
+                        'Please put "skip" in "note" column for this row and run this program again.  By ReadActor.'
                     )
                     logger.error(error_msg)
                     sys.exit()
@@ -416,30 +415,30 @@ def check_each_row(
                         message = (
                             "Fields "
                             + ", ".join(modified_fields)
-                            + " is/are updated.  By SemBot."
+                            + " is/are updated.  By ReadActor."
                         )
                         if isinstance(row["note"], str):
                             row["note"] = row["note"] + " " + message
                         else:
                             row["note"] = message
                         row["last_modified"] = today
-                        row["last_modified_by"] = "SemBot"
+                        row["last_modified_by"] = "ReadActor"
                         logger.info(message)
                         return row, last_person_id
                     else:
                         if isinstance(row["note"], str):
                             row["note"] = (
                                 row["note"]
-                                + " Field `person_id` in this table is updated.  By SemBot."
+                                + " Field `person_id` in this table is updated.  By ReadActor."
                             )
                         else:
                             row[
                                 "note"
-                            ] = "Field `person_id` in this table is updated.  By SemBot."
+                            ] = "Field `person_id` in this table is updated.  By ReadActor."
                         row["last_modified"] = today
-                        row["last_modified_by"] = "SemBot"
+                        row["last_modified_by"] = "ReadActor"
                         logger.info(
-                            "Field `person_id` in row %s of this table is updated.  By SemBot.",
+                            "Field `person_id` in row %s of this table is updated.  By ReadActor.",
                             index,
                         )
                         return row, last_person_id
@@ -454,7 +453,7 @@ def check_each_row(
                             "ReadAct data, but your provided person_id does not match. Please check your data "
                             "carefully. If you are 100% sure that your input is correct, then it is likely that this "
                             'person has an identical name with a person in Wikidata database. Please put "skip" in '
-                            '"note" column for this row and run this program again. By SemBot.'
+                            '"note" column for this row and run this program again. By ReadActor.'
                         )
                         error_msg = (
                             "For row "
@@ -464,7 +463,7 @@ def check_each_row(
                             "does not match. Please check your data carefully. If you are 100% sure that your "
                             "input is correct, then it is likely that this person has an identical name with a "
                             'person in Wikidata database. Please put "skip" in "note" column for this row and '
-                            "run this program again. By SemBot."
+                            "run this program again. By ReadActor."
                         )
                         logger.error(error_msg)
                         sys.exit()
@@ -504,49 +503,49 @@ def check_each_row(
                                     row["note"]
                                     + " Fields "
                                     + ", ".join(modified_fields)
-                                    + " in this table is/are updated.  By SemBot."
+                                    + " in this table is/are updated.  By ReadActor."
                                 )
                             else:
                                 row["note"] = (
                                     "Fields "
                                     + ", ".join(modified_fields)
-                                    + " is/are updated.  By SemBot."
+                                    + " is/are updated.  By ReadActor."
                                 )
                             logger.warning(
                                 "For row %s, you should input at least a person_id even if "
-                                "there is no matched wikidata_id. By SemBot.",
+                                "there is no matched wikidata_id. By ReadActor.",
                                 index,
                             )
                             row["last_modified"] = today
-                            row["last_modified_by"] = "SemBot"
+                            row["last_modified_by"] = "ReadActor"
                             return row, last_person_id
                         else:
                             if isinstance(row["note"], str):
                                 row["note"] = (
                                     row["note"]
-                                    + " Field `person_id` in this table is updated.  By SemBot."
+                                    + " Field `person_id` in this table is updated.  By ReadActor."
                                 )
                             else:
                                 row[
                                     "note"
-                                ] = "Field `person_id` in this table is updated.  By SemBot."
+                                ] = "Field `person_id` in this table is updated.  By ReadActor."
                             logger.warning(
                                 "For row %s, you should look the person up in Wikidata and input the "
                                 "`wikidata_id` in your table in the future.",
                                 index,
                             )
                             row["last_modified"] = today
-                            row["last_modified_by"] = "SemBot"
+                            row["last_modified_by"] = "ReadActor"
                             return row, last_person_id
                 else:
                     last_person_id = row["person_id"]
-                    message = "Field `person_id` is updated. No match in Wikidata.  By SemBot."
+                    message = "Field `person_id` is updated. No match in Wikidata.  By SemReadActorBot."
                     if isinstance(row["note"], str):
                         row["note"] = row["note"] + " " + message
                     else:
                         row["note"] = message
                     row["last_modified"] = today
-                    row["last_modified_by"] = "SemBot"
+                    row["last_modified_by"] = "ReadActor"
                     logger.info(message)
                     return row, last_person_id
 
@@ -662,6 +661,7 @@ def cli(path, interactive, quiet, output, summary):
         row, last_person_id = check_each_row(
             index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
         )
+        df.loc[index] = row
     if output:
         new_csv_path = path[:-4] + "_updated.csv"
         with open(new_csv_path, "w+") as f:
