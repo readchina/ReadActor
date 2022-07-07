@@ -3,7 +3,7 @@ from datetime import date
 
 import pandas as pd
 
-from src.scripts.readactor import check_each_row, get_last_id
+from src.scripts.readactor import check_each_row_Person, get_last_id
 
 
 class MyTestCase(unittest.TestCase):
@@ -54,7 +54,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -99,7 +99,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertNotEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -143,7 +143,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -187,7 +187,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -231,7 +231,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         with self.assertRaises(SystemExit) as cm:
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -260,7 +260,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         with self.assertRaises(SystemExit) as cm:
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -291,7 +291,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -335,7 +335,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -379,7 +379,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         with self.assertRaises(SystemExit) as cm:
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -408,7 +408,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -452,7 +452,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,

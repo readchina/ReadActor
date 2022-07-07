@@ -13,6 +13,12 @@ from src.scripts.authenticity_person import (
     sparql_with_Qid,
 )
 
+from src.scripts.authenticity_space import (
+    compare_to_openstreetmap,
+    geo_code_compare,
+    get_QID,
+)
+
 # Creating an object
 logger = logging.getLogger()
 formatter = logging.Formatter(
@@ -21,11 +27,251 @@ formatter = logging.Formatter(
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-# QG: this is the file on a branch which is not master.
-PERSON_CSV_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
+# Todo(QG): this is the file on a branch which is not master. Should be replaced after 2.0.
+PERSON_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
+SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Space.csv"
+Institution_GITHUB = (
+    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Agent.csv"
+)
 
 
-def __compare_two_rows(row, row_gh):
+# Todo(QG): to write a function to process table about space.
+def check_each_row_Space(index, row, df_space_gh, space_ids_gh, last_space_id, wikidata_ids_GH):
+    today = datetime.date.today().strftime("%Y-%m-%d")
+    if row["note"] == "skip" or row["note"] == "Skip":
+        return row, last_space_id
+    else:
+        # Check if user has inputted space_id for this row
+        if isinstance(row["space_id"], str) and len(row["space_id"]) > 0:
+            # Check if the found space_id already in ReadAct
+                if row["space_id"] in space_ids_gh:
+                    # Find the row with the same "sapce_id" in ReadAct
+                    # To compare two wikidata_id for two Space
+                    # Comtains two cases: both space_id and wikidata_id match
+                    # Or wikidata_id doesn't match
+                    return __compare_wikidata_ids(index, row, df_space_gh), last_space_id
+                else:
+                    # Check if user inputted wikidata_id, if yes:
+                    if (isinstance(row["wikidata_id"], str) is True) and (
+                        len(row["wikidata_id"]) > 0
+                    ):
+                        # Check if this inputted wikidata_id in ReadAct, if yes then it is an error, because the
+                        # input space_id is not in ReadAct
+                        if row["wikidata_id"] in wikidata_ids_GH:
+                            row["note"] = (
+                                "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
+                                "Please check. By ReadActor."
+                            )
+                            error_msg = (
+                                "For row "
+                                + str(int(index))
+                                + " :"
+                                + "`wikidata_id` already exists in "
+                                "GitHub data "
+                                "but the `person_id` does not match. Please check."
+                            )
+                            logger.error(error_msg)
+                            sys.exit()
+                        # neither space_id nor wikidata_id in ReadAct:
+                        else:
+                            wikidata_id_usr = row["wikidata_id"]
+                            geo_code_dict = {}
+                            # key: space_id
+                            # value: space_name, space_type, lat, lang
+                            geo_code_dict[row['space_id']] = [row["space_name"], row["space_type"], row["lat"],
+                                                              row["long"]]
+                            no_match_list = compare_to_openstreetmap(geo_code_dict)
+                            geo_code_dict = {}
+                            if len(no_match_list) == 0:
+                                # This space is authentic.
+                                logger.info("Row %s is checked. The space is authentic according to the OpenStreetMap API query. Pass ", index)
+                                return row, last_space_id
+                            else:
+                                # ToDo(QG): no_match_list[0][0] should be equal to row['space_name]. Should check.
+                                wikidata_id_usr = get_QID(no_match_list[0][0]) # only return one value
+                                if wikidata_id_usr in wikidata_ids_GH:
+                                    row["note"] = (
+                                        "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
+                                        "Please check. By ReadActor."
+                                    )
+                                    error_msg = (
+                                        "For row "
+                                        + str(int(index))
+                                        + " :"
+                                        + "`wikidata_id` already exists in "
+                                        "GitHub data "
+                                        "but the `person_id` does not match. Please check."
+                                    )
+                                    logger.error(error_msg)
+                                    sys.exit()
+                                else:
+                                    still_no_match_list, space_with_QID = geo_code_compare(no_match_list)
+                                    if len(still_no_match_list) == 0:
+                                        # Update Wikidata_id
+                                        row['wikidata_id'] = space_with_QID[row['space_id']][-1]
+                                        warning_msg = (
+                                        "For row "
+                                        + str(int(index))
+                                        + " :"
+                                        + "You should look space up in Wikidata and input the wikidata_id in your table in the future. By ReadActor ")
+                                        logger.warning("warning_msg")
+
+                                        row['note'] = "You should look space up in Wikidata and input the wikidata_id in your table in the future. By ReadActor "
+                                        row["last_modified"] = today
+                                        row["last_modified_by"] = "ReadActor"
+                                        return row, last_space_id
+                                    else:
+                                        #TODO(QG): compare cells and update cells including wikidata_id.
+                                        warning_msg = "For row "
+                                        + str(int(index))
+                                        + " :"
+                                        "You should look this space up in Wikidata again. If it does not match this modification, you should retrieve the old data for this row and put \"skip\" in the column 'note'. By ReadActor "
+                                        row['note'] = "You should look this space up in Wikidata again. If it does not match this modification, you should retrieve the old data for this row and put \"skip\" in the column 'note'. By ReadActor "
+                                        row["last_modified"] = today
+                                        row["last_modified_by"] = "ReadActor"
+                                        return row, last_space_id
+
+
+
+
+
+                            # person_dict = sparql_with_Qid(wikidata_id_usr)
+                            # note_flag = False
+                            # modified_fields = []
+                            # if (
+                            #     "gender" in person_dict
+                            #     and row["sex"] != person_dict["gender"]
+                            # ):
+                            #     row["sex"] = person_dict["gender"]
+                            #     modified_fields.append("sex")
+                            #     note_flag = True
+                            # if (
+                            #     "birthyear" in person_dict
+                            #     and row["birthyear"] != person_dict["birthyear"]
+                            # ):
+                            #     row["birthyear"] = person_dict["birthyear"]
+                            #     modified_fields.append("birthyear")
+                            #     note_flag = True
+                            # if (
+                            #     "deathyear" in person_dict
+                            #     and row["deathyear"] != person_dict["deathyear"]
+                            # ):
+                            #     row["deathyear"] = person_dict["deathyear"]
+                            #     modified_fields.append("deathyear")
+                            #     note_flag = True
+                            # if (
+                            #     "birthplace" in person_dict
+                            #     and row["place_of_birth"] != person_dict["birthplace"]
+                            # ):
+                            #     row["place_of_birth"] = person_dict["birthplace"]
+                            #     modified_fields.append("place_of_birth")
+                            #     note_flag = True
+                            # if note_flag:
+                            #     message = (
+                            #         "Fields -"
+                            #         + ", ".join(modified_fields)
+                            #         + "- is/are overwritten.  By ReadActor."
+                            #     )
+                            #     if isinstance(row["note"], str):
+                            #         row["note"] = row["note"] + " " + message
+                            #     else:
+                            #         row["note"] = message
+                            #     logger.info(message)
+                            #     row["last_modified"] = today
+                            #     row["last_modified_by"] = "ReadActor"
+                            #     return row, last_person_id
+                            # else:
+                            #     logger.info("Row %s is checked. Pass ", index)
+                            #     return row, last_person_id
+
+
+    return row, last_space_id
+
+
+def __compare_wikidata_ids(index, row, df_space_gh):
+    wikidata_id_usr = row["wikidata_id"]
+    row_gh_index = df_space_gh.index[
+        (df_space_gh["person_id"] == row["person_id"])
+        & (df_space_gh["language"] == row["space_type"]
+        # & (df_space_gh["space_type"] == row["space_type"]
+        # & (df_space_gh["lat"] == row["lat"]
+        # & (df_space_gh["long"] == row["long"]
+           )
+    ].tolist()[0]
+    row_GH = df_space_gh.iloc[row_gh_index]
+    wikidata_id_gh = row_GH["wikidata_id"]
+    if wikidata_id_gh == wikidata_id_usr:
+        res = __compare_two_rows_Space(row, row_GH)
+        if not res:
+            return __overwrite_Space(row, row_GH)
+        logger.info("Row %s is checked. Pass ", index)
+        return row
+    else:
+        row[
+            "note"
+        ] = "Error: `wikidata_id` is not matching with GitHub data. Please check. By ReadActor."
+        error_msg = (
+            "For row "
+            + str(int(index))
+            + " : `wikidata_id` does not match GitHub data. Please check. By "
+            "ReadActor."
+        )
+        logger.error(error_msg)
+        sys.exit()
+
+
+def __compare_two_rows_Space(row, row_GH):
+    fields_to_be_compared = [
+        "space_name",
+        "space_type",
+        "lat",
+        "long"
+    ]
+    print("-------------------")
+    print(type(row['lat']))
+    print(type(row_GH['lat']))
+    print("-------------------")
+    for i in fields_to_be_compared:
+        if row[i] != row_GH[i]:
+            return False
+    return True
+
+
+def __overwrite_Space(row, row_gh):
+    fields_to_be_overwritten = [
+        "space_name",
+        "space_type",
+        "language",
+        "lat",
+        "long"
+        "created",
+        "created_by",
+        "last_modified",
+        "last_modified_by",
+        "note",
+    ]
+    note_flag = False
+    modified_fields = []
+    for i in fields_to_be_overwritten:
+        if row[i] != row_gh[i]:
+            row[i] = row_gh[i]
+            modified_fields.append(i)
+            note_flag = True
+    if note_flag:
+        message = (
+            "Fields -"
+            + ", ".join(modified_fields)
+            + "- is/are overwritten.  By ReadActor."
+        )
+        if isinstance(row["note"], str):
+            row["note"] = row["note"] + " " + message
+        else:
+            row["note"] = message
+    logger.info(message)
+    return row
+
+
+def __compare_two_rows_Person(row, row_gh):
     """
     This function will be triggered when `person_id` and `wikidata_id` are the same.
     It will compare the rest fields of two rows from two dataframes seperately.
@@ -55,7 +301,7 @@ def __compare_two_rows(row, row_gh):
     return True
 
 
-def __overwrite(row, row_gh):
+def __overwrite_Person(row, row_gh):
     """
     This function will overwrite all the fields except `person_id` and `wikidata_id`.
     :param row: one row from the user-uploaded Person.csv
@@ -98,7 +344,7 @@ def __overwrite(row, row_gh):
     return row
 
 
-def __compare_wikidata_ids(index, row, df_person_GH):
+def __compare_wikidata_ids_Space(index, row, df_person_GH):
     wikidata_id_usr = row["wikidata_id"]
     row_gh_index = df_person_GH.index[
         (df_person_GH["person_id"] == row["person_id"])
@@ -107,9 +353,9 @@ def __compare_wikidata_ids(index, row, df_person_GH):
     row_GH = df_person_GH.iloc[row_gh_index]
     wikidata_id_gh = row_GH["wikidata_id"]
     if wikidata_id_gh == wikidata_id_usr:
-        res = __compare_two_rows(row, row_GH)
+        res = __compare_two_rows_Person(row, row_GH)
         if not res:
-            return __overwrite(row, row_GH)
+            return __overwrite_Person(row, row_GH)
         logger.info("Row %s is checked. Pass ", index)
         return row
     else:
@@ -147,7 +393,8 @@ def check_gh(
 ):  # a function to check if Person.csv on GitHub has `wikidata_id` column
     if "wikidata_id" not in df.columns:
         error_msg = (
-            "There is no `wikidata_id` column in the Person.csv on GitHub. Please inform someone to check it. "
+            "There is no `wikidata_id` column in the accordingly CSV table on GitHub. Please inform someone to check "
+            "it. "
             ""
             "By ReadActor."
         )
@@ -155,14 +402,19 @@ def check_gh(
         exit()
 
 
-def get_last_id(df):
-    person_ids_GH = df["person_id"].tolist()
-    person_ids_GH.sort()
+def get_last_id(df, named_entity_type):
+    if named_entity_type == "Person":
+        ids_GH = df["person_id"].tolist()
+    elif named_entity_type == "Space":
+        ids_GH = df["space_id"].tolist()
+    elif named_entity_type == "Institution":
+        ids_GH = df["institution_id"].tolist()
+    ids_GH.sort()
     wikidata_ids_GH = df["wikidata_id"].tolist()
-    return person_ids_GH[-1], person_ids_GH, wikidata_ids_GH
+    return ids_GH[-1], ids_GH, wikidata_ids_GH
 
 
-def check_each_row(
+def check_each_row_Person(
     index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
 ):
     today = datetime.date.today().strftime("%Y-%m-%d")
@@ -171,7 +423,7 @@ def check_each_row(
     else:
         if isinstance(row["person_id"], str) and len(row["person_id"]) > 0:
             if row["person_id"] in person_ids_gh:
-                return __compare_wikidata_ids(index, row, df_person_gh), last_person_id
+                return __compare_wikidata_ids_Space(index, row, df_person_gh), last_person_id
             else:
                 if (isinstance(row["wikidata_id"], str) is True) and (
                     len(row["wikidata_id"]) > 0
@@ -646,22 +898,51 @@ def cli(path, interactive, quiet, output, summary):
     df = pd.read_csv(path)  # index_col=0
     df = df.fillna("")  # Replace all the nan into empty string
 
-    df_person_gh = pd.read_csv(PERSON_CSV_GITHUB)
-
-    # Replace all the nan into empty string
-    df_person_gh = df_person_gh.fillna("")
-    check_gh(df_person_gh)
-    last_person_id, person_ids_gh, wikidata_ids_GH = get_last_id(df_person_gh)
-    for index, row in df.iterrows():
-        print(
-            "-------------\nFor row ", index + 2, " :"
-        )  # Because the header line in Person.csv is already row 1
-        # Todo: adjust other row index output
-        print(row.tolist())
-        row, last_person_id = check_each_row(
-            index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
+    # Check which named entity should we process (Person, Space, Institution).
+    if "Person" in path:
+        named_entity_type = "Person"
+        df_person_gh = pd.read_csv(PERSON_GITHUB)
+        # Replace all the nan into empty string
+        df_person_gh = df_person_gh.fillna("")
+        check_gh(df_person_gh)
+        last_person_id, person_ids_gh, wikidata_ids_GH = get_last_id(
+            df_person_gh, named_entity_type
         )
-        df.loc[index] = row
+        #  to be consistent
+        for index, row in df.iterrows():
+            print(
+                "-------------\nFor row ", index + 2, " :"
+            )  # Because the header line in Person.csv is already row 1
+            # Todo(QG): adjust other row index output
+            print(row.tolist())
+            row, last_person_id = check_each_row_Person(
+                index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
+            )
+            df.loc[index] = row
+    elif "Space" in path:
+        named_entity_type = "Space"
+        df_space_gh = pd.read_csv(SPACE_GITHUB)
+        # Replace all the nan into empty string
+        df_space_gh = df_space_gh.fillna("")
+        check_gh(df_space_gh)
+        last_space_id, space_ids_gh, wikidata_ids_GH = get_last_id(
+            df_space_gh, named_entity_type
+        )
+        for index, row in df.iterrows():
+            print(
+                "-------------\nFor row ", index + 2, " :"
+            )  # Because the header line in Person.csv is already row 1
+            # Todo(QG): adjust other row index output
+            print(row.tolist())
+            row, last_space_id = check_each_row_Space(
+                index, row, df_space_gh, space_ids_gh, last_space_id, wikidata_ids_GH
+            )
+            df.loc[index] = row
+
+    elif "Institution" in path:
+        named_entity_type = "Institution"
+        pass
+
     if output:
         new_csv_path = path[:-4] + "_updated.csv"
         with open(new_csv_path, "w+") as f:
