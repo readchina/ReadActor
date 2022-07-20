@@ -12,10 +12,10 @@ from src.scripts.authenticity_person import (
     sparql_by_name,
     sparql_with_Qid,
 )
-
 from src.scripts.authenticity_space import (
     compare_to_openstreetmap,
     geo_code_compare,
+    get_coordinate_from_wikidata,
     get_QID,
 )
 
@@ -26,7 +26,6 @@ formatter = logging.Formatter(
 )
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
-
 # Todo(QG): this is the file on a branch which is not master. Should be replaced after 2.0.
 PERSON_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
 SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Space.csv"
@@ -36,174 +35,217 @@ Institution_GITHUB = (
 
 
 # Todo(QG): to write a function to process table about space.
-def check_each_row_Space(index, row, df_space_gh, space_ids_gh, last_space_id, wikidata_ids_GH):
+def check_each_row_Space(
+    index, row, df_space_gh, space_ids_gh, last_space_id, wikidata_ids_GH
+):
     today = datetime.date.today().strftime("%Y-%m-%d")
     if row["note"] == "skip" or row["note"] == "Skip":
         return row, last_space_id
     else:
-        # Check if user has inputted space_id for this row
+        # Check if user has input space_id for this row
         if isinstance(row["space_id"], str) and len(row["space_id"]) > 0:
             # Check if the found space_id already in ReadAct
-                if row["space_id"] in space_ids_gh:
-                    # Find the row with the same "sapce_id" in ReadAct
-                    # To compare two wikidata_id for two Space
-                    # Comtains two cases: both space_id and wikidata_id match
-                    # Or wikidata_id doesn't match
-                    return __compare_wikidata_ids(index, row, df_space_gh), last_space_id
-                else:
-                    # Check if user inputted wikidata_id, if yes:
-                    if (isinstance(row["wikidata_id"], str) is True) and (
-                        len(row["wikidata_id"]) > 0
-                    ):
-                        # Check if this inputted wikidata_id in ReadAct, if yes then it is an error, because the
-                        # input space_id is not in ReadAct
-                        if row["wikidata_id"] in wikidata_ids_GH:
-                            row["note"] = (
-                                "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
-                                "Please check. By ReadActor."
+            if row["space_id"] in space_ids_gh:
+                # Find the row with the same "sapce_id" in ReadAct
+                # To compare two wikidata_id for two Space
+                # Comtains two cases: both space_id and wikidata_id match
+                # Or wikidata_id doesn't match
+                return __compare_wikidata_ids(index, row, df_space_gh), last_space_id
+            else:
+                # Check if user input wikidata_id, if yes:
+                if (isinstance(row["wikidata_id"], str) is True) and (
+                    len(row["wikidata_id"]) > 0
+                ):
+                    # Check if this input wikidata_id in ReadAct, if yes then it is an error, because the
+                    # input space_id is not in ReadAct
+                    if row["wikidata_id"] in wikidata_ids_GH:
+                        row["note"] = (
+                            "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
+                            "Please check. By ReadActor."
+                        )
+                        error_msg = (
+                            "For row "
+                            + str(int(index))
+                            + " :"
+                            + "`wikidata_id` already exists in "
+                            "GitHub data "
+                            "but the `person_id` does not match. Please check."
+                        )
+                        logger.error(error_msg)
+                        sys.exit()
+
+                    else:
+                        coordinate_pair_wikidata = get_coordinate_from_wikidata(
+                            [row["wikidata_id"]]
+                        )[
+                            0
+                        ]  # because we
+                        # only queried one qname, the returned list should only have maximally one value
+                        if len(coordinate_pair_wikidata) == 0:
+                            logger.info(
+                                "Row %s is checked. The user input wikidata_id does not have the coordinate location "
+                                "property (P625). Could not check `lat` and `long`. Pass ",
+                                index,
                             )
-                            error_msg = (
-                                "For row "
-                                + str(int(index))
-                                + " :"
-                                + "`wikidata_id` already exists in "
-                                "GitHub data "
-                                "but the `person_id` does not match. Please check."
-                            )
-                            logger.error(error_msg)
-                            sys.exit()
-                        # neither space_id nor wikidata_id in ReadAct:
+                            return row, last_space_id
                         else:
-                            wikidata_id_usr = row["wikidata_id"]
-                            geo_code_dict = {}
-                            # key: space_id
-                            # value: space_name, space_type, lat, lang
-                            geo_code_dict[row['space_id']] = [row["space_name"], row["space_type"], row["lat"],
-                                                              row["long"]]
-                            no_match_list = compare_to_openstreetmap(geo_code_dict)
-                            geo_code_dict = {}
-                            if len(no_match_list) == 0:
-                                # This space is authentic.
-                                logger.info("Row %s is checked. The space is authentic according to the OpenStreetMap API query. Pass ", index)
+                            coordinate_pair_usr = [row["lat"], row["long"]]
+                            # TODO(QG): the threshold here is +/- 0.1 between the user input coordinate and the coordinate returned by Wikidata query, should discuss if it makes sense.
+                            if (
+                                abs(
+                                    float(coordinate_pair_wikidata[0])
+                                    - float(coordinate_pair_usr[0])
+                                )
+                                <= 0.1
+                            ) and (
+                                abs(
+                                    float(coordinate_pair_wikidata[1])
+                                    - float(coordinate_pair_usr[1])
+                                )
+                                <= 0.1
+                            ):
+                                logger.info("Row %s is checked. Pass ", index)
                                 return row, last_space_id
+                            # If the coordinates entered by user and the coordinates conveyed by wikidata item are quite
+                            # different (above the threhold)
                             else:
-                                # ToDo(QG): no_match_list[0][0] should be equal to row['space_name]. Should check.
-                                wikidata_id_usr = get_QID(no_match_list[0][0]) # only return one value
-                                if wikidata_id_usr in wikidata_ids_GH:
+                                # Cannot set any thresholds here because the scope of the coordinate of a Space location
+                                # can be as big as a country.
+                                warning_msg = (
+                                    "For row "
+                                    + str(int(index))
+                                    + " :"
+                                    + "You'd better compare the coordinate you entered and the coordinate "
+                                    "conveyed by the wikidata id you entered. By ReadActor "
+                                )
+                                logger.warning("warning_msg")
+                                row["note"] = (
+                                    "You'd better compare the coordinate you entered and the coordinate conveyed by the "
+                                    "wikidata id you entered. By ReadActor "
+                                )
+                                return row, last_space_id
+                # user input space_id not in ReadAct and user did not input wikidata_id
+                else:
+                    wikidata_id_usr = row["wikidata_id"]
+                    geo_code_dict = {}
+                    # key: space_id
+                    # value: space_name, space_type, lat, lang
+                    geo_code_dict[row["space_id"]] = [
+                        row["space_name"],
+                        row["space_type"],
+                        row["lat"],
+                        row["long"],
+                    ]
+                    no_match_list = compare_to_openstreetmap(geo_code_dict)
+                    geo_code_dict = {}
+                    # TODO(QG): here, this subsection should be changed in the future to obtain the potential wikidata id.
+                    if len(no_match_list) == 0:
+                        # This space is authentic.
+                        logger.info(
+                            "Row %s is checked. The space is authentic according to the OpenStreetMap API query. "
+                            "Pass ",
+                            index,
+                        )
+                        return row, last_space_id
+                    else:
+                        # ToDo(QG): no_match_list[0][0] should be equal to row['space_name]. Should check.
+                        wikidata_id_usr = get_QID(
+                            no_match_list[0][0]
+                        )  # only return one value
+                        if wikidata_id_usr is None:
+                            # Cannot find any related wikidata_id
+                            # TODO(QG): should be united: for INFO level, do we write anything into the `note` field?
+                            # And if modification only appears in `note`, should we modify `last_modified` and
+                            # `last_modified_by`? These two questions should be gloablly checked.
+                            logger.info(
+                                "Row %s is checked. The name and coordinate didn't match according to OSM. And, "
+                                "cannot find any wikidata_id by querying with the name. Pass ",
+                                index,
+                            )
+                            return row, last_space_id
+                        else:
+                            # Query by name and find a wikidata_id
+                            if wikidata_id_usr in wikidata_ids_GH:
+                                row["note"] = (
+                                    "Error: Wikidata_id should be unique. `wikidata_id` already exists in GitHub data, "
+                                    "but the space_id does not match. "
+                                    "Please check. By ReadActor."
+                                )
+                                error_msg = (
+                                    "For row "
+                                    + str(int(index))
+                                    + " :"
+                                    + "`wikidata_id` already exists in "
+                                    "GitHub data, but the `space_id` does not match. Please check."
+                                )
+                                logger.error(error_msg)
+                                sys.exit()
+                            # The found wikidata_id is not in ReadAct, the next step is to check its coordinate
+                            else:
+                                # ToDo(QG): for computing efficiency, here the `no_match_list` should be replaced
+                                # with `wikidata_id_usr` but the code should be modified accordingly
+                                still_no_match_list, space_with_QID = geo_code_compare(
+                                    no_match_list
+                                )
+                                if (
+                                    len(still_no_match_list) == 0
+                                ):  # the coordinate entered by user got a match with
+                                    # the wikidata item which was queried by name
+                                    # Update Wikidata_id
+                                    row["wikidata_id"] = space_with_QID[
+                                        row["space_id"]
+                                    ][-1]
+                                    warning_msg = (
+                                        "For row "
+                                        + str(int(index))
+                                        + " :"
+                                        + "You should look space up in Wikidata and input the wikidata_id in your "
+                                        "table in the future. By ReadActor "
+                                    )
+                                    logger.warning("warning_msg")
                                     row["note"] = (
-                                        "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
-                                        "Please check. By ReadActor."
+                                        "You should look space up in Wikidata and input the wikidata_id in your table "
+                                        "in the future. By ReadActor "
                                     )
-                                    error_msg = (
-                                        "For row "
-                                        + str(int(index))
-                                        + " :"
-                                        + "`wikidata_id` already exists in "
-                                        "GitHub data "
-                                        "but the `person_id` does not match. Please check."
-                                    )
-                                    logger.error(error_msg)
-                                    sys.exit()
+                                    row["last_modified"] = today
+                                    row["last_modified_by"] = "ReadActor"
+                                    return row, last_space_id
                                 else:
-                                    still_no_match_list, space_with_QID = geo_code_compare(no_match_list)
-                                    if len(still_no_match_list) == 0:
-                                        # Update Wikidata_id
-                                        row['wikidata_id'] = space_with_QID[row['space_id']][-1]
-                                        warning_msg = (
-                                        "For row "
-                                        + str(int(index))
-                                        + " :"
-                                        + "You should look space up in Wikidata and input the wikidata_id in your table in the future. By ReadActor ")
-                                        logger.warning("warning_msg")
-
-                                        row['note'] = "You should look space up in Wikidata and input the wikidata_id in your table in the future. By ReadActor "
-                                        row["last_modified"] = today
-                                        row["last_modified_by"] = "ReadActor"
-                                        return row, last_space_id
-                                    else:
-                                        #TODO(QG): compare cells and update cells including wikidata_id.
-                                        warning_msg = "For row "
-                                        + str(int(index))
-                                        + " :"
-                                        "You should look this space up in Wikidata again. If it does not match this modification, you should retrieve the old data for this row and put \"skip\" in the column 'note'. By ReadActor "
-                                        row['note'] = "You should look this space up in Wikidata again. If it does not match this modification, you should retrieve the old data for this row and put \"skip\" in the column 'note'. By ReadActor "
-                                        row["last_modified"] = today
-                                        row["last_modified_by"] = "ReadActor"
-                                        return row, last_space_id
-
-
-
-
-
-                            # person_dict = sparql_with_Qid(wikidata_id_usr)
-                            # note_flag = False
-                            # modified_fields = []
-                            # if (
-                            #     "gender" in person_dict
-                            #     and row["sex"] != person_dict["gender"]
-                            # ):
-                            #     row["sex"] = person_dict["gender"]
-                            #     modified_fields.append("sex")
-                            #     note_flag = True
-                            # if (
-                            #     "birthyear" in person_dict
-                            #     and row["birthyear"] != person_dict["birthyear"]
-                            # ):
-                            #     row["birthyear"] = person_dict["birthyear"]
-                            #     modified_fields.append("birthyear")
-                            #     note_flag = True
-                            # if (
-                            #     "deathyear" in person_dict
-                            #     and row["deathyear"] != person_dict["deathyear"]
-                            # ):
-                            #     row["deathyear"] = person_dict["deathyear"]
-                            #     modified_fields.append("deathyear")
-                            #     note_flag = True
-                            # if (
-                            #     "birthplace" in person_dict
-                            #     and row["place_of_birth"] != person_dict["birthplace"]
-                            # ):
-                            #     row["place_of_birth"] = person_dict["birthplace"]
-                            #     modified_fields.append("place_of_birth")
-                            #     note_flag = True
-                            # if note_flag:
-                            #     message = (
-                            #         "Fields -"
-                            #         + ", ".join(modified_fields)
-                            #         + "- is/are overwritten.  By ReadActor."
-                            #     )
-                            #     if isinstance(row["note"], str):
-                            #         row["note"] = row["note"] + " " + message
-                            #     else:
-                            #         row["note"] = message
-                            #     logger.info(message)
-                            #     row["last_modified"] = today
-                            #     row["last_modified_by"] = "ReadActor"
-                            #     return row, last_person_id
-                            # else:
-                            #     logger.info("Row %s is checked. Pass ", index)
-                            #     return row, last_person_id
-
-
-    return row, last_space_id
+                                    row["wikidata_id"] = wikidata_id_usr
+                                    row["lat"] = None
+                                    row["long"] = None
+                                    warning_msg = "For row "
+                                    +str(int(index))
+                                    +" :"
+                                    "You should look this space up in Wikidata again. If it does not match this " "modification, you should retrieve the old data for this row and put `skip` in " "the column 'note'. By ReadActor "
+                                    row["note"] = (
+                                        "You should look this space up in Wikidata again. If it does not match this "
+                                        "modification, you should retrieve the old data for this row and put `skip1 "
+                                        "in the column 'note'. By ReadActor "
+                                    )
+                                    row["last_modified"] = today
+                                    row["last_modified_by"] = "ReadActor"
+                                    return row, last_space_id
 
 
 def __compare_wikidata_ids(index, row, df_space_gh):
     wikidata_id_usr = row["wikidata_id"]
     row_gh_index = df_space_gh.index[
         (df_space_gh["person_id"] == row["person_id"])
-        & (df_space_gh["language"] == row["space_type"]
-        # & (df_space_gh["space_type"] == row["space_type"]
-        # & (df_space_gh["lat"] == row["lat"]
-        # & (df_space_gh["long"] == row["long"]
-           )
+        & (
+            df_space_gh["language"]
+            == row["space_type"]
+            # & (df_space_gh["space_type"] == row["space_type"]
+            # & (df_space_gh["lat"] == row["lat"]
+            # & (df_space_gh["long"] == row["long"]
+        )
     ].tolist()[0]
     row_GH = df_space_gh.iloc[row_gh_index]
     wikidata_id_gh = row_GH["wikidata_id"]
     if wikidata_id_gh == wikidata_id_usr:
         res = __compare_two_rows_Space(row, row_GH)
         if not res:
-            return __overwrite_Space(row, row_GH)
+            return __overwrite_Space(row, row_GH, index)
         logger.info("Row %s is checked. Pass ", index)
         return row
     else:
@@ -221,15 +263,10 @@ def __compare_wikidata_ids(index, row, df_space_gh):
 
 
 def __compare_two_rows_Space(row, row_GH):
-    fields_to_be_compared = [
-        "space_name",
-        "space_type",
-        "lat",
-        "long"
-    ]
+    fields_to_be_compared = ["space_name", "space_type", "lat", "long"]
     print("-------------------")
-    print(type(row['lat']))
-    print(type(row_GH['lat']))
+    print(type(row["lat"]))
+    print(type(row_GH["lat"]))
     print("-------------------")
     for i in fields_to_be_compared:
         if row[i] != row_GH[i]:
@@ -237,14 +274,13 @@ def __compare_two_rows_Space(row, row_GH):
     return True
 
 
-def __overwrite_Space(row, row_gh):
+def __overwrite_Space(row, row_gh, index):
     fields_to_be_overwritten = [
         "space_name",
         "space_type",
         "language",
         "lat",
-        "long"
-        "created",
+        "long" "created",
         "created_by",
         "last_modified",
         "last_modified_by",
@@ -259,7 +295,9 @@ def __overwrite_Space(row, row_gh):
             note_flag = True
     if note_flag:
         message = (
-            "Fields -"
+            "For row "
+            + str(int(index))
+            + "Fields -"
             + ", ".join(modified_fields)
             + "- is/are overwritten.  By ReadActor."
         )
@@ -423,7 +461,10 @@ def check_each_row_Person(
     else:
         if isinstance(row["person_id"], str) and len(row["person_id"]) > 0:
             if row["person_id"] in person_ids_gh:
-                return __compare_wikidata_ids_Space(index, row, df_person_gh), last_person_id
+                return (
+                    __compare_wikidata_ids_Space(index, row, df_person_gh),
+                    last_person_id,
+                )
             else:
                 if (isinstance(row["wikidata_id"], str) is True) and (
                     len(row["wikidata_id"]) > 0
@@ -629,7 +670,8 @@ def check_each_row_Person(
                         + " : this `wikidata_id` already exists in ReadAct. "
                         "Please check carefully. If you are 100% sure that your input is correct, then it is "
                         "likely that this person has an identical name with a person in Wikidata database. "
-                        'Please put "skip" in "note" column for this row and run this program again.  By ReadActor.'
+                        'Please put "skip" in "note" column for this row and run this program again.  By '
+                        "ReadActor."
                     )
                     logger.error(error_msg)
                     sys.exit()
