@@ -73,7 +73,6 @@ def check_each_row_Space(
                         )
                         logger.error(error_msg)
                         sys.exit()
-
                     else:
                         coordinate_pair_wikidata = get_coordinate_from_wikidata(
                             [row["wikidata_id"]]
@@ -126,7 +125,6 @@ def check_each_row_Space(
                                 return row, last_space_id
                 # user input space_id not in ReadAct and user did not input wikidata_id
                 else:
-                    wikidata_id_usr = row["wikidata_id"]
                     geo_code_dict = {}
                     # key: space_id
                     # value: space_name, space_type, lat, lang
@@ -149,10 +147,10 @@ def check_each_row_Space(
                         return row, last_space_id
                     else:
                         # ToDo(QG): no_match_list[0][0] should be equal to row['space_name]. Should check.
-                        wikidata_id_usr = get_QID(
+                        wikidata_id_query = get_QID(
                             no_match_list[0][0]
                         )  # only return one value
-                        if wikidata_id_usr is None:
+                        if wikidata_id_query is None:
                             # Cannot find any related wikidata_id
                             # TODO(QG): should be united: for INFO level, do we write anything into the `note` field?
                             # And if modification only appears in `note`, should we modify `last_modified` and
@@ -165,7 +163,7 @@ def check_each_row_Space(
                             return row, last_space_id
                         else:
                             # Query by name and find a wikidata_id
-                            if wikidata_id_usr in wikidata_ids_GH:
+                            if wikidata_id_query in wikidata_ids_GH:
                                 row["note"] = (
                                     "Error: Wikidata_id should be unique. `wikidata_id` already exists in GitHub data, "
                                     "but the space_id does not match. "
@@ -183,49 +181,72 @@ def check_each_row_Space(
                             # The found wikidata_id is not in ReadAct, the next step is to check its coordinate
                             else:
                                 # ToDo(QG): for computing efficiency, here the `no_match_list` should be replaced
-                                # with `wikidata_id_usr` but the code should be modified accordingly
-                                still_no_match_list, space_with_QID = geo_code_compare(
-                                    no_match_list
+                                # with `wikidata_id_query` but the code should be modified accordingly
+                                coordinate_from_query = get_coordinate_from_wikidata(
+                                    wikidata_id_query
                                 )
                                 if (
-                                    len(still_no_match_list) == 0
-                                ):  # the coordinate entered by user got a match with
+                                    len(coordinate_from_query) == 0
+                                ):  # found the wikidata item has no P625 feature
+                                    logger.info(
+                                        "Row %s is checked. The user input wikidata_id does not have the coordinate location "
+                                        "property (P625). Could not check `lat` and `long`. Pass ",
+                                        index,
+                                    )
+                                    return row, last_space_id
+                                    # check if the coordinate entered by user gets a match with
                                     # the wikidata item which was queried by name
-                                    # Update Wikidata_id
-                                    row["wikidata_id"] = space_with_QID[
-                                        row["space_id"]
-                                    ][-1]
-                                    warning_msg = (
-                                        "For row "
-                                        + str(int(index))
-                                        + " :"
-                                        + "You should look space up in Wikidata and input the wikidata_id in your "
-                                        "table in the future. By ReadActor "
-                                    )
-                                    logger.warning("warning_msg")
-                                    row["note"] = (
-                                        "You should look space up in Wikidata and input the wikidata_id in your table "
-                                        "in the future. By ReadActor "
-                                    )
-                                    row["last_modified"] = today
-                                    row["last_modified_by"] = "ReadActor"
-                                    return row, last_space_id
                                 else:
-                                    row["wikidata_id"] = wikidata_id_usr
-                                    row["lat"] = None
-                                    row["long"] = None
-                                    warning_msg = "For row "
-                                    +str(int(index))
-                                    +" :"
-                                    "You should look this space up in Wikidata again. If it does not match this " "modification, you should retrieve the old data for this row and put `skip` in " "the column 'note'. By ReadActor "
-                                    row["note"] = (
-                                        "You should look this space up in Wikidata again. If it does not match this "
-                                        "modification, you should retrieve the old data for this row and put `skip1 "
-                                        "in the column 'note'. By ReadActor "
-                                    )
-                                    row["last_modified"] = today
-                                    row["last_modified_by"] = "ReadActor"
-                                    return row, last_space_id
+                                    if (
+                                        float(abs(float(coordinate_from_query[0][0])))
+                                        - 0.9
+                                        <= float(row["lat"])
+                                        <= float(
+                                            abs(float(coordinate_from_query[0][0]))
+                                        )
+                                        + 0.9
+                                    ) and (
+                                        float(abs(float(coordinate_from_query[0][1])))
+                                        - 0.9
+                                        <= float(row["long"])
+                                        <= float(
+                                            abs(float(coordinate_from_query[0][1]))
+                                        )
+                                        + 0.9
+                                    ):
+                                        # Update Wikidata_id
+                                        row["wikidata_id"] = wikidata_id_query
+                                        warning_msg = (
+                                            "For row "
+                                            + str(int(index))
+                                            + " :"
+                                            + "You should look space up in Wikidata and input the wikidata_id in your "
+                                            "table in the future. By ReadActor "
+                                        )
+                                        logger.warning("warning_msg")
+                                        row["note"] = (
+                                            "You should look space up in Wikidata and input the wikidata_id in your table "
+                                            "in the future. By ReadActor "
+                                        )
+                                        row["last_modified"] = today
+                                        row["last_modified_by"] = "ReadActor"
+                                        return row, last_space_id
+                                    else:
+                                        row["wikidata_id"] = wikidata_id_query
+                                        row["lat"] = None
+                                        row["long"] = None
+                                        warning_msg = "For row "
+                                        +str(int(index))
+                                        +" :"
+                                        "You should look this space up in Wikidata again. If it does not match this " "modification, you should retrieve the old data for this row and put `skip` in " "the column 'note'. By ReadActor "
+                                        row["note"] = (
+                                            "You should look this space up in Wikidata again. If it does not match this "
+                                            "modification, you should retrieve the old data for this row and put `skip1 "
+                                            "in the column 'note'. By ReadActor "
+                                        )
+                                        row["last_modified"] = today
+                                        row["last_modified_by"] = "ReadActor"
+                                        return row, last_space_id
 
 
 def __compare_wikidata_ids(index, row, df_space_gh):
