@@ -3,7 +3,7 @@ from datetime import date
 
 import pandas as pd
 
-from src.scripts.command_line_tool import check_each_row, get_last_id
+from src.scripts.readactor import check_each_row_Person, get_last_id
 
 
 class MyTestCase(unittest.TestCase):
@@ -28,8 +28,8 @@ class MyTestCase(unittest.TestCase):
         self.df = pd.DataFrame([self.l])
         self.df.columns = self.column_names
         self.df_person_gh = pd.read_csv(
-            "./tests/fixtures/df_person_Github_fake.csv"
-        )  # unofficial version
+            "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
+        )  #  not in master branch
         self.last_person_id, self.person_ids_gh, self.wikidata_ids_GH = get_last_id(
             self.df_person_gh
         )
@@ -54,7 +54,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -99,7 +99,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertNotEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -120,7 +120,7 @@ class MyTestCase(unittest.TestCase):
                 "2021-12-22",
                 "QG",
                 self.today,
-                "SemBot",
+                "ReadActor",
             ],
         )
 
@@ -137,13 +137,13 @@ class MyTestCase(unittest.TestCase):
             "Q23114",
             "2017-07-03",
             "LH",
-            "2020-04-02",
-            "DP",
+            "2022-05-03",
+            "ReadActor",
             "",
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -163,8 +163,8 @@ class MyTestCase(unittest.TestCase):
                 "Q23114",
                 "2017-07-03",
                 "LH",
-                "2020-04-02",
-                "DP",
+                "2022-05-03",
+                "ReadActor",
             ],
         )
 
@@ -187,7 +187,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -207,8 +207,8 @@ class MyTestCase(unittest.TestCase):
                 "Q23114",
                 "2017-07-03",
                 "LH",
-                "2020-04-02",
-                "DP",
+                "2022-05-03",
+                "ReadActor",
             ],
         )
 
@@ -231,7 +231,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         with self.assertRaises(SystemExit) as cm:
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -260,7 +260,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         with self.assertRaises(SystemExit) as cm:
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -271,18 +271,19 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.code, None)
 
     # TODO(DP): I do not understand how this testcase is different from the second test above
+    # (QG): This should be a new entry which does not exist in ReadAct. The second test above is for an existed person.
     def test_it_should_not_update_new_entries_with_matching_data(self):
         self.l = [
-            "AG1200",
-            "Monet",
-            "Claude",
+            "AG0000",
+            "Musk",
+            "Elon",
             "en",
             "male",
-            "1840",
-            "1926",
-            "Paris",
-            "Q296",
-            "2021-12-22",
+            "1971",
+            "",
+            "Pretoria",
+            "Q317521",
+            "2022-06-07",
             "QG",
             "",
             "",
@@ -290,7 +291,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -299,16 +300,16 @@ class MyTestCase(unittest.TestCase):
                 self.wikidata_ids_GH,
             )[0].tolist()[0:-1],
             [
-                "AG1200",
-                "Monet",
-                "Claude",
+                "AG0000",
+                "Musk",
+                "Elon",
                 "en",
                 "male",
-                "1840",
-                "1926",
-                "Paris",
-                "Q296",
-                "2021-12-22",
+                "1971",
+                "",
+                "Pretoria",
+                "Q317521",
+                "2022-06-07",
                 "QG",
                 "",
                 "",
@@ -317,16 +318,16 @@ class MyTestCase(unittest.TestCase):
 
     def test_it_should_update_new_entries_with_missing_data(self):
         self.l = [
-            "AG1200",
-            "Monet",
-            "Claude",
+            "AG0000",
+            "Musk",
+            "Elon",
             "en",
             "",
             "",
             "",
             "",
-            "Q296",
-            "2021-12-22",
+            "Q317521",
+            "2022-06-07",
             "QG",
             "",
             "",
@@ -334,7 +335,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -343,19 +344,19 @@ class MyTestCase(unittest.TestCase):
                 self.wikidata_ids_GH,
             )[0].tolist()[0:-1],
             [
-                "AG1200",
-                "Monet",
-                "Claude",
+                "AG0000",
+                "Musk",
+                "Elon",
                 "en",
                 "male",
-                "1840",
-                "1926",
-                "Paris",
-                "Q296",
-                "2021-12-22",
+                "1971",
+                "",
+                "Pretoria",
+                "Q317521",
+                "2022-06-07",
                 "QG",
                 self.today,
-                "SemBot",
+                "ReadActor",
             ],
         )
 
@@ -378,7 +379,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         with self.assertRaises(SystemExit) as cm:
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -390,16 +391,16 @@ class MyTestCase(unittest.TestCase):
 
     def test_it_should_update_wikiID_using_persondata(self):
         self.l = [
-            "AG1200",
-            "Monet",
-            "Claude",
+            "AG0000",
+            "Musk",
+            "Elon",
             "en",
             "male",
-            "1840",
-            "1926",
-            "Paris",
+            "1971",
             "",
-            "2021-12-22",
+            "Pretoria",
+            "",
+            "2022-06-07",
             "QG",
             "",
             "",
@@ -407,7 +408,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -416,34 +417,34 @@ class MyTestCase(unittest.TestCase):
                 self.wikidata_ids_GH,
             )[0].tolist()[0:-1],
             [
-                "AG1200",
-                "Monet",
-                "Claude",
+                "AG0000",
+                "Musk",
+                "Elon",
                 "en",
                 "male",
-                "1840",
-                "1926",
-                "Paris",
-                "Q296",
-                "2021-12-22",
+                "1971",
+                "",
+                "Pretoria",
+                "Q317521",
+                "2022-06-07",
                 "QG",
                 self.today,
-                "SemBot",
+                "ReadActor",
             ],
         )
 
     def test_it_should_update_data_with_missing_wikiID(self):
         self.l = [
-            "AG1200",
-            "Monet",
-            "Claude",
+            "AG0000",
+            "Musk",
+            "Elon",
             "en",
             "male",
-            "1840",
-            "1926",
+            "1971",
+            "",
             "Tokyo",
             "",
-            "2021-12-22",
+            "2022-06-07",
             "QG",
             "",
             "",
@@ -451,7 +452,7 @@ class MyTestCase(unittest.TestCase):
         ]
         self.df.loc[0] = self.l
         self.assertEqual(
-            check_each_row(
+            check_each_row_Person(
                 0,
                 self.df.iloc[0],
                 self.df_person_gh,
@@ -460,19 +461,19 @@ class MyTestCase(unittest.TestCase):
                 self.wikidata_ids_GH,
             )[0].tolist()[0:-1],
             [
-                "AG1200",
-                "Monet",
-                "Claude",
+                "AG0000",
+                "Musk",
+                "Elon",
                 "en",
                 "male",
-                "1840",
-                "1926",
-                "Paris",
-                "Q296",
-                "2021-12-22",
+                "1971",
+                "",
+                "Pretoria",
+                "Q317521",
+                "2022-06-07",
                 "QG",
                 self.today,
-                "SemBot",
+                "ReadActor",
             ],
         )
         # should test the warning and clean up after testing updated files
