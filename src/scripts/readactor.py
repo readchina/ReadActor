@@ -95,7 +95,8 @@ def check_each_row_Space(
                         row["space_id"],
                         [row["space_name"], row["space_type"], row["lat"], row["long"]],
                     )
-                    # TODO(QG): here, this subsection should be changed in the future to obtain the potential wikidata id.
+                    # TODO(QG): here, this subsection should be changed in the future to obtain the potential
+                    #  wikidata id.
                     if (
                         res_OSM is None
                     ):  # space_name matches with geo coordinates basing on OSM query
@@ -110,8 +111,7 @@ def check_each_row_Space(
                         )  # only return one value
                         if wikidata_id_from_query is None:  # query returns None
                             logger.info(
-                                "For row %s : check lat+long on OSM found the address which doesn't contain "
-                                "space_name. Query by name didn't find any wikidata item."
+                                "For row %s : check lat+long on OSM found the address which doesn't contain space_name. Query by name didn't find any wikidata item."
                                 % index
                             )
                         else:  # query by name and find a wikidata_id
@@ -119,13 +119,15 @@ def check_each_row_Space(
                                 wikidata_id_from_query in wikidata_ids_GH
                             ):  # found wikidata_id in ReadAct
                                 logger.error(
-                                    "For row %s, found wikidata_id already in ReadAct while the space_id is not. If you are certain about your input, you can put the word 'skip' in 'note' to avoid this error message. "
+                                    "For row %s, found wikidata_id already in ReadAct while the space_id is not. If "
+                                    "you are certain about your input, you can put the word 'skip' in 'note' to avoid =this error message. "
                                     % index
                                 )
                                 sys.exit()
                             # The found wikidata_id is not in ReadAct, the next step is to check its coordinate
                             else:
-                                # ToDo(QG): for computing efficiency, here the `no_match_list` should be replaced with `wikidata_id_query` but the code should be modified accordingly
+                                # ToDo(QG): for computing efficiency, here the `no_match_list` should be replaced
+                                #  with `wikidata_id_query` but the code should be modified accordingly
                                 coordinate_from_query = get_coordinate_from_wikidata(
                                     wikidata_id_from_query
                                 )
@@ -148,8 +150,7 @@ def check_each_row_Space(
                                             "wikidata_id"
                                         ] = wikidata_id_from_query  # to update wikidata
                                         warning_msg = (
-                                            "For cases like row %s , you'd better look the Space up in wikidata "
-                                            "and input wikidata_id in your table."
+                                            "For cases like row %s , you'd better look the Space up in wikidata and input wikidata_id in your table."
                                             % index
                                         )
                                         row = __modify_note_lastModified_lastModifiedBy(
@@ -188,10 +189,14 @@ def __compare_wikidata_ids_Space(index, row, df_space_gh, today):
     wikidata_id_usr = row["wikidata_id"]
     row_gh_index = df_space_gh.index[
         (df_space_gh["space_id"] == row["space_id"])
-        & (df_space_gh["language"] == row["language"])
+        & (df_space_gh["name_lang"] == row["name_lang"])
     ].tolist()[0]
     row_GH = df_space_gh.iloc[row_gh_index]
     wikidata_id_gh = row_GH["wikidata_id"]
+    if (
+        wikidata_id_gh is None or len(wikidata_id_gh) == 0
+    ):  # if there is no Wikidata_id in ReadAct, pass.
+        return row
     if wikidata_id_gh == wikidata_id_usr:
         res = __compare_two_rows_Space(row, row_GH)
         if not res:
@@ -390,7 +395,7 @@ def get_last_id(df, named_entity_type):
 def check_each_row_Person(
     index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
 ):
-    today = datetime.date.today().strftime("%Y-%m-%d")
+    today = date.today().strftime("%Y-%m-%d")
     if row["note"] == "skip" or row["note"] == "Skip":
         return row, last_person_id
     else:
