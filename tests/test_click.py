@@ -206,7 +206,7 @@ class TestSum(unittest.TestCase):
                 print("update: \n", update)
             assert "ReadActor" in update  # (QG) make sure it is not an empty file
 
-    #TODO(QG): it might be more meaningful if this test can be rewritten to raise error and catch the error
+    # TODO(QG): it might be more meaningful if this test can be rewritten to raise error and catch the error
     def test_output_2_should_check_new_file(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
