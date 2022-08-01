@@ -157,13 +157,19 @@ def check_each_row_Space(
                                             row, warning_msg, today
                                         )
                                         logger.warning(warning_msg)
-                                    else:  # geo coordinates conflict. Either the query is not accurate or user input
-                                        # is wrong. Requires manual check.
-                                        logger.error(
-                                            "For row %s, by querying with space_name, the found wikidata item which has different geo coordinate from your input. Please do manually check and put the word 'skip' in 'note' if you are confident about your input."
-                                            % index
+                                    else:  # geo coordinates conflict. Probably the wikidata query is not accurate.
+                                        # Or the query returns a geo location in the same area but different from the
+                                        # geo location given by user since a geo area has a certain size.
+                                        warning_msg = (
+                                            "For row %s, by querying with space_name, the found wikidata item "
+                                            "has a different geo location from your input. You are suggested to check "
+                                            "it and put the word 'skip' in 'note' if you are confident about "
+                                            "your input." % index
                                         )
-                                        sys.exit()
+                                        row = __modify_note_lastModified_lastModifiedBy(
+                                            row, warning_msg, today
+                                        )
+                                        logger.warning(warning_msg)
         else:  # user did not input space_id
             logger.error("Please input space_id for row %s ." % index)
             sys.exit()
@@ -889,7 +895,7 @@ def cli(path, interactive, quiet, output, summary):
         #  to be consistent
         for index, row in df.iterrows():
             print(
-                "-------------\nFor row ", index + 2, " :"
+                "-------------\nFor row ", index, " :"
             )  # Because the header line in Person.csv is already row 1
             # Todo(QG): adjust other row index output
             print(row.tolist())
@@ -908,7 +914,7 @@ def cli(path, interactive, quiet, output, summary):
         )
         for index, row in df.iterrows():
             print(
-                "-------------\nFor row ", index + 2, " :"
+                "-------------\nFor row ", index, " :"
             )  # Because the header line in Person.csv is already row 1
             # Todo(QG): adjust other row index output
             print(row.tolist())

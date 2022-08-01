@@ -31,7 +31,7 @@ class MyTestCase(unittest.TestCase):
             "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
         )  #  not in master branch
         self.last_person_id, self.person_ids_gh, self.wikidata_ids_GH = get_last_id(
-            self.df_person_gh
+            self.df_person_gh, "Person"
         )
         self.today = date.today().strftime("%Y-%m-%d")
 
