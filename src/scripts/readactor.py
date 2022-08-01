@@ -867,8 +867,19 @@ def log(level):
     is_flag=True,
     help="Do not update input table, but summarise results in console",
 )
+@click.option(
+    "--space",
+    is_flag=True,
+    help="Process only places (places and locations)",
+)
+@click.option(
+    "-a",
+    "--agents",
+    is_flag=True,
+    help="Process only agents (persons and institutions)",
+)
 @click.argument("path", default=".", type=str)
-def cli(path, interactive, quiet, output, summary):
+def cli(path, interactive, quiet, output, summary, space, agents):
     if interactive:
         click.confirm("Do you want to update the table?", default=False, abort=True)
 
@@ -881,6 +892,19 @@ def cli(path, interactive, quiet, output, summary):
 
     df = pd.read_csv(path)  # index_col=0
     df = df.fillna("")  # Replace all the nan into empty string
+
+    if space:
+        if "Space" not in path:
+            print(
+                "You want to process space/locations, but your input file path doesn't contain this kind of file."
+            )
+            sys.exit()
+    if agents:
+        print(
+            "You want to process person/institution, but your input file path doesn't contain this kind of file."
+        )
+        if "Person" not in path and "Institution" not in path:
+            sys.exit()
 
     # Check which named entity should we process (Person, Space, Institution).
     if "Person" in path:
