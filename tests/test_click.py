@@ -164,7 +164,7 @@ class TestSum(unittest.TestCase):
 
     def test_output_1_should_check_new_file(self):
         runner = CliRunner()
-        with runner.isolated_filesystem(temp_dir="./src/results/tmp"):
+        with runner.isolated_filesystem():
             with open("Person.csv", "w") as f1:
                 f1.write(
                     "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
@@ -204,12 +204,12 @@ class TestSum(unittest.TestCase):
             with open("Person_updated.csv", "r") as f2:
                 update = f2.read()
                 print("update: \n", update)
-                print(type(update))
             assert "ReadActor" in update  # (QG) make sure it is not an empty file
 
+    #TODO(QG): it might be more meaningful if this test can be rewritten to raise error and catch the error
     def test_output_2_should_check_new_file(self):
         runner = CliRunner()
-        with runner.isolated_filesystem(temp_dir="./src/results/tmp"):
+        with runner.isolated_filesystem():
             with open("Person.csv", "w") as f:
                 f.write(
                     "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
@@ -220,8 +220,6 @@ class TestSum(unittest.TestCase):
             directory = os.getcwd()
             with open("Person_updated.csv", "r") as f2:
                 update = f2.read()
-                print("update: \n", update)
-                print(type(update))
             assert "ReadActor" in update  # (QG) make sure it is not an empty file
 
     def test_summary_1_should_check_new_file(self):
