@@ -27,6 +27,7 @@ class MyTestCase(unittest.TestCase):
         self.l = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""]
         self.df = pd.DataFrame([self.l])
         self.df.columns = self.column_names
+        self.df = self.df.astype(str)
         self.df_person_gh = pd.read_csv(
             "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
         )  #  not in master branch
