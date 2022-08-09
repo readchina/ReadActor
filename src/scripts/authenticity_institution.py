@@ -73,11 +73,11 @@ def read_institution_csv(
     return ins_dict
 
 
-def compare(inst_dict, sleep=2):
+def compare_inst(inst_dict, sleep=2):
     no_match = {}
     match = {}
     for k, v in inst_dict.items():
-        results = get_QID(k[1])
+        results = get_QID_inst(k[1])
         if results is None:
             no_match[k] = v
             continue
@@ -85,7 +85,7 @@ def compare(inst_dict, sleep=2):
         if q_ids is None:
             no_match[k] = v
             continue
-        inst_wiki_dict = __sparql(q_ids, sleep)
+        inst_wiki_dict = sparql_inst(q_ids, sleep)
         if (
             len(inst_wiki_dict["headquarters"]) > 0
             and v[0] in inst_wiki_dict["headquarters"]
@@ -115,7 +115,7 @@ def compare(inst_dict, sleep=2):
     return no_match, match
 
 
-def __sparql(q_ids, sleep=2):
+def sparql_inst(q_ids, sleep=2):
     if q_ids is None:
         return []
     inst_wiki = {}
@@ -160,7 +160,7 @@ def __sparql(q_ids, sleep=2):
     return inst_wiki
 
 
-def get_QID(lookup):
+def get_QID_inst(lookup):
     params = {
         "action": "wbsearchentities",
         "language": "en",
@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
     inst_dict = read_institution_csv()
     print(inst_dict)
-    no_match, match = compare(inst_dict, 10)
+    no_match, match = compare_inst(inst_dict, 10)
     print("no_match dictionary: ", no_match)
     print("length of the no_match dictionary: ", len(no_match))
 

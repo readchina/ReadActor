@@ -3,7 +3,8 @@ from datetime import date
 
 import pandas as pd
 
-from src.scripts.readactor import check_each_row_Person, get_last_id
+from src.scripts.agent_table_processing import process_agent_tables
+from src.scripts.readactor import check_each_row_Person
 
 
 class MyTestCase(unittest.TestCase):
@@ -28,12 +29,13 @@ class MyTestCase(unittest.TestCase):
         self.df = pd.DataFrame([self.l])
         self.df.columns = self.column_names
         self.df = self.df.astype(str)
-        self.df_person_gh = pd.read_csv(
-            "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
-        )  #  not in master branch
-        self.last_person_id, self.person_ids_gh, self.wikidata_ids_GH = get_last_id(
-            self.df_person_gh, "Person"
-        )
+
+        (
+            self.df_person_new,
+            self.person_ids_gh,
+            self.last_person_id,
+            self.wikidata_ids_GH,
+        ) = process_agent_tables("Person")
         self.today = date.today().strftime("%Y-%m-%d")
 
     def test_it_should_respect_skip_annotation(self):
@@ -58,7 +60,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -103,7 +105,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -147,7 +149,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -191,7 +193,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -235,7 +237,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -264,7 +266,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -295,7 +297,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -339,7 +341,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -383,7 +385,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -412,7 +414,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
@@ -456,7 +458,7 @@ class MyTestCase(unittest.TestCase):
             check_each_row_Person(
                 0,
                 self.df.iloc[0],
-                self.df_person_gh,
+                self.df_person_new,
                 self.person_ids_gh,
                 self.last_person_id,
                 self.wikidata_ids_GH,
