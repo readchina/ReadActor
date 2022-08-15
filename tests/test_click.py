@@ -6,7 +6,6 @@ from os import listdir
 from os.path import exists, isfile, join
 
 import click
-import pandas as pd
 from click.testing import CliRunner
 
 from src.scripts.readactor import cli

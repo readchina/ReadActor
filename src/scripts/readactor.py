@@ -8,7 +8,6 @@ import click
 import pandas as pd
 
 from src.scripts.agent_table_processing import process_agent_tables
-from src.scripts.authenticity_institution import compare_inst, get_QID_inst, sparql_inst
 from src.scripts.authenticity_person import (
     order_name_by_language,
     sparql_by_name,
@@ -16,11 +15,11 @@ from src.scripts.authenticity_person import (
 )
 from src.scripts.authenticity_space import (
     compare_coordinates_with_threhold,
-    compare_to_openstreetmap,
     get_coordinate_from_wikidata,
     get_QID,
     query_with_OSM,
 )
+from src.scripts.process_Institution import process_Inst
 
 # Creating an object
 logger = logging.getLogger()
@@ -30,10 +29,7 @@ formatter = logging.Formatter(
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 # Todo(QG): this is the file on a branch which is not master. Should be replaced after 2.0.
-PERSON_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
 SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Space.csv"
-INST_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Institution.csv"
-AGENT_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Agent.csv"
 
 
 def check_each_row_Space(
@@ -88,7 +84,7 @@ def check_each_row_Space(
                                     "Wikidata manually." % index
                                 )
                                 logger.warning("warning_msg")
-                                row = __modify_note_lastModified_lastModifiedBy(
+                                row = modify_note_lastModified_lastModifiedBy(
                                     row, warning_msg, today
                                 )
                 else:  # user input space_id not in ReadAct and user did not input wikidata_id
@@ -123,7 +119,7 @@ def check_each_row_Space(
                                 logger.error(
                                     "For row %s, found wikidata_id already in ReadAct while the space_id is not. If "
                                     "you are certain about your input, you can put the word 'skip' in 'note' to avoid "
-                                    "=this error message. " % index
+                                    "this error message. " % index
                                 )
                                 sys.exit()
                             # The found wikidata_id is not in ReadAct, the next step is to check its coordinate
@@ -157,7 +153,7 @@ def check_each_row_Space(
                                             "and input wikidata_id in your table."
                                             % index
                                         )
-                                        row = __modify_note_lastModified_lastModifiedBy(
+                                        row = modify_note_lastModified_lastModifiedBy(
                                             row, warning_msg, today
                                         )
                                         logger.warning(warning_msg)
@@ -171,7 +167,7 @@ def check_each_row_Space(
                                             "it and put the word 'skip' in 'note' if you are confident about "
                                             "your input." % index
                                         )
-                                        row = __modify_note_lastModified_lastModifiedBy(
+                                        row = modify_note_lastModified_lastModifiedBy(
                                             row, warning_msg, today
                                         )
                                         logger.warning(warning_msg)
@@ -181,7 +177,7 @@ def check_each_row_Space(
     return row, last_space_id
 
 
-def __modify_note_lastModified_lastModifiedBy(row, message, today):
+def modify_note_lastModified_lastModifiedBy(row, message, today):
     row["note"] += " " + message
     row["last_modified"] = today
     row["last_modified_by"] = "ReadActor"
@@ -255,7 +251,7 @@ def __overwrite_Space(row, row_gh, index, today):
         index,
         ", ".join(map(str, modified_fields)),
     )
-    row = __modify_note_lastModified_lastModifiedBy(row, message, today)
+    row = modify_note_lastModified_lastModifiedBy(row, message, today)
     logger.info(message)
     return row
 
@@ -790,181 +786,6 @@ def check_each_row_Person(
                     return row, last_person_id
 
 
-def __compare_wikidata_ids_Inst(index, row, df_inst_new, today):
-    wikidata_id_usr = row["wikidata_id"]
-    row_gh_index = df_inst_new.index[
-        (df_inst_new["inst_id"] == row["inst_id"])
-        & (df_inst_new["inst_name_lang"] == row["inst_name_lang"])
-    ].tolist()[0]
-    row_GH = df_inst_new.iloc[row_gh_index]
-    wikidata_id_gh = row_GH["wikidata_id"]
-    if wikidata_id_gh == wikidata_id_usr:
-        res = __compare_two_rows_Inst(row, row_GH)
-        if not res:
-            return __overwrite_Inst(row, row_GH, index, today)
-        logger.info("Row %s is checked. Pass " % index)
-        return row
-    else:
-        row[
-            "note"
-        ] = "Error: `wikidata_id` is not matching with GitHub data. Please check. By ReadActor."
-        error_msg = (
-            "For row "
-            + str(int(index))
-            + " : `wikidata_id` does not match GitHub data. Please check. By "
-            "ReadActor."
-        )
-        logger.error(error_msg)
-        sys.exit()
-
-
-def __compare_two_rows_Inst(row, row_gh):
-    fields_to_be_compared = [
-        "inst_name",
-        "inst_name_lang",
-        "place",
-        "start",
-        "end",
-        "alt_start",
-        "alt_end",
-        "inst_alt_name",
-        "wikidata_id",
-        "note",
-        "source",
-        "page",
-        "created",
-        "created_by",
-        "last_modified",
-        "last_modified_by",
-    ]
-    for i in fields_to_be_compared:
-        if row[i].str != row_gh[i].str:  # ToDo(QG): check integer/float .
-            return False
-    return True
-
-
-def __overwrite_Inst(row, row_gh, index, today):
-    fields_to_be_overwritten = [
-        "inst_name",
-        "inst_name_lang",
-        "place",
-        "start",
-        "end",
-        "alt_start",
-        "alt_end",
-        "inst_alt_name",
-        "wikidata_id",
-        "note",
-        "source",
-        "page",
-        "created",
-        "created_by",
-        "last_modified",
-        "last_modified_by",
-    ]
-    modified_fields = []
-    for i in fields_to_be_overwritten:
-        if row[i] != row_gh[i]:
-            row[i] = row_gh[i]
-            modified_fields.append(i)
-    message = "In row %s , the following fields are overwritten: %s " % (
-        index,
-        ", ".join(map(str, modified_fields)),
-    )
-    row = __modify_note_lastModified_lastModifiedBy(row, message, today)
-    logger.info(message)
-    return row
-
-
-def check_each_row_Inst(
-    index, row, df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH
-):
-    today = date.today().strftime("%Y-%m-%d")
-    if row["note"] == "skip" or row["note"] == "Skip":
-        return row, last_inst_id
-    else:
-        if isinstance(row["inst_id"], str) and len(row["inst_id"]) > 0:
-            if row["inst_id"] in inst_ids_gh:  # inst_id is in ReadAct
-                return (
-                    __compare_wikidata_ids_Inst(index, row, df_inst_new, today),
-                    last_inst_id,
-                )
-            else:  # inst_id not in ReadAct
-                if (isinstance(row["wikidata_id"], str) is True) and (
-                    len(row["wikidata_id"]) > 0
-                ):  # user did input wikidata_id
-                    if (
-                        row["wikidata_id"] in wikidata_ids_GH
-                    ):  # the input wikidata_id in ReadAct
-                        logger.error(
-                            "For row %s , wikidata_id in ReadAct but inst_id not. Please check."
-                            % index
-                        )
-                        sys.exit()
-                    else:  # the input wikidata_id not in ReadAct
-                        inst_q_ids = [
-                            row["wikidata_id"]
-                        ]  # Format it as a list because of the function's need
-                        inst_wiki_dict = sparql_inst(inst_q_ids)
-
-                        k = (row["inst_id"], row["inst_name"])
-                        v = [row["place"], row["start"], row["end"]]
-
-                        if (
-                            len(inst_wiki_dict["headquarters"]) > 0
-                            and v[0] in inst_wiki_dict["headquarters"]
-                        ):
-                            # consider as a match
-                            logger.info("Row %s is checked. Pass " % index)
-                            return row, last_inst_id
-                        elif (
-                            len(inst_wiki_dict["administrativeTerritorialEntity"]) > 0
-                            and v[0]
-                            in inst_wiki_dict["administrativeTerritorialEntity"]
-                        ):
-                            # consider as a match
-                            logger.info("Row %s is checked. Pass " % index)
-                            return row, last_inst_id
-                        elif (
-                            len(inst_wiki_dict["locationOfFormation"]) > 0
-                            and v[0] in inst_wiki_dict["locationOfFormation"]
-                        ):
-                            # consider as a match
-                            logger.info("Row %s is checked. Pass " % index)
-                            return row, last_inst_id
-                        elif (
-                            len(inst_wiki_dict["inception"]) > 0
-                            and str(v[1])[0:4] in str(inst_wiki_dict["inception"])[0:4]
-                        ):
-                            # consider as a match
-                            logger.info("Row %s is checked. Pass " % index)
-                            return row, last_inst_id
-                        else:
-
-                            logger.warning(
-                                "Row %s has no field which is matching any according wikidata properties. "
-                                "Please check. " % index
-                            )
-                            return row, last_inst_id
-
-                        # inst_q_id = get_QID_inst(row['inst_name'])  # (QG): actually we are only querying the English
-                        # # wikidata
-                        # if inst_q_id is None:
-                        #     warning_msg = (
-                        #             "In row %s ,you'd better compare the  you entered and the one on "
-                        #             "Wikidata manually." % index
-                        #         )
-                        #     logger.warning("warning_msg")
-                        #     row = __modify_note_lastModified_lastModifiedBy(
-                        #         row, warning_msg, today
-                        #     )
-                else:  # user did NOT input wikidata_id
-                    pass
-        else:  # user did not input inst_id
-            logger.error("Please input inst_id for row %s ." % index)
-            sys.exit()
-
-
 # eager
 def print_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
@@ -1070,9 +891,6 @@ def cli(path, interactive, quiet, output, summary, space, agents):
 
     log(level)
 
-    df = pd.read_csv(path)  # index_col=0
-    df = df.fillna("")  # Replace all the nan into empty string
-
     if space:
         if "Space" not in path:
             print(
@@ -1080,15 +898,18 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             )
             sys.exit()
     if agents:
-        print(
-            "You want to process person/institution, but your input file path doesn't contain this kind of file."
-        )
         if "Person" not in path and "Institution" not in path:
+            print(
+                "You want to process person/institution, but your input file path doesn't contain this kind of file."
+            )
             sys.exit()
 
     # Check which named entity should we process (Person, Space, Institution).
     if "Person" in path:
         entity_type = "Person"
+        agent_user_path = path[-10] + "/Agent.csv"
+        df= process_agent_tables(entity_type, 'user', path=[path, agent_user_path])[0]
+        df = df.fillna("")  # Replace all the nan into empty string
         (
             df_person_new,
             person_ids_gh,
@@ -1114,6 +935,9 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             df.loc[index] = row
 
     elif "Space" in path:
+        df = pd.read_csv(path)  # index_col=0
+        df = df.fillna("")  # Replace all the nan into empty string
+        entity_type = "Space"
         df_space_gh = pd.read_csv(SPACE_GITHUB)
         # Replace all the nan into empty string
         df_space_gh = df_space_gh.fillna("")
@@ -1135,19 +959,11 @@ def cli(path, interactive, quiet, output, summary, space, agents):
 
     elif "Institution" in path:
         entity_type = "Institution"
-        df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH = process_agent_tables(
-            entity_type
-        )
-        #  to be consistent
-        for index, row in df.iterrows():
-            print(
-                "-------------\nFor row ", index, " :"
-            )  # Todo(QG): adjust other row index output
-            print(row.tolist())
-            row, last_person_id = check_each_row_Inst(
-                index, row, df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH
-            )
-            df.loc[index] = row
+        agent_user_path = path[:-15] + "Agent.csv"
+        df = process_agent_tables(entity_type, 'user', path=[path, agent_user_path])[0]
+        df = df.fillna("")  # Replace all the nan into empty string
+        df = process_Inst(df, entity_type)
+
 
     print(
         "\n\n\n\ndf before check output/summary/else, but should already reflect if ReadActor did something: ",
@@ -1155,14 +971,24 @@ def cli(path, interactive, quiet, output, summary, space, agents):
     )
 
     if output:
-        new_csv_path = path[:-4] + "_updated.csv"
-        with open(new_csv_path, "w+") as f:
-            f.write(df.to_csv(index=False))
+        if entity_type == "space":
+            new_csv_path = path[:-4] + "_updated.csv"
+            with open(new_csv_path, "w+") as f:
+                f.write(df.to_csv(index=False))
+        else:
+            # write two tables: agent and the other
+            # ToDo(QG): here we should update two tables for any agents
+            pass
     elif summary:
         print("\nelif summary:\n", df.to_csv(index=False))
     else:
-        with open(path, "w") as f:
-            f.write(df.to_csv(index=False))
+        if entity_type == "space":
+            with open(path, "w") as f:
+                f.write(df.to_csv(index=False))
+        else:
+            # write two tables: agent and the other
+            # ToDo(QG): here we should update two tables for any agents
+            pass
 
 
 if __name__ == "__main__":

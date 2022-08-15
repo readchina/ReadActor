@@ -1,5 +1,5 @@
 import pandas as pd
-from authenticity_space import read_space_csv
+from src.scripts.authenticity_space import read_space_csv
 
 PERSON_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
 SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Space.csv"
@@ -30,9 +30,12 @@ def add_wikidataID__replaceSpaceForInst_to_specific_table(
     return df_inst_new
 
 
-def process_agent_tables(entity_type):
+def process_agent_tables(entity_type, user_or_ReadAct, path=[]):
     if entity_type == "Person":
-        which_agent = PERSON_GITHUB
+        if user_or_ReadAct == "ReadAct":
+            which_agent = PERSON_GITHUB
+        else:
+            which_agent = path[0]
         agent_id = "person_id"
         cols = [
             "person_id",
@@ -60,7 +63,10 @@ def process_agent_tables(entity_type):
         ]
     elif entity_type == "Institution":
         place_dict = read_space_csv()
-        which_agent = INST_GITHUB
+        if user_or_ReadAct == "ReadAct":
+            which_agent = INST_GITHUB
+        else:
+            which_agent = path[0]
         agent_id = "inst_id"
         cols = [
             "inst_id",
@@ -89,7 +95,10 @@ def process_agent_tables(entity_type):
     agent_ids_gh.sort()  # Order them
     last_item_id = agent_ids_gh[-1]  # Get the last institution/person's agent_id
 
-    df_agent = pd.read_csv(AGENT_GITHUB).fillna("")  # Get agent table
+    if user_or_ReadAct == "ReadAct":
+        df_agent = pd.read_csv(AGENT_GITHUB).fillna("")  # Get agent table
+    else:
+        df_agent = pd.read_csv(path[1]).fillna("")  # Get agent table
     df_agent_part = df_agent.loc[
         df_agent["agent_id"].isin(agent_ids_gh)
     ]  # Get part of agent table
