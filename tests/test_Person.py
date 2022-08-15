@@ -35,7 +35,7 @@ class MyTestCase(unittest.TestCase):
             self.person_ids_gh,
             self.last_person_id,
             self.wikidata_ids_GH,
-        ) = process_agent_tables("Person", 'ReadAct', [])
+        ) = process_agent_tables("Person", "ReadAct", [])
         self.today = date.today().strftime("%Y-%m-%d")
 
     def test_it_should_respect_skip_annotation(self):

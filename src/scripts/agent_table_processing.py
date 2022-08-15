@@ -107,8 +107,8 @@ def process_agent_tables(entity_type, user_or_ReadAct, path=[]):
         "wikidata_id"
     ] = ""  # Add an empty wikidata_id column to institution/person table
     df_agent_new = add_wikidataID__replaceSpaceForInst_to_specific_table(
-            df_agent_gh, df_agent_part, agent_id, place_dict, entity_type
-        )  # combine wikidata_id information from agent
+        df_agent_gh, df_agent_part, agent_id, place_dict, entity_type
+    )  # combine wikidata_id information from agent
     # table with institution/person table to get a new df
     df_agent_new = df_agent_new[cols]  # Reorder the table
     wikidata_ids_GH = df_agent_new["wikidata_id"].tolist()
