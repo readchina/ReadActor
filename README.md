@@ -101,7 +101,7 @@ The updating can be  based on:
 - `Wikidata id`
 - `family name` and  `first name` (to be implemented)
 
-At the end, a `statistic` message will be printed out to tell the user how many entries are updated.
+Please make sure the "Agent.csv" is in the same directory as your "Person.csv".
 
 ## What it does
 
@@ -123,6 +123,8 @@ Two APIs (OpenStreetMap and MediaWiki) are under using.
 ### Institution
 
 To look up Institutions we use MediaWiki API.
+
+Please make sure the "Agent.csv" is in the same directory as your "Institution.csv".
 
 
 ## The time it takes
