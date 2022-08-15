@@ -908,7 +908,7 @@ def cli(path, interactive, quiet, output, summary, space, agents):
     if "Person" in path:
         entity_type = "Person"
         agent_user_path = path[-10] + "/Agent.csv"
-        df= process_agent_tables(entity_type, 'user', path=[path, agent_user_path])[0]
+        df = process_agent_tables(entity_type, "user", path=[path, agent_user_path])[0]
         df = df.fillna("")  # Replace all the nan into empty string
         (
             df_person_new,
@@ -960,10 +960,9 @@ def cli(path, interactive, quiet, output, summary, space, agents):
     elif "Institution" in path:
         entity_type = "Institution"
         agent_user_path = path[:-15] + "Agent.csv"
-        df = process_agent_tables(entity_type, 'user', path=[path, agent_user_path])[0]
+        df = process_agent_tables(entity_type, "user", path=[path, agent_user_path])[0]
         df = df.fillna("")  # Replace all the nan into empty string
         df = process_Inst(df, entity_type)
-
 
     print(
         "\n\n\n\ndf before check output/summary/else, but should already reflect if ReadActor did something: ",

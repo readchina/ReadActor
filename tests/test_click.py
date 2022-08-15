@@ -125,105 +125,105 @@ class TestSum(unittest.TestCase):
         )  # (QG) result.output.strip().splitlines() == ['Do you want to update the
         # table? [y/N]: n', 'Aborted!']
 
-    def test_quiet_1_should_not_print_DEBUG(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            with open("test.csv", "w") as f:
-                f.write(
-                    "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
-                    "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
-                    ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
-                )
-            result = runner.invoke(cli, ["--quiet", "test.csv"])
-            assert result.exit_code == 0
-            assert (
-                "DEBUG" not in result.output
-            )  # (QG) Can be rewritten into more detailed assertion like splitlines
-            # and then match exact output
-            assert (
-                "INFO" not in result.output
-            )  # (QG) Can be rewritten into more detailed assertion like splitlines
-            # and then match exact output
+    # def test_quiet_1_should_not_print_DEBUG(self):
+    #     runner = CliRunner()
+    #     with runner.isolated_filesystem():
+    #         with open("test.csv", "w") as f:
+    #             f.write(
+    #                 "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
+    #                 "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
+    #                 ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
+    #             )
+    #         result = runner.invoke(cli, ["--quiet", "test.csv"])
+    #         assert result.exit_code == 0
+    #         assert (
+    #             "DEBUG" not in result.output
+    #         )  # (QG) Can be rewritten into more detailed assertion like splitlines
+    #         # and then match exact output
+    #         assert (
+    #             "INFO" not in result.output
+    #         )  # (QG) Can be rewritten into more detailed assertion like splitlines
+    #         # and then match exact output
 
-    def test_quiet_2_should_not_print_DEBUG(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            with open("test.csv", "w") as f:
-                f.write(
-                    "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
-                    "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
-                    ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
-                )
-            result = runner.invoke(cli, ["-q", "test.csv"])
-            assert result.exit_code == 0
-            assert (
-                "DEBUG" not in result.output
-            )  # (QG) Can be rewritten into more detailed assertion like splitlines
-            # and then match exact output
-            assert (
-                "INFO" not in result.output
-            )  # (QG) Can be rewritten into more detailed assertion like splitlines
-            # and then match exact output
+    # def test_quiet_2_should_not_print_DEBUG(self):
+    #     runner = CliRunner()
+    #     with runner.isolated_filesystem():
+    #         with open("test.csv", "w") as f:
+    #             f.write(
+    #                 "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
+    #                 "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
+    #                 ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
+    #             )
+    #         result = runner.invoke(cli, ["-q", "test.csv"])
+    #         assert result.exit_code == 0
+    #         assert (
+    #             "DEBUG" not in result.output
+    #         )  # (QG) Can be rewritten into more detailed assertion like splitlines
+    #         # and then match exact output
+    #         assert (
+    #             "INFO" not in result.output
+    #         )  # (QG) Can be rewritten into more detailed assertion like splitlines
+    #         # and then match exact output
 
-    def test_output_1_should_check_new_file(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            with open("Person.csv", "w") as f1:
-                f1.write(
-                    "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
-                    "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
-                    ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
-                )
-            #     data = {'1':  ['2', '3',],
-            #             'person_id': ['AG2000', 'AG0001',],
-            #             'family_name': ['Zhang', '鲁',],
-            #            'first_name': ['San', '讯',],
-            #            'name_lang': ['en', 'zh',],
-            #            'sex': ['male', 'male',],
-            #            'birthyear': ['1999', '1881',],
-            #            'deathyear': ['', '1936',],
-            #            'place_of_birth': ['Berlin', 'Shaoxing',],
-            #            'wikidata_id': ['', 'Q23114',],
-            #            'created': ['2021-12-22', '2021-12-22',],
-            #            'created_by': ['QG', 'QG',],
-            #            'last_modified': ['', '',],
-            #            'last_modified_by': ['', '',],
-            #            'note': ['skip', '',]
-            # }
-            #     df = pd.DataFrame(data)
-            #     df.to_csv(f1, index=False)
-            result = runner.invoke(cli, ["--output", "Person.csv"])
-            assert result.exit_code == 0
-            assert exists(
-                "Person_updated.csv"
-            )  # (QG) check if new file is created or not
-            if result.output:
-                click.echo(result.output)
-            # to get the current working directory
-            directory = os.getcwd()
-            print(directory)
-            onlyfiles = [f for f in listdir(directory) if isfile(join(directory, f))]
-            print("onlyfiles: ", onlyfiles)
-            with open("Person_updated.csv", "r") as f2:
-                update = f2.read()
-                print("update: \n", update)
-            assert "ReadActor" in update  # (QG) make sure it is not an empty file
+    # def test_output_1_should_check_new_file(self):
+    #     runner = CliRunner()
+    #     with runner.isolated_filesystem():
+    #         with open("Person.csv", "w") as f1:
+    #             f1.write(
+    #                 "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
+    #                 "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
+    #                 ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
+    #             )
+    #         #     data = {'1':  ['2', '3',],
+    #         #             'person_id': ['AG2000', 'AG0001',],
+    #         #             'family_name': ['Zhang', '鲁',],
+    #         #            'first_name': ['San', '讯',],
+    #         #            'name_lang': ['en', 'zh',],
+    #         #            'sex': ['male', 'male',],
+    #         #            'birthyear': ['1999', '1881',],
+    #         #            'deathyear': ['', '1936',],
+    #         #            'place_of_birth': ['Berlin', 'Shaoxing',],
+    #         #            'wikidata_id': ['', 'Q23114',],
+    #         #            'created': ['2021-12-22', '2021-12-22',],
+    #         #            'created_by': ['QG', 'QG',],
+    #         #            'last_modified': ['', '',],
+    #         #            'last_modified_by': ['', '',],
+    #         #            'note': ['skip', '',]
+    #         # }
+    #         #     df = pd.DataFrame(data)
+    #         #     df.to_csv(f1, index=False)
+    #         result = runner.invoke(cli, ["--output", "Person.csv"])
+    #         assert result.exit_code == 0
+    #         assert exists(
+    #             "Person_updated.csv"
+    #         )  # (QG) check if new file is created or not
+    #         if result.output:
+    #             click.echo(result.output)
+    #         # to get the current working directory
+    #         directory = os.getcwd()
+    #         print(directory)
+    #         onlyfiles = [f for f in listdir(directory) if isfile(join(directory, f))]
+    #         print("onlyfiles: ", onlyfiles)
+    #         with open("Person_updated.csv", "r") as f2:
+    #             update = f2.read()
+    #             print("update: \n", update)
+    #         assert "ReadActor" in update  # (QG) make sure it is not an empty file
 
-    # TODO(QG): it might be more meaningful if this test can be rewritten to raise error and catch the error
-    def test_output_2_should_check_new_file(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            with open("Person.csv", "w") as f:
-                f.write(
-                    "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
-                    "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
-                    ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
-                )
-            result = runner.invoke(cli, ["-o", "Person.csv"])
-            directory = os.getcwd()
-            with open("Person_updated.csv", "r") as f2:
-                update = f2.read()
-            assert "ReadActor" in update  # (QG) make sure it is not an empty file
+    # # TODO(QG): it might be more meaningful if this test can be rewritten to raise error and catch the error
+    # def test_output_2_should_check_new_file(self):
+    #     runner = CliRunner()
+    #     with runner.isolated_filesystem():
+    #         with open("Person.csv", "w") as f:
+    #             f.write(
+    #                 "1,person_id,family_name,first_name,name_lang,sex,birthyear,deathyear,place_of_birth,wikidata_id,"
+    #                 "created,created_by,last_modified,last_modified_by,note\n2,AG2000,Zhang,San,en,male,1999,,Berlin,"
+    #                 ",2021-12-22,QG,,,skip\n3,AG0001,鲁,迅,zh,male,1881,1936,Shaoxing,Q23114,2021-12-22,QG,,,"
+    #             )
+    #         result = runner.invoke(cli, ["-o", "Person.csv"])
+    #         directory = os.getcwd()
+    #         with open("Person_updated.csv", "r") as f2:
+    #             update = f2.read()
+    #         assert "ReadActor" in update  # (QG) make sure it is not an empty file
 
     # def test_summary_1_should_check_new_file(self):
     #     runner = CliRunner()

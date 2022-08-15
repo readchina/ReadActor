@@ -19,7 +19,7 @@ def modify_note_lastModified_lastModifiedBy(row, message, today):
 
 def process_Inst(df, entity_type):
     df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH = process_agent_tables(
-        entity_type, 'ReadAct', path=[]
+        entity_type, "ReadAct", path=[]
     )
     for index, row in df.iterrows():
         print(
@@ -181,9 +181,11 @@ def __compare_two_rows_Inst(row, row_gh):
             pass
         else:
             length = len(str(int((row_gh[i]))))
-            if str(int(row[i]))[0:length+1] != str(int(row_gh[i])): # Only check maximally the first 4 digits if the
+            if str(int(row[i]))[0 : length + 1] != str(
+                int(row_gh[i])
+            ):  # Only check maximally the first 4 digits if the
                 # column is
-            # about
+                # about
                 # year/time
                 return False
     else:

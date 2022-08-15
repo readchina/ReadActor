@@ -1,4 +1,5 @@
 import pandas as pd
+
 from src.scripts.authenticity_space import read_space_csv
 
 PERSON_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/add-wikidata_id/csv/data/Person.csv"
@@ -31,6 +32,7 @@ def add_wikidataID__replaceSpaceForInst_to_specific_table(
 
 
 def process_agent_tables(entity_type, user_or_ReadAct, path=[]):
+    place_dict = read_space_csv()
     if entity_type == "Person":
         if user_or_ReadAct == "ReadAct":
             which_agent = PERSON_GITHUB
@@ -62,7 +64,6 @@ def process_agent_tables(entity_type, user_or_ReadAct, path=[]):
             "last_modified_by",
         ]
     elif entity_type == "Institution":
-        place_dict = read_space_csv()
         if user_or_ReadAct == "ReadAct":
             which_agent = INST_GITHUB
         else:
@@ -106,8 +107,8 @@ def process_agent_tables(entity_type, user_or_ReadAct, path=[]):
         "wikidata_id"
     ] = ""  # Add an empty wikidata_id column to institution/person table
     df_agent_new = add_wikidataID__replaceSpaceForInst_to_specific_table(
-        df_agent_gh, df_agent_part, agent_id, place_dict, entity_type
-    )  # combine wikidata_id infomation from agent
+            df_agent_gh, df_agent_part, agent_id, place_dict, entity_type
+        )  # combine wikidata_id information from agent
     # table with institution/person table to get a new df
     df_agent_new = df_agent_new[cols]  # Reorder the table
     wikidata_ids_GH = df_agent_new["wikidata_id"].tolist()
