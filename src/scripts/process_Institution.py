@@ -26,9 +26,11 @@ def process_Inst(df, entity_type):
             "-------------\nFor row ", index, " :"
         )  # Todo(QG): adjust row index output
         print(row.tolist())
-        row, last_person_id = check_each_row_Inst(
+        row, last_inst_id = check_each_row_Inst(
             index, row, df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH
         )
+        # validate the format of start and end (year)
+        row = validate_year_Inst(row)
         df.loc[index] = row
     return df
 
@@ -81,9 +83,13 @@ def check_each_row_Inst(
                                 index, row, inst_wiki, l, today, row["wikidata_id"]
                             )
                 else:  # user did NOT input wikidata_id
-                    wikidata_id_from_query_Inst = get_QID_inst(
-                        row["name"]
-                    )  # only return one value
+                    # TODO(QG): maybe it is better to modify get_QID_inst()
+                    if row["inst_name"] is None or len(row["inst_name"]) == 0:
+                        wikidata_id_from_query_Inst = None
+                    else:
+                        wikidata_id_from_query_Inst = get_QID_inst(
+                            row["inst_name"]
+                        )  # only return one value
                     if (
                         wikidata_id_from_query_Inst is None
                     ):  # query by name and return None
@@ -103,7 +109,7 @@ def check_each_row_Inst(
                         # The found wikidata_id is not in ReadAct, the next step is to check its coordinate
                         else:
                             inst_wiki = sparql_inst(
-                                [wikidata_id_from_query_Inst]
+                                [wikidata_id_from_query_Inst[0]["id"]]
                             )  # query by wikidata_id to get other properties
                             l = [
                                 inst_wiki["headquarters"],
@@ -248,6 +254,34 @@ def __compare_place_and_start_for_Inst(index, row, inst_wiki, l, today, wikidata
         )
         logger.warning(message)
         row = modify_note_lastModified_lastModifiedBy(row, message, today)
+    return row
+
+
+def validate_year_Inst(row):
+    for x in ["start", "end"]:
+        if isinstance(row[x], float):
+            row[x] = int(row[x])
+        if "-" in str(row[x]):
+            if isinstance(row[x][1:], float):
+                row[x] = "-" + str(int(row[x][1:]))
+            if isinstance(row[x][1:], int):
+                year = str(int(row[x][1:]))
+                if len(year) < 3:
+                    pad = 3 - len(year)  # pad = 2,1
+                    if pad == 1:
+                        row["start"] = "-" + "0" + year
+                    elif pad == 2:
+                        row["start"] = "-" + "00" + year
+        elif isinstance(row[x], int):
+            year = str(int(row[x]))
+            if len(year) < 4:
+                pad = 4 - len(year)  # pad = 3,2,1
+                if pad == 1:
+                    row[x] = "0" + year
+                elif pad == 2:
+                    row[x] = "00" + year
+                elif pad == 3:
+                    row[x] = "000" + year
     return row
 
 
