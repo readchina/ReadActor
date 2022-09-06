@@ -54,14 +54,14 @@ LIMIT 1
 #################################################################
 ################## Approach 1 : look up with name ##################
 def read_person_csv(
-    person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv",
+    person_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv",
 ):
     """
     A function to read "Person.csv", preprocess CSV.
     :param person_url
     :return: a dictionary
     """
-    df = pd.read_csv(person_url, error_bad_lines=False)
+    df = pd.read_csv(person_url, error_bad_lines=False).fillna("")
     person_dict = {}
     place_dict = read_space_csv()
     for index, row in df.iterrows():
@@ -71,7 +71,7 @@ def read_person_csv(
         if id not in person_dict:
             person_dict[id] = dict()
 
-        if row["name_lang"] not in person_dict[row["person_id"]]:
+        if row["language"] not in person_dict[row["person_id"]]:
             # name_ordered is a list of a single name or multiple names
             name_ordered = order_name_by_language(row)
 
@@ -108,7 +108,7 @@ def read_person_csv(
                 "Please check why the place of birth is not in the dictionary of space."
             )
 
-        person_dict[id][row["name_lang"]] = [
+        person_dict[id][row["language"]] = [
             name_ordered,
             row["sex"],
             birth_years,
@@ -124,7 +124,7 @@ def order_name_by_language(row):
         name_ordered = [row["first_name"]]
     elif type(row["first_name"]) != str:
         name_ordered = [row["family_name"]]
-    elif row["name_lang"] == "zh":
+    elif row["language"] == "zh":
         name_ordered = [row["family_name"] + row["first_name"]]  # 毛泽东
     else:
         # Make it a list with two types of order to suit different languages
@@ -141,42 +141,43 @@ def order_name_by_language(row):
 
 
 def __clean_birth_death_year_format(default_year):
-    char_to_remove = ["[", "]", "?", "~"]
-    cleaned_year = default_year
-    for c in char_to_remove:
-        cleaned_year = cleaned_year.replace(c, "")
-
-    if cleaned_year.isalpha():  # "XXXX" contain 0 information
-        years = []
-    elif "." in cleaned_year:
-        cleaned_year = cleaned_year.split("..")
-        years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
-    elif "-" in cleaned_year:  # For BCE year
-        cleaned_year = int(cleaned_year.replace("-", ""))
-        years = [cleaned_year + 1, cleaned_year, cleaned_year - 1]
-    elif any([i.isalpha() for i in cleaned_year]):
-        cleaned_year = [
-            cleaned_year.replace("X", "0").replace("x", "0"),
-            cleaned_year.replace("X", "9").replace("x", "0"),
-        ]
-        # Note(QG): Maybe consider to tickle the weight at this step already? since range(1000,2000)
-        # covers 1000 years and it does not offer really useful information
-        years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
-    elif "," in cleaned_year:
-        cleaned_year = cleaned_year.split(",")
-        years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
-    else:
-        years = [int(cleaned_year)]
-    return years
+    return default_year
+    # char_to_remove = ["[", "]", "?", "~"]
+    # cleaned_year = default_year
+    # for c in char_to_remove:
+    #     cleaned_year = cleaned_year.replace(c, "")
+    #
+    # if cleaned_year.isalpha():  # "XXXX" contain 0 information
+    #     years = []
+    # elif "." in cleaned_year:
+    #     cleaned_year = cleaned_year.split("..")
+    #     years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
+    # elif "-" in cleaned_year:  # For BCE year
+    #     cleaned_year = int(cleaned_year.replace("-", ""))
+    #     years = [cleaned_year + 1, cleaned_year, cleaned_year - 1]
+    # elif any([i.isalpha() for i in cleaned_year]):
+    #     cleaned_year = [
+    #         cleaned_year.replace("X", "0").replace("x", "0"),
+    #         cleaned_year.replace("X", "9").replace("x", "0"),
+    #     ]
+    #     # Note(QG): Maybe consider to tickle the weight at this step already? since range(1000,2000)
+    #     # covers 1000 years and it does not offer really useful information
+    #     years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
+    # elif "," in cleaned_year:
+    #     cleaned_year = cleaned_year.split(",")
+    #     years = list(range(int(cleaned_year[0]), int(cleaned_year[1]) + 1))
+    # else:
+    #     years = [int(cleaned_year)]
+    # return years
 
 
 def get_person_weight(person_dict, sleep=2):
     person_weight_dict = {}
     for person_id, value in person_dict.items():
-        name_langs = value.keys()
+        languages = value.keys()
         l = []
         person_weight_dict[person_id] = []
-        for lang in name_langs:
+        for lang in languages:
             v = value[lang]
             # Use the ordered_name list as lookups
             lookup_names = v[0]
@@ -243,14 +244,14 @@ def sparql_by_name(lookup_names, lang, sleep=2):
                 URL,
                 params={
                     "format": "json",
-                    "query": QUERY.format(lookup, lang, lookup, lang),
+                    "query": QUERY.format(lookup.strip(), lang, lookup, lang),
                 },
             )
             if response.status_code == 200:  # a successful response
                 results = response.json().get("results", {}).get("bindings")
                 if len(results) == 0:
                     # Didn't find the entity with this name on Wikidata
-                    pass
+                    continue
                 else:
                     for r in results:
                         person_wiki = {}
@@ -284,7 +285,7 @@ def compare_weights(person_weight_dict):
         # No match at all
         if len(p) < 1:
             no_match_person.append(id)
-        # At least one match for one name_lang, no match for the rest name_lang
+        # At least one match for one language, no match for the rest language
         elif len(p) == 1:
             lang = p[0][0]
             weights = p[0][1]
@@ -295,7 +296,7 @@ def compare_weights(person_weight_dict):
             Qid = p[0][2][index]
             wi = p[0][3][index]
             match_person[id] = [Qid, wi]
-        # There are at least one match for each name_lang
+        # There are at least one match for each language
         else:
             m = 0
             q = ""
@@ -416,16 +417,13 @@ def sparql_with_Qid(Qid):
 
 if __name__ == "__main__":
 
-    person_url = (
-        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
-    )
+    person_url = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv"
 
     #################################################################
     ################## Approach 1 : look up with name ##################
     person_dict = read_person_csv(
-        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
+        "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv"
     )
-    # print(person_dict)
 
     # Break the entire dictionary into several chunks.
     # So that we can add break sessions in between to avoid exceed the limitation of SPARQL query

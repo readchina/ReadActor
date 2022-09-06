@@ -64,6 +64,10 @@ def read_institution_csv(
     for index, row in df.iterrows():
         if row[1] not in ins_dict:
             if row[3] in place_dict:
+                if len(str(row[4])) > 0:
+                    row[4] = int(float(row[4]))
+                if len(str(row[5])) > 0:
+                    row[5] = int(float(row[5]))
                 ins_dict[(row[0], row[1])] = [place_dict[row[3]][0], row[4], row[5]]
             else:
                 ins_dict[(row[0], row[1])] = [row[3], row[4], row[5]]

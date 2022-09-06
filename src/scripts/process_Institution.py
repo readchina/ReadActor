@@ -1,8 +1,7 @@
 import logging
+import re
 import sys
 from datetime import date
-
-import pandas as pd
 
 from src.scripts.agent_table_processing import process_agent_tables
 from src.scripts.authenticity_institution import compare_inst, get_QID_inst, sparql_inst
@@ -18,7 +17,7 @@ def modify_note_lastModified_lastModifiedBy(row, message, today):
 
 
 def process_Inst(df, entity_type):
-    df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH = process_agent_tables(
+    df_inst_gh, inst_ids_gh, last_inst_id, all_wikidata_ids = process_agent_tables(
         entity_type, "ReadAct", path=[]
     )
     for index, row in df.iterrows():
@@ -27,7 +26,7 @@ def process_Inst(df, entity_type):
         )  # Todo(QG): adjust row index output
         print(row.tolist())
         row, last_inst_id = check_each_row_Inst(
-            index, row, df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH
+            index, row, df_inst_gh, inst_ids_gh, last_inst_id, all_wikidata_ids
         )
         # validate the format of start and end (year)
         row = validate_year_Inst(row)
@@ -36,7 +35,7 @@ def process_Inst(df, entity_type):
 
 
 def check_each_row_Inst(
-    index, row, df_inst_new, inst_ids_gh, last_inst_id, wikidata_ids_GH
+    index, row, df_inst_gh, inst_ids_gh, last_inst_id, all_wikidata_ids
 ):
     today = date.today().strftime("%Y-%m-%d")
     if row["note"] == "skip" or row["note"] == "Skip":
@@ -45,7 +44,7 @@ def check_each_row_Inst(
         if isinstance(row["inst_id"], str) and len(row["inst_id"]) > 0:
             if row["inst_id"] in inst_ids_gh:  # inst_id is in ReadAct
                 return (
-                    __compare_wikidata_ids_Inst(index, row, df_inst_new, today),
+                    __compare_wikidata_ids_Inst(index, row, df_inst_gh, today),
                     last_inst_id,
                 )
             else:  # inst_id not in ReadAct
@@ -53,7 +52,7 @@ def check_each_row_Inst(
                     len(row["wikidata_id"]) > 0
                 ):  # user did input wikidata_id
                     if (
-                        row["wikidata_id"] in wikidata_ids_GH
+                        row["wikidata_id"] in all_wikidata_ids
                     ):  # the input wikidata_id in ReadAct
                         logger.error(
                             "For row %s , wikidata_id in ReadAct but inst_id not. Please check. "
@@ -99,7 +98,7 @@ def check_each_row_Inst(
                         )
                     else:  # query by name and find a wikidata_id
                         if (
-                            wikidata_id_from_query_Inst in wikidata_ids_GH
+                            wikidata_id_from_query_Inst in all_wikidata_ids
                         ):  # found wikidata_id in ReadAct
                             logger.error(
                                 'For row %s, The wikidata_id found by querying with institution name exists in ReadAct already. If you are 100% sure that your input is correct, you can put "skip" in "note". '
@@ -140,13 +139,13 @@ def check_each_row_Inst(
     return row, last_inst_id
 
 
-def __compare_wikidata_ids_Inst(index, row, df_inst_new, today):
+def __compare_wikidata_ids_Inst(index, row, df_inst_gh, today):
     wikidata_id_usr = row["wikidata_id"]
-    row_gh_index = df_inst_new.index[
-        (df_inst_new["inst_id"] == row["inst_id"])
-        & (df_inst_new["inst_name_lang"] == row["inst_name_lang"])
+    row_gh_index = df_inst_gh.index[
+        (df_inst_gh["inst_id"] == row["inst_id"])
+        & (df_inst_gh["language"] == row["language"])
     ].tolist()[0]
-    row_GH = df_inst_new.iloc[row_gh_index]
+    row_GH = df_inst_gh.iloc[row_gh_index]
     wikidata_id_gh = row_GH["wikidata_id"]
     if wikidata_id_gh == wikidata_id_usr:  # two wikidata_id are the same
         res = __compare_two_rows_Inst(row, row_GH)
@@ -166,7 +165,7 @@ def __compare_wikidata_ids_Inst(index, row, df_inst_new, today):
 def __compare_two_rows_Inst(row, row_gh):
     fields_to_be_compared = [
         "inst_name",
-        "inst_name_lang",
+        "language",
         "place",
         "start",
         "end",
@@ -182,28 +181,27 @@ def __compare_two_rows_Inst(row, row_gh):
         "last_modified",
         "last_modified_by",
     ]
-    for i in fields_to_be_compared[3:7]:
+    for i in fields_to_be_compared:
         if row_gh[i] == "":
-            pass
+            continue
+        elif i in ["start", "end", "alt_start", "alt_end"]:
+            if "." in str(row[i]):
+                row[i] = int(
+                    float(row[i])
+                )  # to remove the ".0" part of any potential floating-point number
+            if bool(re.match("[0-9.]+", str(row[i]))):
+                if int(row[i]) != int(row_gh[i]):
+                    return False
         else:
-            length = len(str(int((row_gh[i]))))
-            if str(int(row[i]))[0 : length + 1] != str(
-                int(row_gh[i])
-            ):  # Only check maximally the first 4 digits if the
-                # column is
-                # about
-                # year/time
+            if row[i] != row_gh[i]:
                 return False
-    else:
-        if row[i] != row_gh[i]:
-            return False
     return True
 
 
 def __overwrite_Inst(row, row_gh, index, today):
     fields_to_be_overwritten = [
         "inst_name",
-        "inst_name_lang",
+        "language",
         "place",
         "start",
         "end",

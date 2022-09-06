@@ -2,8 +2,6 @@ import logging
 import sys
 from datetime import date
 
-import pandas as pd
-
 from src.scripts.agent_table_processing import process_agent_tables
 from src.scripts.authenticity_person import (
     order_name_by_language,
@@ -23,10 +21,10 @@ logger = logging.getLogger(__name__)
 
 def process_Pers(df, entity_type):
     (
-        df_person_new,
+        df_person_gh,
         person_ids_gh,
         last_person_id,
-        wikidata_ids_GH,
+        all_wikidata_ids,
     ) = process_agent_tables(entity_type, "ReadAct", path=[])
     for index, row in df.iterrows():
         print(
@@ -34,7 +32,7 @@ def process_Pers(df, entity_type):
         )  # Todo(QG): adjust row index output
         print(row.tolist())
         row, last_person_id = check_each_row_Person(
-            index, row, df_person_new, person_ids_gh, last_person_id, wikidata_ids_GH
+            index, row, df_person_gh, person_ids_gh, last_person_id, all_wikidata_ids
         )
         # validate the format of start and end (year)
         row = validate_year_Person(row)
@@ -43,7 +41,7 @@ def process_Pers(df, entity_type):
 
 
 def check_each_row_Person(
-    index, row, df_person_gh, person_ids_gh, last_person_id, wikidata_ids_GH
+    index, row, df_person_gh, person_ids_gh, last_person_id, all_wikidata_ids
 ):
     today = date.today().strftime("%Y-%m-%d")
     if row["note"] == "skip" or row["note"] == "Skip":
@@ -59,7 +57,7 @@ def check_each_row_Person(
                 if (isinstance(row["wikidata_id"], str) is True) and (
                     len(row["wikidata_id"]) > 0
                 ):
-                    if row["wikidata_id"] in wikidata_ids_GH:
+                    if row["wikidata_id"] in all_wikidata_ids:
                         row["note"] = (
                             "Error: `wikidata_id` already exists in GitHub data but the person_id does not match. "
                             "Please check. By ReadActor."
@@ -126,12 +124,12 @@ def check_each_row_Person(
                             return row, last_person_id
                 else:  # user provided "person_id" but not "wikidata_id"
                     names = order_name_by_language(row)
-                    person = sparql_by_name(names, row["name_lang"], 2)
+                    person = sparql_by_name(names, row["language"], 2)
                     if len(person) > 0:
                         wikidata_id_usr = next(iter(person))
-                        if wikidata_id_usr in wikidata_ids_GH:
+                        if wikidata_id_usr in all_wikidata_ids:
                             row["note"] = (
-                                "Error: `wikidata_id` queried by family_name, first_name, name_lang already exists in "
+                                "Error: `wikidata_id` queried by family_name, first_name, language already exists in "
                                 ""
                                 "ReadAct data, but your provided person_id does not match. Please check your data "
                                 "carefully. If you are 100% sure that your input is correct, then it is likely that "
@@ -144,7 +142,7 @@ def check_each_row_Person(
                                 + " :"
                                 + " `wikidata_id` queried by "
                                 "family_name, "
-                                "first_name, name_lang already exists in ReadAct data, but your provided "
+                                "first_name, language already exists in ReadAct data, but your provided "
                                 "person_id does not match. Please check your data carefully. If you are 100% "
                                 "sure that your input is correct, then it is likely that this person has an "
                                 'identical name with a person in Wikidata database. Please put "skip" in "note" '
@@ -244,7 +242,7 @@ def check_each_row_Person(
             if (isinstance(row["wikidata_id"], str) is True) and (
                 len(row["wikidata_id"]) > 0
             ):  # no person_id, but has wikidata_id
-                if row["wikidata_id"] in wikidata_ids_GH:
+                if row["wikidata_id"] in all_wikidata_ids:
                     row["note"] = (
                         "Error: this `wikidata_id` already exists in ReadAct. Please check carefully. If you are 100% "
                         ""
@@ -326,12 +324,12 @@ def check_each_row_Person(
                         return row, last_person_id
             else:  # no person_id, no wikidata_id
                 names = order_name_by_language(row)
-                person = sparql_by_name(names, row["name_lang"], 2)
+                person = sparql_by_name(names, row["language"], 2)
                 if len(person) > 0:
                     wikidata_id_usr = next(iter(person))
-                    if wikidata_id_usr in wikidata_ids_GH:
+                    if wikidata_id_usr in all_wikidata_ids:
                         row["note"] = (
-                            "Error: `wikidata_id` queried by family_name, first_name, name_lang already exists in "
+                            "Error: `wikidata_id` queried by family_name, first_name, language already exists in "
                             "ReadAct data, but your provided person_id does not match. Please check your data "
                             "carefully. If you are 100% sure that your input is correct, then it is likely that this "
                             'person has an identical name with a person in Wikidata database. Please put "skip" in '
@@ -341,7 +339,7 @@ def check_each_row_Person(
                             "For row "
                             + str(int(index))
                             + " : `wikidata_id` queried by family_name, "
-                            "first_name, name_lang already exists in ReadAct data, but your provided person_id "
+                            "first_name, language already exists in ReadAct data, but your provided person_id "
                             "does not match. Please check your data carefully. If you are 100% sure that your "
                             "input is correct, then it is likely that this person has an identical name with a "
                             'person in Wikidata database. Please put "skip" in "note" column for this row and '
@@ -443,7 +441,7 @@ def __compare_two_rows_Person(row, row_gh):
     fields_to_be_compared = [
         "family_name",
         "first_name",
-        "name_lang",
+        "language",
         "sex",
         "birthyear",
         "deathyear",
@@ -471,7 +469,7 @@ def __overwrite_Person(row, row_gh):
     fields_to_be_overwritten = [
         "family_name",
         "first_name",
-        "name_lang",
+        "language",
         "sex",
         "birthyear",
         "deathyear",
@@ -503,13 +501,13 @@ def __overwrite_Person(row, row_gh):
     return row
 
 
-def __compare_wikidata_ids_Person(index, row, df_person_GH):
+def __compare_wikidata_ids_Person(index, row, df_person_gh):
     wikidata_id_usr = row["wikidata_id"]
-    row_gh_index = df_person_GH.index[
-        (df_person_GH["person_id"] == row["person_id"])
-        & (df_person_GH["name_lang"] == row["name_lang"])
+    row_gh_index = df_person_gh.index[
+        (df_person_gh["person_id"] == row["person_id"])
+        & (df_person_gh["language"] == row["language"])
     ].tolist()[0]
-    row_GH = df_person_GH.iloc[row_gh_index]
+    row_GH = df_person_gh.iloc[row_gh_index]
     wikidata_id_gh = row_GH["wikidata_id"]
     if wikidata_id_gh == wikidata_id_usr:
         res = __compare_two_rows_Person(row, row_GH)
