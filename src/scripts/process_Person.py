@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 def process_Pers(df, entity_type):
     (
         df_person_gh,
+        agent_processed,
         person_ids_gh,
         last_person_id,
         all_wikidata_ids,
@@ -417,7 +418,7 @@ def check_each_row_Person(
                             return row, last_person_id
                 else:
                     last_person_id = row["person_id"]
-                    message = "Field `person_id` is updated. No match in Wikidata.  By SemReadActorBot."
+                    message = "No match in Wikidata.  By ReadActor."
                     if isinstance(row["note"], str):
                         row["note"] = row["note"] + " " + message
                     else:

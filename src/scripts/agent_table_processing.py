@@ -48,9 +48,10 @@ def combine_agent_tables(df_agent_user, df_agent_gh, agent_ids_gh):
     agent_cols = [
         "agent_id",
         "old_id",
-        "language",
-        "wikidata_id",
         "agent_type",
+        "wikidata_id",
+        "fictionality",
+        "language",
         "commentary",
         "note",
         "created",
@@ -83,23 +84,53 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
         elif entity_type == "Institution":
             which_agent = INST_GITHUB
         agent_processed = df_agent_gh
+        dtype_dict = {}
 
     elif user_or_ReadAct == "user":
         if entity_type == "Person":
             which_agent = path[0]  # path of Person.csv in user's computer
+            dtype_dict = {"birthyear": str, "deathyear": str}
         elif entity_type == "Institution":
             which_agent = path[0]  # path of Institution.csv in user's computer
+            dtype_dict = {
+                "start": str,
+                "end": str,
+                "alt_start": str,
+                "alt_end": str,
+            }  # here we assume all the years in Institution are type int
         df_agent_user = pd.read_csv(path[1]).fillna("")  # Get agent table
         agent_processed = combine_agent_tables(df_agent_user, df_agent_gh, agent_ids_gh)
+        print("\n@@@@@@@@@@@agent_processed@@@@@@@@@@@@@@@")
+        print(agent_processed)
 
     all_wikidata_ids = [x for x in agent_processed["wikidata_id"].tolist() if x]
-    df_PI = pd.read_csv(which_agent).fillna("")
+    df_PI = pd.read_csv(which_agent, dtype=dtype_dict).fillna("")
     df_PI["wikidata_id"] = ""  # add an empty wikidata_id column
     df_PI = addWikidataID_and_replaceSpace(
         df_PI, agent_processed, agent_id, place_dict, entity_type
     )  # add wikidata_id information from ReadAct's Agent table
 
-    return df_PI, agent_ids_gh, last_item_id_gh, all_wikidata_ids
+    return df_PI, agent_processed, agent_ids_gh, last_item_id_gh, all_wikidata_ids
+
+
+def space_dict_for_agents(
+    space_url=SPACE_GITHUB,
+):
+    df = pd.read_csv(space_url)
+    space_dict = {}
+    for index, row in df.iterrows():
+        # consider the case that if there are identical space_names in csv file
+        if row["space_name"] not in space_dict.keys():
+            # key: 'space_name'
+            # value: 'space_id'
+            space_dict[row["space_name"]] = row["space_id"]
+        else:
+            # ToDo(QG): Is it on purpose that we have reduplicated space_name ?
+            continue
+    space_dict[""] = ""
+    space_dict[None] = ""
+    space_dict[float("nan")] = ""
+    return space_dict
 
 
 if __name__ == "__main__":

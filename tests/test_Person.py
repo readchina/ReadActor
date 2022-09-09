@@ -32,6 +32,7 @@ class MyTestCase(unittest.TestCase):
 
         (
             self.df_person_new,
+            _,
             self.person_ids_gh,
             self.last_person_id,
             self.wikidata_ids_GH,

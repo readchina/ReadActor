@@ -4,7 +4,7 @@ import sys
 from datetime import date
 
 from src.scripts.agent_table_processing import process_agent_tables
-from src.scripts.authenticity_institution import compare_inst, get_QID_inst, sparql_inst
+from src.scripts.authenticity_institution import get_QID_inst, sparql_inst
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +17,13 @@ def modify_note_lastModified_lastModifiedBy(row, message, today):
 
 
 def process_Inst(df, entity_type):
-    df_inst_gh, inst_ids_gh, last_inst_id, all_wikidata_ids = process_agent_tables(
-        entity_type, "ReadAct", path=[]
-    )
+    (
+        df_inst_gh,
+        agent_processed,
+        inst_ids_gh,
+        last_inst_id,
+        all_wikidata_ids,
+    ) = process_agent_tables(entity_type, "ReadAct", path=[])
     for index, row in df.iterrows():
         print(
             "-------------\nFor row ", index, " :"
@@ -67,8 +71,8 @@ def check_each_row_Inst(
                             inst_wiki["headquarters"],
                             inst_wiki["administrativeTerritorialEntity"],
                             inst_wiki["locationOfFormation"],
-                            inst_wiki["locationOfFormation"],
                         ]
+                        l = [i for x in l for i in x]
                         if not any(l):  # all items in above list are empty strings
                             message = (
                                 "For row %s, the user input wikidata_id does not have relevant info. Couldn't check. "
@@ -98,7 +102,7 @@ def check_each_row_Inst(
                         )
                     else:  # query by name and find a wikidata_id
                         if (
-                            wikidata_id_from_query_Inst in all_wikidata_ids
+                            wikidata_id_from_query_Inst[0]["id"] in all_wikidata_ids
                         ):  # found wikidata_id in ReadAct
                             logger.error(
                                 'For row %s, The wikidata_id found by querying with institution name exists in ReadAct already. If you are 100% sure that your input is correct, you can put "skip" in "note". '
@@ -114,8 +118,8 @@ def check_each_row_Inst(
                                 inst_wiki["headquarters"],
                                 inst_wiki["administrativeTerritorialEntity"],
                                 inst_wiki["locationOfFormation"],
-                                inst_wiki["locationOfFormation"],
                             ]
+                            l = [i for x in l for i in x]
                             if not any(l):  # all items in above list are empty strings
                                 message = (
                                     "For row %s, the user input wikidata_id does not have relevant info. Couldn't check. "
@@ -131,7 +135,7 @@ def check_each_row_Inst(
                                     inst_wiki,
                                     l,
                                     today,
-                                    wikidata_id_from_query_Inst,
+                                    wikidata_id_from_query_Inst[0]["id"],
                                 )
         else:  # user did not input inst_id
             logger.error("Please input inst_id for row %s ." % index)
