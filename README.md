@@ -1,4 +1,4 @@
-# Wikidata Lookup
+# ReadActor
 
 [![CI](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml/badge.svg)](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml)
 
@@ -17,19 +17,19 @@ The tool is tested on macOS and linux.
 You can install the tool using pip:
 
 ```bash 
-pip install ReadChinaLookup
+pip install ReadActor
 ```
 
 To check if the tool is working:
 
 ```bash
-python -m src.scripts.command_line_tool --version
+readactor --version
 ```
 
-You should see:
+You should see version number like:
 
 ```bash
-version 1.0.0
+version 1.0.1
 ```
 
 ## Development
@@ -67,46 +67,18 @@ python -m unittest discover -v
 
 ## Version
 
-Every PR will trigger the release of a new version. [Python semantic release](https://python-semantic-release.readthedocs.io/en/latest/) is used for version control. 
+Currently, the version number is updated manually.
+
+<!--Every PR will trigger the release of a new version. [Python semantic release](https://python-semantic-release.readthedocs.io/en/latest/) is used for version control. 
 
 See  [Parsing of commit logs](https://python-semantic-release.readthedocs.io/en/latest/commit-log-parsing.html#commit-log-parsing) for commit conventions.
 
-Here is an example:
+Here is an example: -->
 <!-- ToDo: an exmaple to show how to tell the CI that this is the time of a new release -->
-```
-```
 
 
-## Usage
-
-The tables need to adhere to ReadAct's data model, you can check the definitions in its [Data Dictionary](https://github.com/readchina/ReadAct/blob/master/csv/data_dictionary.csv).
-
-### Person Lookup
-
-To install the package ReadChinaLookup 1.0.0:
-
-```
-pip install -i https://test.pypi.org/simple/ ReadChinaLookup==1.0.0
-```
-
-To read a user defined `Person.csv`, check the column names and to update it if necessary. Updated rows will be marked as modified by `SemBot`:
-
-```bash
-python -m src.scripts.command_line_tool src/CSV/Person.csv
-```
-
-The updating can be  based on:
-
-- `wikipedia link`
-- `Wikidata id`
-- `family name` and  `first name` (to be implemented)
-
-At the end, a `statistic` message will be printed out to tell the user how many entries are updated.
-
-## What it does
-
-### Agents
-
+## Strategy
+### Person look up
 There are two approaches for checking person entries:
 
 - **look up with name** or
@@ -116,19 +88,106 @@ For the former, names (include alt_name) are used to look up with SPARQL query s
 
 For the latter, using [MediaWiki API](https://www.mediawiki.org/wiki/API:Main_page), Q-identifiers are acquired based on Wikipedia links and then queried via SPARQL.
 
-### Space
+Longest mact are taken as the final result.
 
+### Institution lookup
+To look up Institutions we use MediaWiki API.
+
+### Space lookup
 Two APIs (OpenStreetMap and MediaWiki) are under using.
+
+
+## Usage
+
+The tables need to adhere to ReadAct's data model, you can check the definitions in its [Data Dictionary](https://github.com/readchina/ReadAct/blob/master/csv/data_dictionary.csv) and you can check the data schema in the [schema folder](https://github.com/readchina/ReadAct/tree/master/csv/schema).
+
+
+<!-- ToDo: to update on pypi with the new version -->
+To install the package ReadActor 1.0.0:
+
+```
+pip install -i https://test.pypi.org/simple/ ReadActor==1.0.0
+```
+
+It is suggested to run it in a virtual environment with the following codes:
+
+```bash
+# to create the virtuanl environment for the first time
+virtualenv venv
+
+# to activate existed virtual environment (for OS X)
+. venv/bin/activate
+
+# to deactivate the virtual environment
+deactivate
+```
+
+Command `readactor --help` or `readactor -h` will show you different options.
+For example:
+
+```bash
+"Usage: cli [OPTIONS] [PATH]",
+            "",
+            "Options:",
+            "  -v, --version      Package version",
+            "  -d, --debug        Print full log output to console",
+            "  -i, --interactive  Prompt user for confirmation to continue",
+            "  -q, --quiet        Print no log output to console other then completion",
+            "                     message and error level events",
+            "  -o, --output       Do not update input table, but create a new file at <path>",
+            "                     instead",
+            "  -s, --summary      Do not update input table, but summarise results in console",
+            "  -S, --space        Process only places (places and locations)",
+            "  -A, --agents       Process only agents (persons and institutions)",
+            "  -h, --help         Show this message and exit.",
+```
+
+The basic usage is to use this tool to verify the authenticity of Person/Institution/Space entities by comparing your data with ReadAct and query on Wikidata.
+The most command style is:
+
+```bash
+# readactor [path]
+readactor src/CSV/Person.csv
+```
+
+If you are new to this tool, please also read the following relevant details.
+
+
+## Details
+### Basic rules:
+1. To process entities like Person/Institution/Space, you are expected to pass one and only one path in your command, for example, `readactor myProject/Person.csv`.
+2. In the directory which you stores either one or some of Person/Institution/Space tables, the file names, if the file exists, must be exactly `Person.csv` or `Institution.csv` or `Space.csv` or `Agent.csv` (pay attention to the upper case letter).
+3. When there are new Space entities in your Person/Institution table which has no corresponding entry in ReadAct, you are expected to include the new entities in your local `Space.csv` in the same directory as the Person/Institution table.
+4. For new Space entities which are introduced by the tool itself, ReadActor will take care of it.
+5. Your local `Space.csv` might be overwritten in certain condition (no new Space entity appeared in your Person/Institution table). It is always a good idea to have a backup of the CSV files that you are going to process.
+
+
+### Agents
+
+<!-- -->
+
+A local Agent table is necessary when you want to process Person/Institution table. Because the `wikidata_id` for Person/Institution will only be stored in the Agent table.
+
+You should at least fill the `agent_id` column in your Agent table. For each Person/Institution entry in the file you want to process, there should be one corresponding line in your `Agent.csv`.
+
+### Person
+
+Please make sure the "Agent.csv" is in the same directory as your "Person.csv".
 
 ### Institution
 
-To look up Institutions we use MediaWiki API.
+Please make sure the "Agent.csv" is in the same directory as your "Institution.csv".
+
+### Space
+
+
+
 
 
 ## The time it takes
 To run this tool on your own data, it takes from a few seconds to several hours according to the amount of data.
 
-For example, using the data in [ReadAct](https://github.com/readchina/ReadAct), to run this tool on the [Person.csv](https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv) (data until 30.04.2022), it takes up to several hours. But if you only add and commit one or two new Person entries, or run this tool on your own CVS table which consists of one or two lines, it should take only a few seconds or one minute.
+For example, using the data in [ReadAct](https://github.com/readchina/ReadAct), to run this tool on the [Person.csv](https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv) (data until 20.09.2022), it takes up to several hours. But if you only add and commit one or two new Person entries, or run this tool on your own CVS table which consists of a few lines, it should take only a few seconds or several minute.
 
 It is similar if you want to run scripts in this tool by yourselves, like `authenticity_person.py`, `authenticity_space.py`, `authenticity_institution.py`, it takes from a few minutes to several hours depending on the amount of data. 
 

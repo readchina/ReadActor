@@ -10,6 +10,7 @@ The standards of verificating an Institution entry is:
 to find one match among headquarters/administrativeTerritorialEntity/locationOfFormation/inception.
 """
 import json
+import sys
 import time
 
 import pandas as pd
@@ -50,7 +51,7 @@ GROUP BY ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLab
 
 
 def read_institution_csv(
-    inst_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Institution.csv",
+    inst_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Institution.csv",
 ):
     """
     A function to read "Institution.csv"
@@ -62,22 +63,37 @@ def read_institution_csv(
     ins_dict = {}
     place_dict = read_space_csv()
     for index, row in df.iterrows():
-        if row[1] not in ins_dict:
-            if row[3] in place_dict:
-                ins_dict[(row[0], row[1])] = [place_dict[row[3]][0], row[4], row[5]]
+        if (row["inst_id"], row["inst_name"]) not in ins_dict:
+            if row["place"] in place_dict:
+                if len(str(row["start"])) > 0:
+                    row["start"] = int(float(row["start"]))
+                if len(str(row["end"])) > 0:
+                    row["end"] = int(float(row["end"]))
+                ins_dict[(row["inst_id"], row["inst_name"])] = [
+                    place_dict[row["place"]][0],
+                    row["start"],
+                    row["end"],
+                ]
             else:
-                ins_dict[(row[0], row[1])] = [row[3], row[4], row[5]]
+                ins_dict[(row["inst_id"], row["inst_name"])] = [
+                    row["place"],
+                    row["start"],
+                    row["end"],
+                ]
                 print("Please check. A space_id is not in Space.csv.")
         else:
-            print("Please check. There are overlaps between institution names.")
+            print(
+                "Please check. The combination of inst_id and inst_name should be unique."
+            )
+            sys.exit()
     return ins_dict
 
 
-def compare(inst_dict, sleep=2):
+def compare_inst(inst_dict, sleep=2):
     no_match = {}
     match = {}
     for k, v in inst_dict.items():
-        results = get_QID(k[1])
+        results = get_QID_inst(k[1])
         if results is None:
             no_match[k] = v
             continue
@@ -85,7 +101,7 @@ def compare(inst_dict, sleep=2):
         if q_ids is None:
             no_match[k] = v
             continue
-        inst_wiki_dict = __sparql(q_ids, sleep)
+        inst_wiki_dict = sparql_inst(q_ids, sleep)
         if (
             len(inst_wiki_dict["headquarters"]) > 0
             and v[0] in inst_wiki_dict["headquarters"]
@@ -115,7 +131,7 @@ def compare(inst_dict, sleep=2):
     return no_match, match
 
 
-def __sparql(q_ids, sleep=2):
+def sparql_inst(q_ids, sleep=2):
     if q_ids is None:
         return []
     inst_wiki = {}
@@ -160,7 +176,7 @@ def __sparql(q_ids, sleep=2):
     return inst_wiki
 
 
-def get_QID(lookup):
+def get_QID_inst(lookup):
     params = {
         "action": "wbsearchentities",
         "language": "en",
@@ -191,7 +207,7 @@ if __name__ == "__main__":
 
     inst_dict = read_institution_csv()
     print(inst_dict)
-    no_match, match = compare(inst_dict, 10)
+    no_match, match = compare_inst(inst_dict, 10)
     print("no_match dictionary: ", no_match)
     print("length of the no_match dictionary: ", len(no_match))
 

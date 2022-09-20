@@ -66,3 +66,4 @@ cover/
 
 venv/
 env/
+src/results/tmp/

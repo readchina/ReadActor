@@ -14,6 +14,8 @@ less or equal to 0.9.
 """
 
 import json
+import logging
+import sys
 import time
 from itertools import islice
 
@@ -32,9 +34,11 @@ WHERE {{
 }}
 """
 
+logger = logging.getLogger(__name__)
+
 
 def read_space_csv(
-    space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
+    space_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv",
 ):
     """
     A function to read "Space.csv" for now.
@@ -44,13 +48,19 @@ def read_space_csv(
     df = pd.read_csv(space_url, error_bad_lines=False)
     geo_code_dict = {}
     for index, row in df.iterrows():
-        # consider the case that if there are identical space_names in csv file
-        if row[0] not in geo_code_dict:
+        # consider the case that if there are identical space_id in csv file
+        if row["space_id"] not in geo_code_dict:
             # key: space_id
-            # value: space_name, space_type, lat, lang
-            geo_code_dict[row[0]] = [row[2], row[3], row[5], row[6]]
+            # value: space_name, space_type, lat, long
+            geo_code_dict[row["space_id"]] = [
+                row["space_name"],
+                row["space_type"],
+                row["lat"],
+                row["long"],
+            ]
         else:
-            print("Space id not exist ?!")
+            logger.error("Space ID should be unique in this table. Please check. ")
+            sys.exit()
     return geo_code_dict
 
 
@@ -62,21 +72,27 @@ def compare_to_openstreetmap(geo_code_dict):
     """
     no_match_list = []
     for k, v in geo_code_dict.items():
-        if v[0] != "unknown" and v[2] != 0.0:
-            lat = str(v[2])
-            lon = str(v[3])
-            url = (
-                "https://nominatim.openstreetmap.org/reverse?format=xml&lat="
-                + lat
-                + "&lon="
-                + lon
-                + "&zoom=18&addressdetails=1&format=json&accept-language=en"
-            )
-            data = requests.get(url)
-            if v[0].lower() not in str(data.json()).lower():
-                item = v + [k]
-                no_match_list.append(item)
+        item = query_with_OSM(k, v)
+        if item:  # item: space_name, space_type, lat, long, space_id
+            no_match_list.append(item)
     return no_match_list
+
+
+def query_with_OSM(k, v):
+    if v[0] != "unknown" and v[2] != 0.0:
+        lat = str(v[2])
+        long = str(v[3])
+        url = (
+            "https://nominatim.openstreetmap.org/reverse?format=xml&lat="
+            + lat
+            + "&lon="
+            + long
+            + "&zoom=18&addressdetails=1&format=json&accept-language=en"
+        )
+        data = requests.get(url)
+        if v[0].lower() not in str(data.json()).lower():
+            item = v + [k]
+            return item
 
 
 def geo_code_compare(no_match_list):
@@ -88,15 +104,14 @@ def geo_code_compare(no_match_list):
     still_no_match_list = []
     space_with_QID = {}  # To collect QIDs for Space.csv
     count = 0
-    for i in no_match_list:
-
+    for i in no_match_list:  # i: space_name, space_type, lat, long, space_id
         if i[0] is None:
             res = None
         else:
             count += 1
             res = get_QID(
                 i[0]
-            )  # If there is more than one returned QID and we want to check all of them,
+            )  # If there are more than one returned QID and we want to check all of them,
             # the following code must be modified as well.
 
         if count == 20:
@@ -111,20 +126,11 @@ def geo_code_compare(no_match_list):
             if len(coordinate_list) == 0:
                 still_no_match_list.append(i)
                 continue
-            for c in coordinate_list:
+            for coordinate_wiki in coordinate_list:
                 # If the difference are within +-0.9, consider a match, no collection for no_match_list,
                 # but one collect action for space_with_QID dictionary, then break nested loop
-                # Pay attention that Wikidata coordinate have the longitude first, and the latitude later.
-                # It is the pposite in ReadAct if we read the table from left to right.
-                if (
-                    float(abs(float(c[0]))) - 0.9
-                    <= float(i[3])
-                    <= float(abs(float(c[0]))) + 0.9
-                ) and (
-                    float(abs(float(c[1]))) - 0.9
-                    <= float(i[2])
-                    <= float(abs(float(c[1]))) + 0.9
-                ):
+                # Pay attention that the query-returned coordinate have order: long, lat.
+                if compare_coordinates_with_threhold(coordinate_wiki, i[2], i[3], 0.9):
                     space_with_QID[i[-1]] = i[:-1] + [res]
                     i = ""
                     break
@@ -132,6 +138,14 @@ def geo_code_compare(no_match_list):
                 still_no_match_list.append(i)
     print("space_with_QID", space_with_QID)
     return still_no_match_list, space_with_QID
+
+
+def compare_coordinates_with_threhold(coordinate_wiki, lat_usr, long_usr, threshold):
+    if (abs(float(coordinate_wiki[0]) - float(long_usr)) <= threshold) and (
+        abs(float(coordinate_wiki[1]) - float(lat_usr)) <= threshold
+    ):
+        return True
+    return False
 
 
 def get_QID(lookup):
@@ -162,7 +176,7 @@ def get_QID(lookup):
 def get_coordinate_from_wikidata(q):
     """
     A function to extract coordinate location (if exists) of a wikidata entity
-    :param qname: a list of Qname
+    :param qname: a wikidata id
     :return: a list with tuples, each tuple is a (lat, long) combination
     """
     coordinate_list = []
@@ -198,14 +212,51 @@ def chunks(it, size):
 
 if __name__ == "__main__":
 
+    # # To compare the extracting coordinate location with the info in Space.csv
+    # space_url = (
+    #     "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
+    # )
+    # geo_code_dict = read_space_csv(space_url)
+    #
+    # # To filter CSV entries with comparing to openstreetmap first
+    # no_match_list = compare_to_openstreetmap(geo_code_dict)
+
+    # # To compare the rest with wikidata info
+    # all_still_no_match_list = []
+    # dictionary_list = []
+    # for chunk in chunks(no_match_list, 30):  # the digit here controls the batch size
+    #     if len(chunk) > 0:
+    #         l, d = geo_code_compare(chunk)
+    #         if l is not None:
+    #             all_still_no_match_list += l
+    #         dictionary_list += [d]
+    #         print("\n I am taking a break XD \n")
+    #         time.sleep(
+    #             10
+    #         )  # for every a few  entries, let this script take a break of 90 seconds
+    # print("Finished the whole iteration")
+    # print(all_still_no_match_list)
+    # print("dictionary_list", dictionary_list)
+    # match_for_space = {k: v for x in dictionary_list for k, v in dict(x).items()}
+    # print(match_for_space)
+    # with open("../results/match_for_space.json", "w") as f:
+    #     json.dump(match_for_space, f)
+
+    """
+    The following is a one-time script to deactivate the compare_to_openstreetmap function to get as much Q-ids as
+    we can.
+    """
+
     # To compare the extracting coordinate location with the info in Space.csv
-    space_url = (
-        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
-    )
+    space_url = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
     geo_code_dict = read_space_csv(space_url)
 
-    # To filter CSV entries with comparing to openstreetmap first
-    no_match_list = compare_to_openstreetmap(geo_code_dict)
+    # Assume 0 match from openstreetmap
+    no_match_list = []
+    for k, v in geo_code_dict.items():
+        if v[0] != "unknown" and v[2] != 0.0:
+            item = v + [k]
+            no_match_list.append(item)
 
     # To compare the rest with wikidata info
     all_still_no_match_list = []
@@ -216,14 +267,16 @@ if __name__ == "__main__":
             if l is not None:
                 all_still_no_match_list += l
             dictionary_list += [d]
+
             print("\n I am taking a break XD \n")
             time.sleep(
                 10
             )  # for every a few  entries, let this script take a break of 90 seconds
+
     print("Finished the whole iteration")
-    print(all_still_no_match_list)
+    print("all_still_no_match_list:", all_still_no_match_list)
     print("dictionary_list", dictionary_list)
     match_for_space = {k: v for x in dictionary_list for k, v in dict(x).items()}
     print(match_for_space)
-    with open("../results/match_for_space.json", "w") as f:
+    with open("../results/match_for_space_without_Openstreetmap.json", "w") as f:
         json.dump(match_for_space, f)

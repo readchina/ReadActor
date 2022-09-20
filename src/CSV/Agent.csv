@@ -1,0 +1,6 @@
+agent_id,old_id,agent_type,wikidata_id,fictionality,language,commentary,note,created,created_by,last_modified,last_modified_by
+AG1000,,P,Q13522515,,en,,,2021-06-07,DP,2022-04-05,DP
+AG1001,,I,Q153978,,en,,,2022-08-08,QG,2022-09-09,ReadActor
+AG2000,,P,Q65875189,,,,,2021-12-22,QG,2022-09-09,ReadActor
+AG2001,,P,Q708679,,,,,2021-12-22,QG,2022-09-09,ReadActor
+AG9999,I0999,I,,,en,,,2022-05-10,DP,2022-05-10,DP

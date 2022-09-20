@@ -25,8 +25,8 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install the test dependencies
         run: pip install black isort                
-      # - name: Install current project in editable mode
-      #   run: python -m pip install -e .
+      - name: Install current project
+        run: python -m pip install .
       - name: Install App dependencies
         uses: py-actions/py-dependency-install@v3
         with:
@@ -36,10 +36,13 @@ jobs:
           black --check .
           isort --profile black --check .
       - name: Check tool version
-        run: python -m src.scripts.command_line_tool --version
+        run: readactor --version
 
       # - name: Run Old Tests
       #   run: python -m test scripts.command_line_tool
+
+#      - name: Run Click Test of Version
+#        run: python  -m unittest -v tests.test_click
 
       - name: Run New Tests
         run: python -m unittest discover -v
@@ -87,9 +90,10 @@ jobs:
           repository_url: https://test.pypi.org/legacy/
           skip_existing: true
 
-  #     - name: Publish distribution 📦 to PyPI
   # Note(QG): this section should be replaced with git action of python semantic release
   # TODO: release precedure needs documentation
-  #       uses: pypa/gh-action-pypi-publish@release/v1
-  #       with:
-  #         password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish distribution 📦 to PyPI
+        if: github.ref == 'refs/heads/master'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API }}
