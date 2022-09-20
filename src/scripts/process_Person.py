@@ -20,23 +20,26 @@ logger = logging.getLogger(__name__)
 
 
 def process_Pers(df, entity_type):
+    # Process the local Agent table
     (
         df_person_gh,
         agent_processed,
         person_ids_gh,
         last_person_id,
         all_wikidata_ids,
+        _,
+        _,
     ) = process_agent_tables(entity_type, "ReadAct", path=[])
+
+    # Process local table row by row
     for index, row in df.iterrows():
-        print(
-            "-------------\nFor row ", index, " :"
-        )  # Todo(QG): adjust row index output
+        print("-------------\nFor row ", index + 2, " :")
         print(row.tolist())
         row, last_person_id = check_each_row_Person(
             index, row, df_person_gh, person_ids_gh, last_person_id, all_wikidata_ids
         )
-        # validate the format of start and end (year)
-        row = validate_year_Person(row)
+        # make the format of birth and death year valid
+        row = format_year_Person(row)
         df.loc[index] = row
     return df
 
@@ -237,196 +240,13 @@ def check_each_row_Person(
                         # Todo: "note" is changed, does it count as modified?
                         logger.info("Row %s in this table is checked. Pass." % index)
                         return row, last_person_id
-        else:  # No user provided `person_id`
-            __check_person_id_size(row, last_person_id)
-            row["person_id"] = last_person_id[0:2] + str(int(last_person_id[2:]) + 1)
-            if (isinstance(row["wikidata_id"], str) is True) and (
-                len(row["wikidata_id"]) > 0
-            ):  # no person_id, but has wikidata_id
-                if row["wikidata_id"] in all_wikidata_ids:
-                    row["note"] = (
-                        "Error: this `wikidata_id` already exists in ReadAct. Please check carefully. If you are 100% "
-                        ""
-                        "sure that your input is correct, then it is likely that this person has an identical name "
-                        'with a person in Wikidata database. Please put "skip" in "note" column for this row and run '
-                        "this program again.  By ReadActor."
-                    )
-                    error_msg = (
-                        "For row "
-                        + str(index)
-                        + " : this `wikidata_id` already exists in ReadAct. "
-                        "Please check carefully. If you are 100% sure that your input is correct, then it is "
-                        "likely that this person has an identical name with a person in Wikidata database. "
-                        'Please put "skip" in "note" column for this row and run this program again.  By '
-                        "ReadActor."
-                    )
-                    logger.error(error_msg)
-                    sys.exit()
-                else:
-                    last_person_id = row["person_id"]
-                    person_dict = sparql_with_Qid(row["wikidata_id"])
-                    note_flag = False
-                    modified_fields = ["person_id"]
-                    if "gender" in person_dict and row["sex"] != person_dict["gender"]:
-                        row["sex"] = person_dict["gender"]
-                        modified_fields.append("sex")
-                        note_flag = True
-                    if (
-                        "birthyear" in person_dict
-                        and row["birthyear"] != person_dict["birthyear"]
-                    ):
-                        row["birthyear"] = person_dict["birthyear"]
-                        modified_fields.append("birthyear")
-                        note_flag = True
-                    if (
-                        "deathyear" in person_dict
-                        and row["deathyear"] != person_dict["deathyear"]
-                    ):
-                        row["deathyear"] = person_dict["deathyear"]
-                        modified_fields.append("deathyear")
-                        note_flag = True
-                    if (
-                        "birthplace" in person_dict
-                        and row["place_of_birth"] != person_dict["birthplace"]
-                    ):
-                        row["place_of_birth"] = person_dict["birthplace"]
-                        modified_fields.append("place_of_birth")
-                        note_flag = True
-                    if note_flag:
-                        message = (
-                            "Fields "
-                            + ", ".join(modified_fields)
-                            + " is/are updated.  By ReadActor."
-                        )
-                        if isinstance(row["note"], str):
-                            row["note"] = row["note"] + " " + message
-                        else:
-                            row["note"] = message
-                        row["last_modified"] = today
-                        row["last_modified_by"] = "ReadActor"
-                        logger.info(message)
-                        return row, last_person_id
-                    else:
-                        if isinstance(row["note"], str):
-                            row["note"] = (
-                                row["note"]
-                                + " Field `person_id` in this table is updated.  By ReadActor."
-                            )
-                        else:
-                            row[
-                                "note"
-                            ] = "Field `person_id` in this table is updated.  By ReadActor."
-                        row["last_modified"] = today
-                        row["last_modified_by"] = "ReadActor"
-                        logger.info(
-                            "Field `person_id` in row %s of this table is updated.  By ReadActor."
-                            % index
-                        )
-                        return row, last_person_id
-            else:  # no person_id, no wikidata_id
-                names = order_name_by_language(row)
-                person = sparql_by_name(names, row["language"], 2)
-                if len(person) > 0:
-                    wikidata_id_usr = next(iter(person))
-                    if wikidata_id_usr in all_wikidata_ids:
-                        row["note"] = (
-                            "Error: `wikidata_id` queried by family_name, first_name, language already exists in "
-                            "ReadAct data, but your provided person_id does not match. Please check your data "
-                            "carefully. If you are 100% sure that your input is correct, then it is likely that this "
-                            'person has an identical name with a person in Wikidata database. Please put "skip" in '
-                            '"note" column for this row and run this program again. By ReadActor.'
-                        )
-                        error_msg = (
-                            "For row "
-                            + str(int(index))
-                            + " : `wikidata_id` queried by family_name, "
-                            "first_name, language already exists in ReadAct data, but your provided person_id "
-                            "does not match. Please check your data carefully. If you are 100% sure that your "
-                            "input is correct, then it is likely that this person has an identical name with a "
-                            'person in Wikidata database. Please put "skip" in "note" column for this row and '
-                            "run this program again. By ReadActor."
-                        )
-                        logger.error(error_msg)
-                        sys.exit()
-                    else:
-                        last_person_id = row["person_id"]
-                        row["wikidata_id"] = wikidata_id_usr
-                        person_dict = sparql_with_Qid(wikidata_id_usr)
-                        note_flag = False
-                        modified_fields = ["person_id"]
-                        if (
-                            "gender" in person_dict
-                            and row["sex"] != person_dict["gender"]
-                        ):
-                            modified_fields.append("sex")
-                            note_flag = True
-                        if (
-                            "birthyear" in person_dict
-                            and row["birthyear"] != person_dict["birthyear"]
-                        ):
-                            modified_fields.append("birthyear")
-                            note_flag = True
-                        if (
-                            "deathyear" in person_dict
-                            and row["deathyear"] != person_dict["deathyear"]
-                        ):
-                            modified_fields.append("deathyear")
-                            note_flag = True
-                        if (
-                            "birthplace" in person_dict
-                            and row["place_of_birth"] != person_dict["birthplace"]
-                        ):
-                            modified_fields.append("place_of_birth")
-                            note_flag = True
-                        if note_flag:
-                            if isinstance(row["note"], str):
-                                row["note"] = (
-                                    row["note"]
-                                    + " Fields "
-                                    + ", ".join(modified_fields)
-                                    + " in this table is/are updated.  By ReadActor."
-                                )
-                            else:
-                                row["note"] = (
-                                    "Fields "
-                                    + ", ".join(modified_fields)
-                                    + " is/are updated.  By ReadActor."
-                                )
-                            logger.warning(
-                                "For row %s, you should input at least a person_id even if "
-                                "there is no matched wikidata_id. By ReadActor." % index
-                            )
-                            row["last_modified"] = today
-                            row["last_modified_by"] = "ReadActor"
-                            return row, last_person_id
-                        else:
-                            if isinstance(row["note"], str):
-                                row["note"] = (
-                                    row["note"]
-                                    + " Field `person_id` in this table is updated.  By ReadActor."
-                                )
-                            else:
-                                row[
-                                    "note"
-                                ] = "Field `person_id` in this table is updated.  By ReadActor."
-                            logger.warning(
-                                "For row %s, you should look the person up in Wikidata and input the "
-                                "`wikidata_id` in your table in the future." % index
-                            )
-                            row["last_modified"] = today
-                            row["last_modified_by"] = "ReadActor"
-                            return row, last_person_id
-                else:
-                    last_person_id = row["person_id"]
-                    message = "No match in Wikidata.  By ReadActor."
-                    if isinstance(row["note"], str):
-                        row["note"] = row["note"] + " " + message
-                    else:
-                        row["note"] = message
-                    row["last_modified"] = today
-                    row["last_modified_by"] = "ReadActor"
-                    logger.info(message)
-                    return row, last_person_id
+        else:  # No user-provided `person_id`
+            print("row: ", row)
+            logger.error(
+                'Row %s has no "person_id". You should give an unique id to each row.'
+                % index
+            )
+            sys.exit()
 
 
 def __compare_two_rows_Person(row, row_gh):
@@ -546,7 +366,7 @@ def __check_person_id_size(row, last_id_in_gh):
             ] = "Warning: It is better to update all person_id in the database. By ReadActor."
 
 
-def validate_year_Person(row):
+def format_year_Person(row):
     for x in ["birthyear", "deathyear"]:
         if isinstance(row[x], float):
             row[x] = int(row[x])

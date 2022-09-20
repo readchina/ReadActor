@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 def process_Spac(df):
+    # Check if space_id are unique in user file
+    if not pd.Series(df["space_id"]).is_unique:
+        logger.error("Error: space IDs in your Space table are not unique.")
+        sys.exit()
+
+    # Read the Space table in ReadAct
     df_space_gh = pd.read_csv(SPACE_GITHUB)
     df_space_gh = df_space_gh.fillna("")  # Replace all the nan into empty string
     check_gh(df_space_gh)
@@ -24,11 +30,11 @@ def process_Spac(df):
     space_ids_gh.sort()
     wikidata_ids_GH = df_space_gh["wikidata_id"].tolist()
     last_space_id = space_ids_gh[-1]
+    # Process local table row by row
     for index, row in df.iterrows():
         print(
-            "-------------\nFor row ", index, " :"
+            "-------------\nFor row ", index + 2, " :"
         )  # Because the header line in Person.csv is already row 1
-        # Todo(QG): adjust other row index output
         print(row.tolist())
         row, last_space_id = check_each_row_Space(
             index, row, df_space_gh, space_ids_gh, last_space_id, wikidata_ids_GH
@@ -106,7 +112,7 @@ def check_each_row_Space(
                             "In row %s , space_name matches with geo coordinates according to OSM query."
                             % index
                         )
-                    else:  # res_OSM: space_name, space_type, lat, lang, space_id
+                    else:  # res_OSM: space_name, space_type, lat, long, space_id
                         # ToDo(QG): no_match_list[0][0] should be equal to row['space_name]. Should check.
                         wikidata_id_from_query = get_QID(
                             res_OSM[0]

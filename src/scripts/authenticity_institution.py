@@ -10,6 +10,7 @@ The standards of verificating an Institution entry is:
 to find one match among headquarters/administrativeTerritorialEntity/locationOfFormation/inception.
 """
 import json
+import sys
 import time
 
 import pandas as pd
@@ -50,7 +51,7 @@ GROUP BY ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLab
 
 
 def read_institution_csv(
-    inst_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Institution.csv",
+    inst_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Institution.csv",
 ):
     """
     A function to read "Institution.csv"
@@ -62,18 +63,29 @@ def read_institution_csv(
     ins_dict = {}
     place_dict = read_space_csv()
     for index, row in df.iterrows():
-        if row[1] not in ins_dict:
-            if row[3] in place_dict:
-                if len(str(row[4])) > 0:
-                    row[4] = int(float(row[4]))
-                if len(str(row[5])) > 0:
-                    row[5] = int(float(row[5]))
-                ins_dict[(row[0], row[1])] = [place_dict[row[3]][0], row[4], row[5]]
+        if (row["inst_id"], row["inst_name"]) not in ins_dict:
+            if row["place"] in place_dict:
+                if len(str(row["start"])) > 0:
+                    row["start"] = int(float(row["start"]))
+                if len(str(row["end"])) > 0:
+                    row["end"] = int(float(row["end"]))
+                ins_dict[(row["inst_id"], row["inst_name"])] = [
+                    place_dict[row["place"]][0],
+                    row["start"],
+                    row["end"],
+                ]
             else:
-                ins_dict[(row[0], row[1])] = [row[3], row[4], row[5]]
+                ins_dict[(row["inst_id"], row["inst_name"])] = [
+                    row["place"],
+                    row["start"],
+                    row["end"],
+                ]
                 print("Please check. A space_id is not in Space.csv.")
         else:
-            print("Please check. There are overlaps between institution names.")
+            print(
+                "Please check. The combination of inst_id and inst_name should be unique."
+            )
+            sys.exit()
     return ins_dict
 
 

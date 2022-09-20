@@ -3,6 +3,8 @@ import re
 import sys
 from datetime import date
 
+import pandas as pd
+
 from src.scripts.agent_table_processing import process_agent_tables
 from src.scripts.authenticity_institution import get_QID_inst, sparql_inst
 
@@ -17,23 +19,36 @@ def modify_note_lastModified_lastModifiedBy(row, message, today):
 
 
 def process_Inst(df, entity_type):
+    # Check if (inst_id, inst_name) pairs are unique in user file
+    id_name_pairs = []
+    for pair in zip(df["inst_id"], df["inst_name"]):
+        pair_str = "({})".format(",".join(pair))
+        id_name_pairs.append(pair_str)
+    if len(id_name_pairs) > len(set(id_name_pairs)):
+        logger.error(
+            "Error: (inst_id, inst_name) in your Institution table are not unique."
+        )
+        sys.exit()
+
+    # Process the local Agent table
     (
         df_inst_gh,
         agent_processed,
         inst_ids_gh,
         last_inst_id,
         all_wikidata_ids,
+        _,
+        _,
     ) = process_agent_tables(entity_type, "ReadAct", path=[])
+    # Process local table row by row
     for index, row in df.iterrows():
-        print(
-            "-------------\nFor row ", index, " :"
-        )  # Todo(QG): adjust row index output
+        print("-------------\nFor row ", index + 2, " :")
         print(row.tolist())
         row, last_inst_id = check_each_row_Inst(
             index, row, df_inst_gh, inst_ids_gh, last_inst_id, all_wikidata_ids
         )
-        # validate the format of start and end (year)
-        row = validate_year_Inst(row)
+        # make the format of start and end (year) valid
+        row = format_year_Inst(row)
         df.loc[index] = row
     return df
 
@@ -259,7 +274,7 @@ def __compare_place_and_start_for_Inst(index, row, inst_wiki, l, today, wikidata
     return row
 
 
-def validate_year_Inst(row):
+def format_year_Inst(row):
     for x in ["start", "end"]:
         if isinstance(row[x], float):
             row[x] = int(row[x])

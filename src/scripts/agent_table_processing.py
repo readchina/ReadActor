@@ -1,3 +1,7 @@
+import logging
+import os.path
+import sys
+
 import pandas as pd
 
 from src.scripts.authenticity_space import read_space_csv
@@ -6,6 +10,8 @@ PERSON_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patc
 SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
 INST_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Institution.csv"
 AGENT_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Agent.csv"
+
+logger = logging.getLogger(__name__)
 
 
 def search_wikidataID_in_table(row, agent_processed, agent_id):
@@ -67,7 +73,6 @@ def combine_agent_tables(df_agent_user, df_agent_gh, agent_ids_gh):
 
 def process_agent_tables(entity_type, user_or_ReadAct, path):
     place_dict = read_space_csv()
-
     df_agent_gh = pd.read_csv(AGENT_GITHUB).fillna("")  # Get Agent table from ReadAct
     agent_ids_gh = list(
         set(df_agent_gh["agent_id"].tolist())
@@ -75,8 +80,10 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
     last_item_id_gh = agent_ids_gh[-1]  # Get the last agent_id in ReadAct
     if entity_type == "Person":
         agent_id = "person_id"  # Set variables for later
+        place_name = "place_of_birth"
     elif entity_type == "Institution":
         agent_id = "inst_id"
+        place_name = "place"
 
     if user_or_ReadAct == "ReadAct":
         if entity_type == "Person":
@@ -99,38 +106,52 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
                 "alt_end": str,
             }  # here we assume all the years in Institution are type int
         df_agent_user = pd.read_csv(path[1]).fillna("")  # Get agent table
+
+        # Check if agent_id are unique in user file
+        if not pd.Series(df_agent_user["agent_id"]).is_unique:
+            logger.error("Error: agent IDs in your Agent table are not unique.")
+            sys.exit()
+
         agent_processed = combine_agent_tables(df_agent_user, df_agent_gh, agent_ids_gh)
-        print("\n@@@@@@@@@@@agent_processed@@@@@@@@@@@@@@@")
-        print(agent_processed)
 
     all_wikidata_ids = [x for x in agent_processed["wikidata_id"].tolist() if x]
     df_PI = pd.read_csv(which_agent, dtype=dtype_dict).fillna("")
+
+    # Check if the place in user's Person/Institution table are all in ReadAct.
+    # So that to get a processed space table to convert space IDs in P/I into space names.
+    if all(place in place_dict for place in df_PI[place_name].tolist()):
+        place_dict_combined = place_dict
+        combined_two_space = False  # Unnecessary to check for potential local Space.csv
+    else:  # place in user's table is not in ReadAct, check if any local space table
+        space_path_user = path[1][:-9] + "Space.csv"
+        if not os.path.isfile(space_path_user):
+            logger.error(
+                "There's place in your Institution/Person table without providing according space table. Please check."
+            )
+            sys.exit()
+        else:
+            combined_two_space = True  # Read local Space.csv
+            place_dict_user = read_space_csv(space_path_user)
+            # update place_dict by combining two Space table
+            place_dict_combined = {
+                **place_dict_user,
+                **place_dict,
+            }  # If any space_id in user's space table is also in ReadAct, take the value from ReadAct data
+
     df_PI["wikidata_id"] = ""  # add an empty wikidata_id column
     df_PI = addWikidataID_and_replaceSpace(
-        df_PI, agent_processed, agent_id, place_dict, entity_type
-    )  # add wikidata_id information from ReadAct's Agent table
+        df_PI, agent_processed, agent_id, place_dict_combined, entity_type
+    )  # add wikidata_id information basing on ReadAct's Agent table
 
-    return df_PI, agent_processed, agent_ids_gh, last_item_id_gh, all_wikidata_ids
-
-
-def space_dict_for_agents(
-    space_url=SPACE_GITHUB,
-):
-    df = pd.read_csv(space_url)
-    space_dict = {}
-    for index, row in df.iterrows():
-        # consider the case that if there are identical space_names in csv file
-        if row["space_name"] not in space_dict.keys():
-            # key: 'space_name'
-            # value: 'space_id'
-            space_dict[row["space_name"]] = row["space_id"]
-        else:
-            # ToDo(QG): Is it on purpose that we have reduplicated space_name ?
-            continue
-    space_dict[""] = ""
-    space_dict[None] = ""
-    space_dict[float("nan")] = ""
-    return space_dict
+    return (
+        df_PI,
+        agent_processed,
+        agent_ids_gh,
+        last_item_id_gh,
+        all_wikidata_ids,
+        place_dict_combined,
+        combined_two_space,
+    )
 
 
 if __name__ == "__main__":

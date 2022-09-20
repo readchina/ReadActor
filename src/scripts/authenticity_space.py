@@ -14,6 +14,8 @@ less or equal to 0.9.
 """
 
 import json
+import logging
+import sys
 import time
 from itertools import islice
 
@@ -32,6 +34,8 @@ WHERE {{
 }}
 """
 
+logger = logging.getLogger(__name__)
+
 
 def read_space_csv(
     space_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv",
@@ -44,13 +48,19 @@ def read_space_csv(
     df = pd.read_csv(space_url, error_bad_lines=False)
     geo_code_dict = {}
     for index, row in df.iterrows():
-        # consider the case that if there are identical space_names in csv file
-        if row[0] not in geo_code_dict:
+        # consider the case that if there are identical space_id in csv file
+        if row["space_id"] not in geo_code_dict:
             # key: space_id
-            # value: space_name, space_type, lat, lang
-            geo_code_dict[row[0]] = [row[3], row[2], row[5], row[6]]
+            # value: space_name, space_type, lat, long
+            geo_code_dict[row["space_id"]] = [
+                row["space_name"],
+                row["space_type"],
+                row["lat"],
+                row["long"],
+            ]
         else:
-            print("Space id not exist ?!")
+            logger.error("Space ID should be unique in this table. Please check. ")
+            sys.exit()
     return geo_code_dict
 
 
@@ -63,7 +73,7 @@ def compare_to_openstreetmap(geo_code_dict):
     no_match_list = []
     for k, v in geo_code_dict.items():
         item = query_with_OSM(k, v)
-        if item:  # item: space_name, space_type, lat, lang, space_id
+        if item:  # item: space_name, space_type, lat, long, space_id
             no_match_list.append(item)
     return no_match_list
 
@@ -94,7 +104,7 @@ def geo_code_compare(no_match_list):
     still_no_match_list = []
     space_with_QID = {}  # To collect QIDs for Space.csv
     count = 0
-    for i in no_match_list:
+    for i in no_match_list:  # i: space_name, space_type, lat, long, space_id
         if i[0] is None:
             res = None
         else:

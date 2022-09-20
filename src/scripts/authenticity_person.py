@@ -287,7 +287,6 @@ def compare_weights(person_weight_dict):
             no_match_person.append(id)
         # At least one match for one language, no match for the rest language
         elif len(p) == 1:
-            lang = p[0][0]
             weights = p[0][1]
             max_weight = max(
                 weights

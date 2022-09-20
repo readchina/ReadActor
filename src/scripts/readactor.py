@@ -1,5 +1,6 @@
 import importlib
 import logging
+import os
 import sys
 from datetime import date
 from importlib.metadata import version
@@ -7,10 +8,8 @@ from importlib.metadata import version
 import click
 import pandas as pd
 
-from src.scripts.agent_table_processing import (
-    process_agent_tables,
-    space_dict_for_agents,
-)
+from src.scripts.agent_table_processing import process_agent_tables
+from src.scripts.authenticity_space import get_coordinate_from_wikidata, get_QID
 from src.scripts.process_Institution import process_Inst
 from src.scripts.process_Person import process_Pers
 from src.scripts.process_Space import process_Spac
@@ -21,9 +20,149 @@ formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s: - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
 
 
-# Todo(QG): this is the file on a branch which is not master. Should be replaced after 2.0.
+def combine_space_tables(df_space_user, df_space_gh, space_ids_gh):
+    """
+    This function aims to use merging the Space tables in ReadAct and in user's directory. If any space_id in the
+    user table already exists in ReadAct, delete according line(s) in the user table and then merge.
+    :param df_space_user: dataframe of the Space.csv from user
+    :param df_space_gh: dataframe of the Space.csv from ReadAct
+    :param space_ids_gh: all the space_ids in the Space.csv in ReadAct
+    :return: a processed combined agent dataframe
+    """
+    df_space_user_not_in_gh = df_space_user.loc[
+        ~df_space_user["space_id"].isin(space_ids_gh)
+    ]  # delete lines which
+    # has agent_id in ReadAct, which is to say, for any agent_id already in ReadAct, use the ReadAct resource
+    space_cols = [
+        "space_id",
+        "old_id",
+        "space_type",
+        "space_name",
+        "language",
+        "lat",
+        "long",
+        "wikidata_id",
+        "note",
+        "created",
+        "created_by",
+        "last_modified",
+        "last_modified_by",
+    ]
+    df_processd = pd.merge(
+        df_space_gh, df_space_user_not_in_gh, on=space_cols, how="outer"
+    )
+    return df_processd
+
+
+def create_new_space_entry(
+    df, place_dict_combined, today, place_name, combined_two_space, entity_type, path
+):
+    # Read Space.csv from ReadAct
+    df_space_gh = pd.read_csv(SPACE_GITHUB).fillna("")
+    space_ids_gh = df_space_gh["space_id"].tolist()
+    space_ids_gh.sort()
+    last_space_id = space_ids_gh[-1]
+
+    if (
+        combined_two_space is True
+    ):  # Already read local Space.csv. Must combine two space table.
+        if entity_type == "Person":
+            path_space_user = path[:-10] + "Space.csv"
+        elif entity_type == "Institution":
+            path_space_user = path[:-15] + "Space.csv"
+        df_space_user = pd.read_csv(path_space_user)
+        df_space_processed = combine_space_tables(
+            df_space_user, df_space_gh, space_ids_gh
+        )
+    else:  # the place in user's P/I table are all in ReadAct, unnecessary to check for potential local Space.csv. Pay
+        # attention that if ReadActor find any new space entity then to save a new Space table might overwrite any
+        # potential local Space.csv
+        df_space_processed = df_space_gh
+
+    flag = False  # Flag to show if any new entries are added
+    for index, row in df.iterrows():
+        if (
+            row[place_name] is None
+            or pd.isna(row[place_name])
+            or len(str(row[place_name])) == 0
+        ):
+            continue
+        elif row[place_name] in place_dict_combined:
+            continue
+        else:
+            # New space introduced by SPAQRL query
+            # Append new entries
+            # space_id,old_id,space_type,space_name,language,lat,long,wikidata_id,note,created,created_by, last_modified,last_modified_by
+            if int(last_space_id[2:]) > 9999:
+                logger.error(
+                    "Please inform the maintainer to update the schema of Space and modify scripts accordingly."
+                )
+                sys.exit()
+            new_space_id = last_space_id[0:2] + str(int(last_space_id[2:]) + 1)
+            new_space_name = row[place_name]
+            new_language = "en"
+            new_created = today
+            new_created_by = "ReadActor"
+            query_space = get_QID(new_space_name)
+            if query_space is None:
+                new_wikidata_id = ""
+                new_lat = ""
+                new_long = ""
+                new_space_type = "L"  # L for locations (with NULL coordinates)
+            else:
+                coordinate = get_coordinate_from_wikidata(query_space["id"])[0]
+                new_wikidata_id = query_space["id"]
+                if len(coordinate) == 0:
+                    new_lat = ""
+                    new_long = ""
+                elif len(coordinate) == 1:
+                    new_long = coordinate[0]
+                    new_lat = ""
+                elif len(coordinate) == 2:
+                    new_lat = coordinate[1]
+                    new_long = coordinate[0]
+                new_space_type = "PL"  # PL for place
+            df_space_processed.loc[len(df_space_processed.index)] = [
+                new_space_id,
+                "",  # space_type
+                new_space_type,
+                new_space_name,
+                new_language,
+                new_lat,
+                new_long,
+                new_wikidata_id,
+                "",  # note
+                new_created,
+                new_created_by,
+                "",  # last_modified
+                "",  # last_modified_by
+            ]
+            flag = True
+            last_space_id = new_space_id
+    return df_space_processed, flag
+
+
+def space_dict_for_agents(df_space):
+    space_dict = {}
+    for index, row in df_space.iterrows():
+        # consider the case that if there are identical space_names in csv file
+        if row["space_name"] not in space_dict.keys():
+            # key: 'space_name'
+            # value: 'space_id'
+            space_dict[row["space_name"]] = row["space_id"]
+        else:
+            # ToDo(QG): Is it on purpose that we have reduplicated space_name ?
+            logger.warning(
+                "There are reduplicated space_name in ReadAct. Please notice the maintainer."
+            )
+            continue
+    space_dict[""] = ""
+    space_dict[None] = ""
+    space_dict[float("nan")] = ""
+    return space_dict
 
 
 # eager
@@ -143,9 +282,9 @@ def cli(path, interactive, quiet, output, summary, space, agents):
                 "You want to process person/institution, but your input file path doesn't contain this kind of file."
             )
             sys.exit()
+    today = date.today().strftime("%Y-%m-%d")
 
     # process the dataframe (Person, Space, Institution).
-
     if "Space" in path:
         entity_type = "Space"
         df = pd.read_csv(path)  # index_col=0
@@ -154,10 +293,17 @@ def cli(path, interactive, quiet, output, summary, space, agents):
 
     elif "Person" in path:
         entity_type = "Person"
+        place_name = "place_of_birth"
         agent_user_path = path[:-10] + "Agent.csv"
-        df, agent_processed, _, _, _ = process_agent_tables(
-            entity_type, "user", path=[path, agent_user_path]
-        )
+        (
+            df,
+            agent_processed,
+            _,
+            _,
+            _,
+            place_dict_combined,
+            combined_two_space,
+        ) = process_agent_tables(entity_type, "user", path=[path, agent_user_path])
 
         agent_processed_sorted = agent_processed.loc[
             agent_processed["agent_id"].str[2:].astype(int).sort_values().index
@@ -171,29 +317,32 @@ def cli(path, interactive, quiet, output, summary, space, agents):
         )  # Sort Person.csv by person_id
         df = df_sorted
 
-        space_dict = space_dict_for_agents()
+        df_space_raw = pd.read_csv(SPACE_GITHUB)
+        space_dict = space_dict_for_agents(df_space_raw)
         df = df.replace({"place_of_birth": space_dict})
-
-        for index, row in df.iterrows():
-            if (
-                row["place_of_birth"] is None
-                or pd.isna(row["place_of_birth"])
-                or len(str(row["place_of_birth"])) == 0
-            ):
-                continue
-            elif row["place_of_birth"] not in space_dict.values():
-                logger.error(
-                    "The place %s is not in Space.csv. Please update Space.csv first."
-                    % row["place_of_birth"]
-                )
-                sys.exit()
+        df_space_processed, flag_space_table = create_new_space_entry(
+            df,
+            place_dict_combined,
+            today,
+            place_name,
+            combined_two_space,
+            entity_type,
+            path,
+        )
 
     elif "Institution" in path:
         entity_type = "Institution"
+        place_name = "place"
         agent_user_path = path[:-15] + "Agent.csv"
-        df, agent_processed, _, _, _ = process_agent_tables(
-            entity_type, "user", path=[path, agent_user_path]
-        )
+        (
+            df,
+            agent_processed,
+            _,
+            _,
+            _,
+            place_dict_combined,
+            combined_two_space,
+        ) = process_agent_tables(entity_type, "user", path=[path, agent_user_path])
         agent_processed_sorted = agent_processed.loc[
             agent_processed["agent_id"].str[2:].astype(int).sort_values().index
         ].reset_index(drop=True)
@@ -205,27 +354,29 @@ def cli(path, interactive, quiet, output, summary, space, agents):
         )  # Sort Institution.csv by inst_id
         df = df_sorted
 
-        space_dict = space_dict_for_agents()
+        df_space_raw = pd.read_csv(SPACE_GITHUB)
+        space_dict = space_dict_for_agents(df_space_raw)
         df = df.replace({"place": space_dict})
-        for index, row in df.iterrows():
-            if (
-                row["place"] is None
-                or pd.isna(row["place"])
-                or len(str(row["place"])) == 0
-            ):
-                continue
-            elif row["place"] not in space_dict.values():
-                logger.error(
-                    "The place %s is not in Space.csv. Please update Space.csv first."
-                    % row["place"]
-                )
-                sys.exit()
+        df_space_processed, flag_space_table = create_new_space_entry(
+            df,
+            place_dict_combined,
+            today,
+            place_name,
+            combined_two_space,
+            entity_type,
+            path,
+        )
 
     if entity_type == "Person":
         a_id = "person_id"
+        # after adding new space entry, replace space name with new space ID
+        space_dict = space_dict_for_agents(df_space_processed)
+        df = df.replace({"place_of_birth": space_dict})
     elif entity_type == "Institution":
         a_id = "inst_id"
-    today = date.today().strftime("%Y-%m-%d")
+        # after adding new space entry, replace space name with new space ID
+        space_dict = space_dict_for_agents(df_space_processed)
+        df = df.replace({"place": space_dict})
 
     # output to new tables
     if output:
@@ -234,7 +385,7 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             with open(new_csv_path, "w+") as f:
                 f.write(df.to_csv(index=False))
         else:
-            # write two updated tables to new files: agent and the other
+            # write two/three updated tables to new files: agent and the other
             df_person_or_inst = df.copy(deep=True)  # a deep copy
             df_person_or_inst.drop("wikidata_id", inplace=True, axis=1)
             new_csv_path = path[:-4] + "_updated.csv"
@@ -253,6 +404,14 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             new_agent_user_path = agent_user_path[:-4] + "_updated.csv"
             with open(new_agent_user_path, "w") as f:
                 f.write(df_agent.to_csv(index=False))
+
+            if flag_space_table:
+                if entity_type == "Person":
+                    path_space = path[:-10] + "Space_updated.csv"
+                elif entity_type == "Institution":
+                    path_space = path[:-15] + "Space_updated.csv"
+                with open(path_space, "w") as f:
+                    f.write(df_space_processed.to_csv(index=False))
 
     # Print summary
     elif summary:
@@ -276,6 +435,10 @@ def cli(path, interactive, quiet, output, summary, space, agents):
                             logger.info("Wikidata id is updated. ")
             # print("\nSummary of Agent:")
             # print(df_agent.to_csv(index=False))
+
+            if flag_space_table:
+                print("\nSummary of Space")
+                print(df_space_processed.to_csv(index=False))
 
     else:
         if entity_type == "Space":
@@ -301,6 +464,16 @@ def cli(path, interactive, quiet, output, summary, space, agents):
                             logger.info("Wikidata id is updated. ")
             with open(agent_user_path, "w") as f:
                 f.write(df_agent.to_csv(index=False))
+
+            if flag_space_table:
+                if entity_type == "Person":
+                    path_space = path[:-10] + "Space.csv"
+                elif entity_type == "Institution":
+                    path_space = path[:-15] + "Space.csv"
+                if os.path.isfile(path_space):
+                    logger.warning("Your Space.csv at %s is overwritten. " % path_space)
+                with open(path_space, "w") as f:
+                    f.write(df_space_processed.to_csv(index=False))
 
 
 if __name__ == "__main__":
