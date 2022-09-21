@@ -90,7 +90,8 @@ def check_each_row_Inst(
                         l = [i for x in l for i in x]
                         if not any(l):  # all items in above list are empty strings
                             message = (
-                                "For row %s, the user input wikidata_id does not have relevant info. Couldn't check. "
+                                "For row %s, the user input wikidata_id does not have relevant info. "
+                                "Couldn't check. "
                             ) % index
                             logger.warning(message)
                             row = modify_note_lastModified_lastModifiedBy(
@@ -120,8 +121,9 @@ def check_each_row_Inst(
                             wikidata_id_from_query_Inst[0]["id"] in all_wikidata_ids
                         ):  # found wikidata_id in ReadAct
                             logger.error(
-                                'For row %s, The wikidata_id found by querying with institution name exists in ReadAct already. If you are 100% sure that your input is correct, you can put "skip" in "note". '
-                                % index
+                                "For row %s, The wikidata_id found by querying with institution name exists in "
+                                'ReadAct already. If you are 100% sure that your input is correct, you can put "skip" '
+                                'in "note". ' % index
                             )
                             sys.exit()
                         # The found wikidata_id is not in ReadAct, the next step is to check its coordinate
@@ -137,7 +139,8 @@ def check_each_row_Inst(
                             l = [i for x in l for i in x]
                             if not any(l):  # all items in above list are empty strings
                                 message = (
-                                    "For row %s, the user input wikidata_id does not have relevant info. Couldn't check. "
+                                    "For row %s, the user input wikidata_id does not have relevant info. "
+                                    "Couldn't check. "
                                 ) % index
                                 logger.warning(message)
                                 row = modify_note_lastModified_lastModifiedBy(
@@ -201,16 +204,18 @@ def __compare_two_rows_Inst(row, row_gh):
         "last_modified_by",
     ]
     for i in fields_to_be_compared:
-        if row_gh[i] == "":
+        if row_gh[i] == "" or row_gh[i] is None:
             continue
-        elif i in ["start", "end", "alt_start", "alt_end"]:
+        elif (
+            i in ["start", "end", "alt_start", "alt_end"]
+            and re.search("[a-zA-Z]", str(row[i])) is None
+        ):
             if "." in str(row[i]):
                 row[i] = int(
                     float(row[i])
-                )  # to remove the ".0" part of any potential floating-point number
-            if bool(re.match("[0-9.]+", str(row[i]))):
-                if int(row[i]) != int(row_gh[i]):
-                    return False
+                )  # to remove ".0" part of potential floating-point number
+            if int(row[i]) != int(row_gh[i]):
+                return False
         else:
             if row[i] != row_gh[i]:
                 return False
@@ -257,8 +262,8 @@ def __compare_place_and_start_for_Inst(index, row, inst_wiki, l, today, wikidata
         if wikidata_id != row["wikidata_id"]:
             row["wikidata_id"] = wikidata_id
             message = (
-                "For row %s, the wikidata_id can be queried. You should look institution up in Wikidata and write the wikidata_id in your table in the future. "
-                % index
+                "For row %s, the wikidata_id can be queried. You should look institution up in Wikidata and write "
+                "the wikidata_id in your table in the future. " % index
             )
             logger.warning(message)
             row = modify_note_lastModified_lastModifiedBy(row, message, today)
