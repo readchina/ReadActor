@@ -32,20 +32,25 @@ def process_Inst(df, entity_type):
 
     # Process the local Agent table
     (
-        df_inst_gh,
+        df_P_or_I_gh,
         agent_processed,
-        inst_ids_gh,
+        all_agents_ids_gh,
         last_inst_id,
         all_wikidata_ids,
         _,
         _,
     ) = process_agent_tables(entity_type, "ReadAct", path=[])
     # Process local table row by row
+    print("~~~~~~~~~~~~~")
+    print("df:", df)
+    print("~~~~~~~~~~~~~")
+    print("df_P_or_I_gh:", df_P_or_I_gh)
+    print("~~~~~~~~~~~~~")
     for index, row in df.iterrows():
         print("-------------\nFor row ", index + 2, " :")
         print(row.tolist())
         row, last_inst_id = check_each_row_Inst(
-            index, row, df_inst_gh, inst_ids_gh, last_inst_id, all_wikidata_ids
+            index, row, df_P_or_I_gh, all_agents_ids_gh, last_inst_id, all_wikidata_ids
         )
         # make the format of start and end (year) valid
         row = format_year_Inst(row)
@@ -54,14 +59,14 @@ def process_Inst(df, entity_type):
 
 
 def check_each_row_Inst(
-    index, row, df_inst_gh, inst_ids_gh, last_inst_id, all_wikidata_ids
+    index, row, df_inst_gh, all_agents_ids_gh, last_inst_id, all_wikidata_ids
 ):
     today = date.today().strftime("%Y-%m-%d")
     if row["note"] == "skip" or row["note"] == "Skip":
         return row, last_inst_id
     else:
         if isinstance(row["inst_id"], str) and len(row["inst_id"]) > 0:
-            if row["inst_id"] in inst_ids_gh:  # inst_id is in ReadAct
+            if row["inst_id"] in all_agents_ids_gh:  # inst_id is in ReadAct
                 return (
                     __compare_wikidata_ids_Inst(index, row, df_inst_gh, today),
                     last_inst_id,
@@ -82,12 +87,23 @@ def check_each_row_Inst(
                         inst_wiki = sparql_inst(
                             [row["wikidata_id"]]
                         )  # query by wikidata_id to get other properties
+
+                        print("===============")
+                        print("inst_wiki:")
+                        print(inst_wiki)
+                        print("===============")
+
                         l = [
                             inst_wiki["headquarters"],
                             inst_wiki["administrativeTerritorialEntity"],
                             inst_wiki["locationOfFormation"],
+                            inst_wiki["inception"],
                         ]
                         l = [i for x in l for i in x]
+                        print("===============")
+                        print("l:")
+                        print(l)
+                        print("===============")
                         if not any(l):  # all items in above list are empty strings
                             message = (
                                 "For row %s, the user input wikidata_id does not have relevant info. "
@@ -99,7 +115,7 @@ def check_each_row_Inst(
                             )
                         else:
                             row = __compare_place_and_start_for_Inst(
-                                index, row, inst_wiki, l, today, row["wikidata_id"]
+                                index, row, inst_wiki, today, ""
                             )
                 else:  # user did NOT input wikidata_id
                     # TODO(QG): maybe it is better to modify get_QID_inst()
@@ -126,7 +142,8 @@ def check_each_row_Inst(
                                 'in "note". ' % index
                             )
                             sys.exit()
-                        # The found wikidata_id is not in ReadAct, the next step is to check its coordinate
+                        # The found wikidata_id is not in ReadAct, the next step is to compare the info given by
+                        # Wikidata with start/end/place in Institution
                         else:
                             inst_wiki = sparql_inst(
                                 [wikidata_id_from_query_Inst[0]["id"]]
@@ -135,6 +152,7 @@ def check_each_row_Inst(
                                 inst_wiki["headquarters"],
                                 inst_wiki["administrativeTerritorialEntity"],
                                 inst_wiki["locationOfFormation"],
+                                inst_wiki["inception"],
                             ]
                             l = [i for x in l for i in x]
                             if not any(l):  # all items in above list are empty strings
@@ -151,7 +169,6 @@ def check_each_row_Inst(
                                     index,
                                     row,
                                     inst_wiki,
-                                    l,
                                     today,
                                     wikidata_id_from_query_Inst[0]["id"],
                                 )
@@ -255,27 +272,62 @@ def __overwrite_Inst(row, row_gh, index, today):
     return row
 
 
-def __compare_place_and_start_for_Inst(index, row, inst_wiki, l, today, wikidata_id):
-    if (row["place"] in l) or (
-        str(row["start"])[0:4] in str(inst_wiki["inception"])[0:4]
-    ):
-        if wikidata_id != row["wikidata_id"]:
-            row["wikidata_id"] = wikidata_id
-            message = (
-                "For row %s, the wikidata_id can be queried. You should look institution up in Wikidata and write "
-                "the wikidata_id in your table in the future. " % index
-            )
-            logger.warning(message)
-            row = modify_note_lastModified_lastModifiedBy(row, message, today)
+def __compare_place_and_start_for_Inst(
+    index, row, inst_wiki, today, wikidata_id_by_query
+):
+    potential_place = (
+        inst_wiki["headquarters"]
+        + inst_wiki["administrativeTerritorialEntity"]
+        + inst_wiki["locationOfFormation"]
+    )
+    inception = inst_wiki["inception"][0][0:4]
+    print("====")
+    print(potential_place)
+    print(inception)
+    if row["place"] in potential_place:
+        if wikidata_id_by_query:
+            row["wikidata_id"] = wikidata_id_by_query
+            message1 = "Wikidata_id is acquired by querying with name. "
         else:
-            logger.info("Row %s is checked. Pass. " % index)
+            message1 = ""
+        if row["start"] != inception:
+            row["start"] = inception
+            message2 = (
+                "Row %s has fields 'start' changed according to the wikidata_id given by user. "
+                % index
+            )
+            logger.info(message2)
+            row = modify_note_lastModified_lastModifiedBy(
+                row, message1 + message2, today
+            )
+        else:
+            message2 = "Row %s is checked. Pass. " % index
+            logger.info(message1 + message2)
+    elif row["start"] in inception:
+        if wikidata_id_by_query:
+            row["wikidata_id"] = wikidata_id_by_query
+            message1 = "Wikidata_id is acquired by querying with name. "
+        else:
+            message1 = ""
+        if row["place"] != max(set(potential_place)):
+            row["place"] = max(set(potential_place))
+            message2 = (
+                "Row %s has fields 'place' changed according to the wikidata_id given by user. "
+                % index
+            )
+            logger.info(message2)
+            row = modify_note_lastModified_lastModifiedBy(
+                row, message1 + message2, today
+            )
+        else:
+            message2 = "Row %s is checked. Pass. " % index
+            logger.info(message1 + message2)
     else:
-        message = (
-            "Row %s has no field which is matching any according wikidata properties. Please check. "
-            % index
-        )
+        message = "Fields in row %s does not match wikidata properties. " % index
         logger.warning(message)
         row = modify_note_lastModified_lastModifiedBy(row, message, today)
+    print("&&&&&&&&&&&&&&")
+    print("row to be returned: ", row)
     return row
 
 
