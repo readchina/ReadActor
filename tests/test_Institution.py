@@ -131,6 +131,65 @@ class MyTestCase(unittest.TestCase):
             ],
         )
 
+    def test_it_should_not_change_with_unspecific_year_format(self):
+        self.row_inst = [
+            "AG3000",
+            "University Germany",
+            "en",
+            "Germany",  # place
+            "197X",  # start
+            "",  # end
+            "",  # alt_start
+            "",  # alt_end
+            "",  # inst_alt_name
+            "",  # source
+            "",  # page
+            "2019-06-15",
+            "WH",
+            "",
+            "",
+            "",  # wikidata_id
+            "",  # note,
+        ]
+        self.inst.loc[0] = self.row_inst
+        self.all_agents_ids_gh = ["AG3000"]
+        self.last_inst_id = ["AG3000"]
+        self.all_wikidata_ids = [""]
+
+        row, last_inst_id = check_each_row_Inst(
+            0,
+            self.inst.iloc[0],
+            self.inst,
+            self.all_agents_ids_gh,
+            self.last_inst_id,
+            self.all_wikidata_ids,
+        )
+        # make the format of start and end (year) valid
+        row = format_year_Inst(row)
+        print("row: ", row)
+        # print(row.tolist()[0:-1])
+        self.assertEqual(
+            row.tolist()[0:-1],
+            [
+                "AG3000",
+                "University Germany",
+                "en",
+                "Germany",  # place
+                "197X",  # start
+                "",  # end
+                "",  # alt_start
+                "",  # alt_end
+                "",  # inst_alt_name
+                "",  # source
+                "",  # page
+                "2019-06-15",
+                "WH",
+                "",
+                "",
+                "",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
