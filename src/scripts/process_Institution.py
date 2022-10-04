@@ -241,7 +241,6 @@ def __compare_two_rows_Inst(row, row_gh):
 
 def __overwrite_Inst(row, row_gh, index, today):
     fields_to_be_overwritten = [
-        "inst_name",
         "language",
         "place",
         "start",
