@@ -12,6 +12,11 @@ The goal is to automately extract data about **person**, **space**, and **instit
 
 The tool is tested on macOS and linux. 
 
+Also you need to upgrade pandas by using the command:
+
+`python -m pip install --upgrade pip pandas`
+
+
 ## Installation
 
 You can install the tool using pip:
