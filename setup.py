@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="ReadActor",
-    version="1.0.2",
+    version="1.0.3-alpha",
     author="Qin Gu",
     author_email="guqin7@gmail.com",
     description="A lookup tool for ReadChina project",
