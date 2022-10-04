@@ -38,17 +38,17 @@ def addWikidataID_and_replaceSpace(
     return df_PI_gh
 
 
-def combine_agent_tables(df_agent_user, df_agent_gh, agent_ids_gh):
+def combine_agent_tables(df_agent_user, df_agent_gh, all_agents_ids_gh):
     """
     This function aims to use merging the Agent tables in ReadAct and in user's directory. If any agent_id in the
     user table already exists in ReadAct, delete according line(s) in the user table and then merge.
     :param df_agent_user: dataframe of the Agent.csv from user
     :param df_agent_gh: dataframe of the Agent.csv from ReadAct
-    :param agent_ids_gh: all the agent_ids in the Agent.csv in ReadAct
+    :param all_agents_ids_gh: all the agent_ids in the Agent.csv in ReadAct
     :return: a processed combined agent dataframe
     """
     df_agent_user_not_in_gh = df_agent_user.loc[
-        ~df_agent_user["agent_id"].isin(agent_ids_gh)
+        ~df_agent_user["agent_id"].isin(all_agents_ids_gh)
     ]  # delete lines which
     # has agent_id in ReadAct, which is to say, for any agent_id already in ReadAct, use the ReadAct resource
     agent_cols = [
@@ -71,13 +71,18 @@ def combine_agent_tables(df_agent_user, df_agent_gh, agent_ids_gh):
     return df_processd
 
 
-def process_agent_tables(entity_type, user_or_ReadAct, path):
+def preparation():
     place_dict = read_space_csv()
     df_agent_gh = pd.read_csv(AGENT_GITHUB).fillna("")  # Get Agent table from ReadAct
-    agent_ids_gh = list(
+    all_agents_ids_gh = list(
         set(df_agent_gh["agent_id"].tolist())
     )  # Get all the unique agent_ids
-    last_item_id_gh = agent_ids_gh[-1]  # Get the last agent_id in ReadAct
+    last_item_id_gh = all_agents_ids_gh[-1]  # Get the last agent_id in ReadAct
+    return place_dict, df_agent_gh, all_agents_ids_gh, last_item_id_gh
+
+
+def process_agent_tables(entity_type, user_or_ReadAct, path):
+    place_dict, df_agent_gh, all_agents_ids_gh, last_item_id_gh = preparation()
     if entity_type == "Person":
         agent_id = "person_id"  # Set variables for later
         place_name = "place_of_birth"
@@ -104,7 +109,7 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
                 "end": str,
                 "alt_start": str,
                 "alt_end": str,
-            }  # here we assume all the years in Institution are type int
+            }
         df_agent_user = pd.read_csv(path[1]).fillna("")  # Get agent table
 
         # Check if agent_id are unique in user file
@@ -112,15 +117,23 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
             logger.error("Error: agent IDs in your Agent table are not unique.")
             sys.exit()
 
-        agent_processed = combine_agent_tables(df_agent_user, df_agent_gh, agent_ids_gh)
+        agent_processed = combine_agent_tables(
+            df_agent_user, df_agent_gh, all_agents_ids_gh
+        )
 
     all_wikidata_ids = [x for x in agent_processed["wikidata_id"].tolist() if x]
-    df_PI = pd.read_csv(which_agent, dtype=dtype_dict).fillna("")
+    df_P_or_I_gh = pd.read_csv(which_agent, dtype=dtype_dict).fillna("")
+
+    print("************************")
+    print("df_P_or_I_gh original: ", df_P_or_I_gh)
 
     # Check if the place in user's Person/Institution table are all in ReadAct.
     # So that to get a processed space table to convert space IDs in P/I into space names.
-    if all(place in place_dict for place in df_PI[place_name].tolist()):
+    if all(place in place_dict for place in df_P_or_I_gh[place_name].tolist()):
         place_dict_combined = place_dict
+        print("@@@@@@@@@@@@@@@@@")
+        print("place_dict_combined = place_dict")
+        print("@@@@@@@@@@@@@@@@@")
         combined_two_space = False  # Unnecessary to check for potential local Space.csv
     else:  # place in user's table is not in ReadAct, check if any local space table
         space_path_user = path[1][:-9] + "Space.csv"
@@ -138,15 +151,15 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
                 **place_dict,
             }  # If any space_id in user's space table is also in ReadAct, take the value from ReadAct data
 
-    df_PI["wikidata_id"] = ""  # add an empty wikidata_id column
-    df_PI = addWikidataID_and_replaceSpace(
-        df_PI, agent_processed, agent_id, place_dict_combined, entity_type
+    df_P_or_I_gh["wikidata_id"] = ""  # add an empty wikidata_id column
+    df_P_or_I_gh = addWikidataID_and_replaceSpace(
+        df_P_or_I_gh, agent_processed, agent_id, place_dict_combined, entity_type
     )  # add wikidata_id information basing on ReadAct's Agent table
 
     return (
-        df_PI,
+        df_P_or_I_gh,
         agent_processed,
-        agent_ids_gh,
+        all_agents_ids_gh,
         last_item_id_gh,
         all_wikidata_ids,
         place_dict_combined,
