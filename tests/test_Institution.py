@@ -131,7 +131,7 @@ class MyTestCase(unittest.TestCase):
             ],
         )
 
-    def test_it_should_not_change_with_unspecific_year_format(self):
+    def test_it_should_not_change_with_extended_year_format(self):
         self.row_inst = [
             "AG3000",
             "University Germany",

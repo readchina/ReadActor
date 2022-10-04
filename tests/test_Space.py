@@ -79,7 +79,6 @@ class MyTestCase(unittest.TestCase):
             "",
         ]
         self.df.loc[0] = self.l
-        df = process_Spac(self.df)
         self.assertEqual(
             process_Spac(self.df).iloc[0].tolist(),
             [
@@ -99,42 +98,77 @@ class MyTestCase(unittest.TestCase):
             ],
         )
 
-    def test_it_should_respect_skip_annotation(self):
+    def test_it_should_pass_for_available_in_OpenStreetMap(self):
         self.l = [
-            "SP3000",
+            "SP3001",
             "",
             "PL",
-            "Stuttgart",
+            "Baden-Württemberg",
             "en",
-            "48.7775",
-            "9.18",
-            "Q1022",
-            "skip",
+            "48.5",
+            "9.7",
+            "",
+            "",
             "QG",
             "2022-10-01",
             "",
             "",
         ]
         self.df.loc[0] = self.l
-        df = process_Spac(self.df)
         self.assertEqual(
             process_Spac(self.df).iloc[0].tolist(),
             [
-                "SP3000",
+                "SP3001",
                 "",
                 "PL",
-                "Stuttgart",
+                "Baden-Württemberg",
                 "en",
-                "48.7775",
-                "9.18",
-                "Q1022",
-                "skip",
+                "48.5",
+                "9.7",
+                "",
+                "",
                 "QG",
                 "2022-10-01",
                 "",
                 "",
             ],
         )
+
+    # def test_it_should_pass_for_available_in_OpenStreetMap(self):
+    #     self.l = [
+    #         "SP3002",
+    #         "",
+    #         "PL",
+    #         "Ancient Culture Museum | Hohentübingen Castle",
+    #         "en",
+    #         "48.519309594212416",
+    #         "9.050910305431827",
+    #         "",
+    #         "",
+    #         "QG",
+    #         "2022-10-01",
+    #         "",
+    #         "",
+    #     ]
+    #     self.df.loc[0] = self.l
+    #     self.assertEqual(
+    #         process_Spac(self.df).iloc[0].tolist(),
+    #         [
+    #             "SP3002",
+    #             "",
+    #             "PL",
+    #             "Ancient Culture Museum | Hohentübingen Castle",
+    #             "en",
+    #             "48.519309594212416",
+    #             "9.050910305431827",
+    #             "",
+    #             "",
+    #             "QG",
+    #             "2022-10-01",
+    #             "",
+    #             "",
+    #         ],
+    #     )
 
 
 if __name__ == "__main__":
