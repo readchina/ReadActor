@@ -6,6 +6,7 @@ from datetime import date
 from importlib.metadata import version
 
 import click
+import numpy as np
 import pandas as pd
 
 from src.scripts.agent_table_processing import process_agent_tables
@@ -95,7 +96,8 @@ def create_new_space_entry(
         else:
             # New space introduced by SPAQRL query
             # Append new entries
-            # space_id,old_id,space_type,space_name,language,lat,long,wikidata_id,note,created,created_by, last_modified,last_modified_by
+            # space_id,old_id,space_type,space_name,language,lat,long,wikidata_id,note,created,created_by,
+            # last_modified,last_modified_by
             if int(last_space_id[2:]) > 9999:
                 logger.error(
                     "Please inform the maintainer to update the schema of Space and modify scripts accordingly."
@@ -372,6 +374,9 @@ def cli(path, interactive, quiet, output, summary, space, agents):
         # after adding new space entry, replace space name with new space ID
         space_dict = space_dict_for_agents(df_space_processed)
         df = df.replace({"place_of_birth": space_dict})
+        df["narrative_age"] = pd.to_numeric(
+            df["narrative_age"], errors="coerce"
+        ).astype("Int64")
     elif entity_type == "Institution":
         a_id = "inst_id"
         # after adding new space entry, replace space name with new space ID
@@ -391,7 +396,6 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             new_csv_path = path[:-4] + "_updated.csv"
             with open(new_csv_path, "w") as f3:
                 f3.write(df_person_or_inst.to_csv(index=False))
-
             df_agent = agent_processed_sorted
             for i in range(len(df_agent["agent_id"])):
                 for j in range(len(df[a_id])):
@@ -404,7 +408,6 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             new_agent_user_path = agent_user_path[:-4] + "_updated.csv"
             with open(new_agent_user_path, "w") as f:
                 f.write(df_agent.to_csv(index=False))
-
             if flag_space_table:
                 if entity_type == "Person":
                     path_space = path[:-10] + "Space_updated.csv"
@@ -421,6 +424,7 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             # print two tables on screen: agent and the other
             df_person_or_inst = df.copy(deep=True)  # a deep copy
             df_person_or_inst.drop("wikidata_id", inplace=True, axis=1)
+
             print("\nSummary of Person/Institution:")
             print(df_person_or_inst.to_csv(index=False))
 
@@ -446,13 +450,10 @@ def cli(path, interactive, quiet, output, summary, space, agents):
                 f1.write(df.to_csv(index=False))
         else:
             # updated two tables: agent and the other
-
             df_person_or_inst = df.copy(deep=True)  # a deep copy
             df_person_or_inst.drop("wikidata_id", inplace=True, axis=1)
-
             with open(path, "w") as f3:
                 f3.write(df_person_or_inst.to_csv(index=False))
-
             df_agent = agent_processed_sorted
             for i in range(len(df_agent["agent_id"])):
                 for j in range(len(df[a_id])):
