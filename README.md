@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml/badge.svg)](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml)
 
-This repo contains a Python package for verifying the authenticity of named entities basing on [ReadAct](https://github.com/readchina/ReadAct).
+This repo contains a Python package for verifying the authenticity of named entities based on [ReadAct](https://github.com/readchina/ReadAct).
 
 The goal is to automately extract data about **person**, **space**, and **institutions** from ReadAct database, and to use [Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page) to verify existing data and update missing data.
 
-The two way of using it are either install it locally and run the fowllowing scripts, or commit-push your updates for ReadAct to ReadAct where this package will be ran in CI automatically.
+The two ways of using it are either install it locally and run the following scripts, or push your updates to ReadAct to GitHub where this package will be ran in CI automatically.
 
 ## Requierments
 
