@@ -25,6 +25,8 @@ setup(
     include_package_data=True,
     install_requires=[
         "Click",
+        "pandas>=1.4.3",
+        "requests>=2.26"
     ],
     entry_points={
         "console_scripts": [
