@@ -131,9 +131,7 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
     # So that to get a processed space table to convert space IDs in P/I into space names.
     if all(place in place_dict for place in df_P_or_I_gh[place_name].tolist()):
         place_dict_combined = place_dict
-        print("@@@@@@@@@@@@@@@@@")
-        print("place_dict_combined = place_dict")
-        print("@@@@@@@@@@@@@@@@@")
+
         combined_two_space = False  # Unnecessary to check for potential local Space.csv
     else:  # place in user's table is not in ReadAct, check if any local space table
         space_path_user = path[1][:-9] + "Space.csv"

@@ -2,15 +2,22 @@
 
 [![CI](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml/badge.svg)](https://github.com/readchina/WikidataLookup/actions/workflows/ci.yml)
 
-This repo contains a Python package for verifying named entities in [ReadAct](https://github.com/readchina/ReadAct).
+This repo contains a Python package for verifying the authenticity of named entities based on [ReadAct](https://github.com/readchina/ReadAct).
 
-The goal is to automately extract data about **person**, **space**, and **institutions** from ReadAct's data tables, and to use [Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page) for verification and to extract missing data points.
+The goal is to automately extract data about **person**, **space**, and **institutions** from ReadAct database, and to use [Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page) to verify existing data and update missing data.
+
+The two ways of using it are either install it locally and run the following scripts, or push your updates to ReadAct to GitHub where this package will be ran in CI automatically.
 
 ## Requierments
 
-- Python: `>=3.8`
-
 The tool is tested on macOS and linux. 
+
+Python: `>=3.8`
+
+Also you need to upgrade pandas by using the command:
+
+`python -m pip install --upgrade pip pandas`
+
 
 ## Installation
 
@@ -26,7 +33,7 @@ To check if the tool is working:
 readactor --version
 ```
 
-You should see version number like:
+You should see version number similar to:
 
 ```bash
 version 1.0.1
