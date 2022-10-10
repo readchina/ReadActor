@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 def read_space_csv(
-    space_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv",
+    space_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv",
 ):
     """
     A function to read "Space.csv" for now.
@@ -214,7 +214,7 @@ if __name__ == "__main__":
 
     # # To compare the extracting coordinate location with the info in Space.csv
     # space_url = (
-    #     "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
+    #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
     # )
     # geo_code_dict = read_space_csv(space_url)
     #
@@ -248,7 +248,9 @@ if __name__ == "__main__":
     """
 
     # To compare the extracting coordinate location with the info in Space.csv
-    space_url = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
+    space_url = (
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
+    )
     geo_code_dict = read_space_csv(space_url)
 
     # Assume 0 match from openstreetmap

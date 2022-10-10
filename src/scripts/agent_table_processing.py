@@ -6,10 +6,16 @@ import pandas as pd
 
 from src.scripts.authenticity_space import read_space_csv
 
-PERSON_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv"
-SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
-INST_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Institution.csv"
-AGENT_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Agent.csv"
+PERSON_GITHUB = (
+    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
+)
+SPACE_GITHUB = (
+    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
+)
+INST_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Institution.csv"
+AGENT_GITHUB = (
+    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Agent.csv"
+)
 
 logger = logging.getLogger(__name__)
 

@@ -194,7 +194,7 @@ Please make sure the "Agent.csv" is in the same directory as your "Institution.c
 ## The time it takes
 To run this tool on your own data, it takes from a few seconds to several hours according to the amount of data.
 
-For example, using the data in [ReadAct](https://github.com/readchina/ReadAct), to run this tool on the [Person.csv](https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv) (data until 20.09.2022), it takes up to several hours. But if you only add and commit one or two new Person entries, or run this tool on your own CVS table which consists of a few lines, it should take only a few seconds or several minute.
+For example, using the data in [ReadAct](https://github.com/readchina/ReadAct), to run this tool on the [Person.csv](https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv) (data until 20.09.2022), it takes up to several hours. But if you only add and commit one or two new Person entries, or run this tool on your own CVS table which consists of a few lines, it should take only a few seconds or several minute.
 
 It is similar if you want to run scripts in this tool by yourselves, like `authenticity_person.py`, `authenticity_space.py`, `authenticity_institution.py`, it takes from a few minutes to several hours depending on the amount of data. 
 

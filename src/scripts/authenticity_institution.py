@@ -51,7 +51,7 @@ GROUP BY ?item ?itemLabel ?headquartersLabel ?administrativeTerritorialEntityLab
 
 
 def read_institution_csv(
-    inst_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Institution.csv",
+    inst_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Institution.csv",
 ):
     """
     A function to read "Institution.csv"

@@ -11,7 +11,9 @@ from src.scripts.authenticity_space import (
     query_with_OSM,
 )
 
-SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
+SPACE_GITHUB = (
+    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
+)
 
 logger = logging.getLogger(__name__)
 

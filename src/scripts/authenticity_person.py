@@ -54,7 +54,7 @@ LIMIT 1
 #################################################################
 ################## Approach 1 : look up with name ##################
 def read_person_csv(
-    person_url="https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv",
+    person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv",
 ):
     """
     A function to read "Person.csv", preprocess CSV.
@@ -416,12 +416,14 @@ def sparql_with_Qid(Qid):
 
 if __name__ == "__main__":
 
-    person_url = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv"
+    person_url = (
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
+    )
 
     #################################################################
     ################## Approach 1 : look up with name ##################
     person_dict = read_person_csv(
-        "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Person.csv"
+        "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
     )
 
     # Break the entire dictionary into several chunks.

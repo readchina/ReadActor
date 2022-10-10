@@ -21,7 +21,9 @@ formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s: - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-SPACE_GITHUB = "https://raw.githubusercontent.com/readchina/ReadAct/2.0-RC-patch/csv/data/Space.csv"
+SPACE_GITHUB = (
+    "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"
+)
 
 
 def combine_space_tables(df_space_user, df_space_gh, space_ids_gh):
