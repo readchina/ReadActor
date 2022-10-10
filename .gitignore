@@ -67,3 +67,5 @@ cover/
 venv/
 env/
 src/results/tmp/
+*.csv
+*.csv
