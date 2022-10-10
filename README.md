@@ -14,9 +14,9 @@ The tool is tested on macOS and linux.
 
 Python: `>=3.8`
 
-Also you need to upgrade pandas by using the command:
+You might need to upgrade pip by using the command:
 
-`python -m pip install --upgrade pip pandas`
+`python -m pip install --upgrade pip`
 
 
 ## Installation
@@ -24,7 +24,7 @@ Also you need to upgrade pandas by using the command:
 You can install the tool using pip:
 
 ```bash 
-pip install ReadActor
+pip install ReadActor pandas
 ```
 
 To check if the tool is working:
@@ -38,6 +38,22 @@ You should see version number similar to:
 ```bash
 version 1.0.1
 ```
+
+### From Source
+
+From the root directory of this repository, run:
+
+```bash
+pip install -r requirements.txt
+```
+
+To run the testsuite:
+
+```bash
+python -m unittest discover -v
+```
+
+ReadActor works with ReadAct version 2.0.0 and later. 
 
 ## Development
 
@@ -56,25 +72,20 @@ black .
 
 before commiting code.
 
-### From Source
+## Releases
 
-From the root directory of this repository, run:
+Currently, the version number is updated manually, in `setup.py`
 
-```bash
-pip install -r requirements.txt
+```python
+setup(
+    name="ReadActor",
+    version="2.0.2-alpha",
+)
 ```
 
-To run the testsuite:
+Release are automated on CI triggered by push events to the `master` branch. We follow semantic versioning, so during normal development the version number should be a pre-release number ending in `-alpha`, `-beta` etc. 
 
-```bash
-python -m unittest discover -v
-```
-
-<!-- Something about which version of the programm and the first compatible ReadAct version here -->
-
-## Version
-
-Currently, the version number is updated manually.
+To create a release simply commit and push a change that uses a full version number e.g. `2.0.2` to the `master` branch. 
 
 <!--Every PR will trigger the release of a new version. [Python semantic release](https://python-semantic-release.readthedocs.io/en/latest/) is used for version control. 
 
