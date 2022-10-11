@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="ReadActor",
-    version="2.0.2-beta",
+    version="2.0.2-alpha",
     author="Qin Gu",
     author_email="guqin7@gmail.com",
     description="A lookup tool for ReadChina project",
@@ -25,8 +25,6 @@ setup(
     include_package_data=True,
     install_requires=[
         "Click",
-        "pandas",
-        "requests"
     ],
     entry_points={
         "console_scripts": [
