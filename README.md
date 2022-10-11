@@ -173,11 +173,12 @@ If you are new to this tool, please also read the following relevant details.
 
 ## Details
 ### Basic rules:
-1. To process entities like Person/Institution/Space, you are expected to pass one and only one path in your command, for example, `readactor myProject/Person.csv`.
-2. In the directory which you stores either one or some of Person/Institution/Space tables, the file names, if the file exists, must be exactly `Person.csv` or `Institution.csv` or `Space.csv` or `Agent.csv` (pay attention to the upper case letter).
-3. When there are new Space entities in your Person/Institution table which has no corresponding entry in ReadAct, you are expected to include the new entities in your local `Space.csv` in the same directory as the Person/Institution table.
-4. For new Space entities which are introduced by the tool itself, ReadActor will take care of it.
-5. Your local `Space.csv` might be overwritten in certain condition (no new Space entity appeared in your Person/Institution table). It is always a good idea to have a backup of the CSV files that you are going to process.
+1. You files and file-format should follow the [instruction](https://github.com/readchina/ReadAct/wiki/02-Working-on-the-data) on ReadAct.
+2. To process entities like Person/Institution/Space, you are expected to pass one and only one path in your command, for example, `readactor myProject/Person.csv`.
+3. In the directory which you stores either one or some of Person/Institution/Space tables, the file names, if the file exists, must be exactly `Person.csv` or `Institution.csv` or `Space.csv` or `Agent.csv` (pay attention to the upper case letter).
+4. When there are new Space entities in your Person/Institution table which has no corresponding entry in ReadAct, you are expected to include the new entities in your local `Space.csv` in the same directory as the Person/Institution table.
+5. For new Space entities which are introduced by the tool itself, ReadActor will take care of it.
+6. Your local `Space.csv` might be overwritten in certain condition (no new Space entity appeared in your Person/Institution table). It is always a good idea to have a backup of the CSV files that you are going to process.
 
 
 ### Agents
