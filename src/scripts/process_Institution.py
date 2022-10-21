@@ -40,13 +40,17 @@ def process_Inst(df, entity_type):
         _,
         _,
     ) = process_agent_tables(entity_type, "ReadAct", path=[])
+
     # Process local table row by row
-    print("~~~~~~~~~~~~~")
-    print("df:", df)
-    print("~~~~~~~~~~~~~")
-    print("df_P_or_I_gh:", df_P_or_I_gh)
-    print("~~~~~~~~~~~~~")
+
+    # print("~~~~~~~~~~~~~")
+    # print("df:", df)
+    # print("~~~~~~~~~~~~~")
+    # print("df_P_or_I_gh:", df_P_or_I_gh)
+    # print("~~~~~~~~~~~~~")
+
     for index, row in df.iterrows():
+        # ToDo(QG): check the index
         print("-------------\nFor row ", index + 2, " :")
         print(row.tolist())
         row, last_inst_id = check_each_row_Inst(

@@ -37,8 +37,7 @@ def combine_space_tables(df_space_user, df_space_gh, space_ids_gh):
     """
     df_space_user_not_in_gh = df_space_user.loc[
         ~df_space_user["space_id"].isin(space_ids_gh)
-    ]  # delete lines which
-    # has agent_id in ReadAct, which is to say, for any agent_id already in ReadAct, use the ReadAct resource
+    ]  # delete lines which has agent_id in ReadAct: for any agent_id already in ReadAct, use the ReadAct resource
     space_cols = [
         "space_id",
         "old_id",
@@ -158,7 +157,6 @@ def space_dict_for_agents(df_space):
             # value: 'space_id'
             space_dict[row["space_name"]] = row["space_id"]
         else:
-            # ToDo(QG): Is it on purpose that we have reduplicated space_name ?
             logger.warning(
                 "There are reduplicated space_name in ReadAct. Please notice the maintainer."
             )
@@ -286,6 +284,7 @@ def cli(path, interactive, quiet, output, summary, space, agents):
                 "You want to process person/institution, but your input file path doesn't contain this kind of file."
             )
             sys.exit()
+
     today = date.today().strftime("%Y-%m-%d")
 
     # process the dataframe (Person, Space, Institution).
@@ -321,9 +320,11 @@ def cli(path, interactive, quiet, output, summary, space, agents):
         )  # Sort Person.csv by person_id
         df = df_sorted
 
+        # Get dictionary of space id and space name, replace the space id in Person table
         df_space_raw = pd.read_csv(SPACE_GITHUB)
         space_dict = space_dict_for_agents(df_space_raw)
-        df = df.replace({"place_of_birth": space_dict})
+        df = df.replace({place_name: space_dict})
+        # If SPARQL query introduces any space name which is not in Space table, generate space id
         df_space_processed, flag_space_table = create_new_space_entry(
             df,
             place_dict_combined,
@@ -358,9 +359,11 @@ def cli(path, interactive, quiet, output, summary, space, agents):
         )  # Sort Institution.csv by inst_id
         df = df_sorted
 
+        # Get dictionary of space id and space name, replace the space id in Institution table
         df_space_raw = pd.read_csv(SPACE_GITHUB)
         space_dict = space_dict_for_agents(df_space_raw)
-        df = df.replace({"place": space_dict})
+        df = df.replace({place_name: space_dict})
+        # If SPARQL query introduces any space name which is not in Space table, generate space id
         df_space_processed, flag_space_table = create_new_space_entry(
             df,
             place_dict_combined,
@@ -373,9 +376,9 @@ def cli(path, interactive, quiet, output, summary, space, agents):
 
     if entity_type == "Person":
         a_id = "person_id"
-        # after adding new space entry, replace space name with new space ID
+        # After adding new space entry, replace space name with new space ID
         space_dict = space_dict_for_agents(df_space_processed)
-        df = df.replace({"place_of_birth": space_dict})
+        df = df.replace({place_name: space_dict})
         df["narrative_age"] = pd.to_numeric(
             df["narrative_age"], errors="coerce"
         ).astype("Int64")
@@ -383,7 +386,7 @@ def cli(path, interactive, quiet, output, summary, space, agents):
         a_id = "inst_id"
         # after adding new space entry, replace space name with new space ID
         space_dict = space_dict_for_agents(df_space_processed)
-        df = df.replace({"place": space_dict})
+        df = df.replace({place_name: space_dict})
 
     # output to new tables
     if output:
@@ -392,12 +395,13 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             with open(new_csv_path, "w+") as f:
                 f.write(df.to_csv(index=False))
         else:
-            # write two/three updated tables to new files: agent and the other
+            # write two or three updated tables to new files: Person/Institution, Agent (, Space)
             df_person_or_inst = df.copy(deep=True)  # a deep copy
             df_person_or_inst.drop("wikidata_id", inplace=True, axis=1)
             new_csv_path = path[:-4] + "_updated.csv"
             with open(new_csv_path, "w") as f3:
                 f3.write(df_person_or_inst.to_csv(index=False))
+
             df_agent = agent_processed_sorted
             for i in range(len(df_agent["agent_id"])):
                 for j in range(len(df[a_id])):
@@ -410,6 +414,7 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             new_agent_user_path = agent_user_path[:-4] + "_updated.csv"
             with open(new_agent_user_path, "w") as f:
                 f.write(df_agent.to_csv(index=False))
+
             if flag_space_table:
                 if entity_type == "Person":
                     path_space = path[:-10] + "Space_updated.csv"
@@ -439,8 +444,8 @@ def cli(path, interactive, quiet, output, summary, space, agents):
                             df_agent.loc[i, "last_modified"] = today
                             df_agent.loc[i, "last_modified_by"] = "ReadActor"
                             logger.info("Wikidata id is updated. ")
-            # print("\nSummary of Agent:")
-            # print(df_agent.to_csv(index=False))
+            print("\nSummary of Agent:")
+            print(df_agent.to_csv(index=False))
 
             if flag_space_table:
                 print("\nSummary of Space")
@@ -456,6 +461,7 @@ def cli(path, interactive, quiet, output, summary, space, agents):
             df_person_or_inst.drop("wikidata_id", inplace=True, axis=1)
             with open(path, "w") as f3:
                 f3.write(df_person_or_inst.to_csv(index=False))
+
             df_agent = agent_processed_sorted
             for i in range(len(df_agent["agent_id"])):
                 for j in range(len(df[a_id])):

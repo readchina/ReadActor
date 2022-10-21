@@ -130,9 +130,6 @@ def process_agent_tables(entity_type, user_or_ReadAct, path):
     all_wikidata_ids = [x for x in agent_processed["wikidata_id"].tolist() if x]
     df_P_or_I_gh = pd.read_csv(which_agent, dtype=dtype_dict).fillna("")
 
-    print("************************")
-    print("df_P_or_I_gh original: ", df_P_or_I_gh)
-
     # Check if the place in user's Person/Institution table are all in ReadAct.
     # So that to get a processed space table to convert space IDs in P/I into space names.
     if all(place in place_dict for place in df_P_or_I_gh[place_name].tolist()):
