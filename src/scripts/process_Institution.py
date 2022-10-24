@@ -50,8 +50,7 @@ def process_Inst(df, entity_type):
     # print("~~~~~~~~~~~~~")
 
     for index, row in df.iterrows():
-        # ToDo(QG): check the index
-        print("-------------\nFor row ", index + 2, " :")
+        print("-------------\nFor row (index starts from 0)", index, " :")
         print(row.tolist())
         row, last_inst_id = check_each_row_Inst(
             index, row, df_P_or_I_gh, all_agents_ids_gh, last_inst_id, all_wikidata_ids
@@ -91,12 +90,10 @@ def check_each_row_Inst(
                         inst_wiki = sparql_inst(
                             [row["wikidata_id"]]
                         )  # query by wikidata_id to get other properties
-
-                        print("===============")
-                        print("inst_wiki:")
-                        print(inst_wiki)
-                        print("===============")
-
+                        # print("===============")
+                        # print("inst_wiki:")
+                        # print(inst_wiki)
+                        # print("===============")
                         l = [
                             inst_wiki["headquarters"],
                             inst_wiki["administrativeTerritorialEntity"],
@@ -104,10 +101,10 @@ def check_each_row_Inst(
                             inst_wiki["inception"],
                         ]
                         l = [i for x in l for i in x]
-                        print("===============")
-                        print("l:")
-                        print(l)
-                        print("===============")
+                        # print("===============")
+                        # print("l:")
+                        # print(l)
+                        # print("===============")
                         if not any(l):  # all items in above list are empty strings
                             message = (
                                 "For row %s, the user input wikidata_id does not have relevant info. "
@@ -122,9 +119,12 @@ def check_each_row_Inst(
                                 index, row, inst_wiki, today, ""
                             )
                 else:  # user did NOT input wikidata_id
-                    # TODO(QG): maybe it is better to modify get_QID_inst()
                     if row["inst_name"] is None or len(row["inst_name"]) == 0:
-                        wikidata_id_from_query_Inst = None
+                        logger.error(
+                            "For row %s , there is no Institution name. Please check. "
+                            % index
+                        )
+                        sys.exit()
                     else:
                         wikidata_id_from_query_Inst = get_QID_inst(
                             row["inst_name"]
@@ -136,7 +136,7 @@ def check_each_row_Inst(
                             "For row %s : Query by name didn't find any wikidata item."
                             % index
                         )
-                    else:  # query by name and find a wikidata_id
+                    else:  # query by name, find a qid, then check if this qid is in ReadAct
                         if (
                             wikidata_id_from_query_Inst[0]["id"] in all_wikidata_ids
                         ):  # found wikidata_id in ReadAct
@@ -146,9 +146,7 @@ def check_each_row_Inst(
                                 'in "note". ' % index
                             )
                             sys.exit()
-                        # The found wikidata_id is not in ReadAct, the next step is to compare the info given by
-                        # Wikidata with start/end/place in Institution
-                        else:
+                        else:  # The found qid is not in ReadAct, then: compare start/end/place
                             inst_wiki = sparql_inst(
                                 [wikidata_id_from_query_Inst[0]["id"]]
                             )  # query by wikidata_id to get other properties
@@ -161,8 +159,7 @@ def check_each_row_Inst(
                             l = [i for x in l for i in x]
                             if not any(l):  # all items in above list are empty strings
                                 message = (
-                                    "For row %s, the user input wikidata_id does not have relevant info. "
-                                    "Couldn't check. "
+                                    "For row %s, the user input qid does not have relevant info. Couldn't check. "
                                 ) % index
                                 logger.warning(message)
                                 row = modify_note_lastModified_lastModifiedBy(
@@ -284,9 +281,9 @@ def __compare_place_and_start_for_Inst(
         + inst_wiki["locationOfFormation"]
     )
     inception = inst_wiki["inception"][0][0:4]
-    print("====")
-    print(potential_place)
-    print(inception)
+    # print("====")
+    # print(potential_place)
+    # print(inception)
     if row["place"] in potential_place:
         if wikidata_id_by_query:
             row["wikidata_id"] = wikidata_id_by_query
@@ -329,8 +326,8 @@ def __compare_place_and_start_for_Inst(
         message = "Fields in row %s does not match wikidata properties. " % index
         logger.warning(message)
         row = modify_note_lastModified_lastModifiedBy(row, message, today)
-    print("&&&&&&&&&&&&&&")
-    print("row to be returned: ", row)
+    # print("&&&&&&&&&&&&&&")
+    # print("row to be returned: ", row)
     return row
 
 
