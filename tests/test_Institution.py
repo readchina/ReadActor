@@ -18,9 +18,9 @@ class MyTestCase(unittest.TestCase):
     # execute before every test case function run.
     def setUp(self):
         THIS_DIR = Path(__file__).parent
-        ag_for_test = THIS_DIR / "ag_for_test.csv"
-        pl_for_test = THIS_DIR / "pl_for_test.csv"
-        inst_for_test = THIS_DIR / "inst_for_test.csv"
+        ag_for_test = THIS_DIR / "fixtures/ag.csv"
+        pl_for_test = THIS_DIR / "fixtures/pl.csv"
+        inst_for_test = THIS_DIR / "fixtures/inst.csv"
         ag = pd.read_csv(ag_for_test).fillna("")
         pl = pd.read_csv(pl_for_test).fillna("")
         inst = pd.read_csv(inst_for_test).fillna("")
