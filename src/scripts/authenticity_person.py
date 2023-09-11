@@ -61,7 +61,7 @@ def read_person_csv(
     :param person_url
     :return: a dictionary
     """
-    df = pd.read_csv(person_url, error_bad_lines=False).fillna("")
+    df = pd.read_csv(person_url).fillna("")
     person_dict = {}
     place_dict = read_space_csv()
     for index, row in df.iterrows():
@@ -332,7 +332,7 @@ def chunks(person_dict, SIZE=30):
 def get_matched_by_wikipedia_url(
     person_url="https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv",
 ):
-    df = pd.read_csv(person_url, error_bad_lines=False)
+    df = pd.read_csv(person_url)
     person_matched_by_wikipedia = {}
 
     count = 0

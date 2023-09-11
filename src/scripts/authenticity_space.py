@@ -45,7 +45,7 @@ def read_space_csv(
     :param space_url
     :return: a dictionary
     """
-    df = pd.read_csv(space_url, error_bad_lines=False)
+    df = pd.read_csv(space_url)
     geo_code_dict = {}
     for index, row in df.iterrows():
         # consider the case that if there are identical space_id in csv file
