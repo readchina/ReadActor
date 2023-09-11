@@ -211,7 +211,6 @@ def chunks(it, size):
 
 
 if __name__ == "__main__":
-
     # # To compare the extracting coordinate location with the info in Space.csv
     # space_url = (
     #     "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Space.csv"

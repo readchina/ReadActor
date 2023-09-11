@@ -415,7 +415,6 @@ def sparql_with_Qid(Qid):
 
 
 if __name__ == "__main__":
-
     person_url = (
         "https://raw.githubusercontent.com/readchina/ReadAct/master/csv/data/Person.csv"
     )

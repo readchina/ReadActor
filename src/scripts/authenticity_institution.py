@@ -204,7 +204,6 @@ def get_QID_inst(lookup):
 
 
 if __name__ == "__main__":
-
     inst_dict = read_institution_csv()
     print(inst_dict)
     no_match, match = compare_inst(inst_dict, 10)
