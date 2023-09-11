@@ -58,7 +58,7 @@ def read_institution_csv(
     :param inst_url: the GitHub address of Institution.csv
     :return: a dictionary
     """
-    df = pd.read_csv(inst_url, error_bad_lines=False)
+    df = pd.read_csv(inst_url)
     df = df.fillna("")
     ins_dict = {}
     place_dict = read_space_csv()
@@ -204,7 +204,6 @@ def get_QID_inst(lookup):
 
 
 if __name__ == "__main__":
-
     inst_dict = read_institution_csv()
     print(inst_dict)
     no_match, match = compare_inst(inst_dict, 10)
